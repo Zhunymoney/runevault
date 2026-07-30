@@ -1,0 +1,2 @@
+import { QuoteCard } from "@/components/quote-card";
+export default function QuotePage(){return <main className="mx-auto min-h-[700px] max-w-6xl px-6 py-20"><div className="grid gap-12 lg:grid-cols-2"><div><p className="text-sm font-black uppercase tracking-[.2em] text-amber-400">Test quote</p><h1 className="mt-5 text-5xl font-black">Create an order.</h1><p className="mt-5 leading-8 text-white/45">Choose buy or sell, enter an amount, and create a simulated order. It will appear immediately in order tracking and the admin dashboard.</p></div><QuoteCard/></div></main>}

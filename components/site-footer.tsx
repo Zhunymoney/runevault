@@ -1,0 +1,1 @@
+export function SiteFooter(){return <footer className="border-t border-white/10"><div className="mx-auto max-w-7xl px-6 py-10 text-sm text-white/35">RuneVault test mode. No live payment or in-game transaction is processed.</div></footer>}
