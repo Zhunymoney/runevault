@@ -1,7 +1,53 @@
 @import "tailwindcss";
+
 :root { color-scheme: dark; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; background:#07090d; color:#fff; font-family: Arial, Helvetica, sans-serif; }
+body {
+  margin: 0;
+  background: #07090d;
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  background-image:
+    radial-gradient(circle at 50% -10%, rgba(245, 158, 11, .08), transparent 35%),
+    linear-gradient(180deg, #07090d 0%, #080b11 100%);
+}
 button, input, select { font: inherit; }
-::selection { background:#f59e0b; color:#111; }
+a { text-decoration: none; }
+::selection { background: #f59e0b; color: #111; }
+
+.hero-grid {
+  background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+.hero-glow { background: rgba(245,158,11,.13); filter: blur(110px); }
+.gold-text { background: linear-gradient(90deg, #fde68a, #f59e0b 55%, #fcd34d); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.eyebrow { display: inline-flex; align-items: center; gap: .5rem; border: 1px solid rgba(251,191,36,.2); background: rgba(251,191,36,.08); color: #fcd34d; border-radius: 999px; padding: .65rem 1rem; font-size: .72rem; font-weight: 900; letter-spacing: .17em; text-transform: uppercase; }
+.primary-button, .secondary-button { display: inline-flex; align-items: center; justify-content: center; gap: .65rem; min-height: 52px; border-radius: 16px; padding: 0 1.35rem; font-weight: 900; transition: transform .2s ease, border-color .2s ease, background .2s ease; }
+.primary-button { background: linear-gradient(135deg, #fde68a, #f59e0b); color: #14100a; box-shadow: 0 14px 40px rgba(245,158,11,.16); }
+.secondary-button { border: 1px solid rgba(255,255,255,.11); background: rgba(255,255,255,.035); color: #fff; }
+.primary-button:hover, .secondary-button:hover { transform: translateY(-2px); }
+.secondary-button:hover { border-color: rgba(251,191,36,.35); }
+.section-shell { max-width: 80rem; margin: 0 auto; padding: 6rem 1.5rem; }
+.section-heading { max-width: 46rem; }
+.section-heading > p, .section-kicker { color: #fbbf24; font-size: .72rem; font-weight: 900; letter-spacing: .2em; text-transform: uppercase; }
+.section-heading h2 { margin-top: 1rem; font-size: clamp(2.3rem, 5vw, 4rem); line-height: 1; letter-spacing: -.045em; font-weight: 900; }
+.section-heading > span { display: block; margin-top: 1.25rem; color: rgba(255,255,255,.43); line-height: 1.75; }
+.feature-card, .review-card { border: 1px solid rgba(255,255,255,.08); background: linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.018)); border-radius: 28px; padding: 2rem; box-shadow: inset 0 1px rgba(255,255,255,.025); }
+.feature-card { min-height: 300px; }
+.operations-panel { display: grid; gap: 3rem; border: 1px solid rgba(251,191,36,.15); background: radial-gradient(circle at 0 0, rgba(245,158,11,.11), transparent 38%), rgba(255,255,255,.018); border-radius: 36px; padding: clamp(2rem, 5vw, 4rem); }
+.mini-card { border: 1px solid rgba(255,255,255,.08); background: rgba(6,8,12,.65); border-radius: 22px; padding: 1.4rem; }
+.mini-card svg { color: #fbbf24; }
+.mini-card h3 { margin-top: 1rem; font-size: 1rem; font-weight: 900; }
+.mini-card p { margin-top: .6rem; color: rgba(255,255,255,.38); font-size: .88rem; line-height: 1.55; }
+.review-card { min-height: 300px; }
+.faq-card { border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.025); border-radius: 20px; overflow: hidden; }
+.faq-card summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; list-style: none; padding: 1.25rem 1.4rem; font-weight: 900; }
+.faq-card summary::-webkit-details-marker { display: none; }
+.faq-card summary span { color: #fbbf24; font-size: 1.4rem; }
+.faq-card p { margin: 0; padding: 0 1.4rem 1.4rem; color: rgba(255,255,255,.43); line-height: 1.7; }
+.cta-panel { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 2rem; border: 1px solid rgba(251,191,36,.18); background: linear-gradient(135deg, rgba(245,158,11,.12), rgba(255,255,255,.025)); border-radius: 32px; padding: clamp(2rem, 5vw, 3.5rem); }
+
+@media (min-width: 1024px) { .operations-panel { grid-template-columns: .9fr 1.1fr; align-items: center; } }
+@media (min-width: 768px) { .cta-panel { flex-direction: row; align-items: center; } }

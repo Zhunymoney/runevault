@@ -1,1 +1,18 @@
-export function SiteFooter(){return <footer className="border-t border-white/10"><div className="mx-auto max-w-7xl px-6 py-10 text-sm text-white/35">RuneVault test mode. No live payment or in-game transaction is processed.</div></footer>}
+import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
+
+export function SiteFooter() {
+  return (
+    <footer className="border-t border-white/8 bg-[#06080c]">
+      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 md:grid-cols-[1.2fr_.8fr_.8fr]">
+        <div>
+          <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 font-black text-black">R</span><div><b>RuneVault</b><p className="text-xs font-bold uppercase tracking-[.16em] text-amber-300">Marketplace platform</p></div></div>
+          <p className="mt-5 max-w-md text-sm leading-6 text-white/35">A database-backed test environment for marketplace quotes, customer accounts, order tracking, pricing, inventory, and administrative operations.</p>
+        </div>
+        <div><p className="text-xs font-black uppercase tracking-[.18em] text-white/30">Platform</p><div className="mt-4 grid gap-3 text-sm font-bold text-white/55"><Link href="/quote">Create quote</Link><Link href="/orders">Track order</Link><Link href="/account">Customer account</Link><Link href="/admin">Admin dashboard</Link></div></div>
+        <div><p className="text-xs font-black uppercase tracking-[.18em] text-white/30">Current status</p><div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-400/15 bg-amber-400/8 px-3 py-2 text-xs font-black text-amber-300"><ShieldCheck size={14} /> TEST MODE ACTIVE</div><p className="mt-4 text-sm leading-6 text-white/35">No live payment or in-game transaction is processed by this version.</p></div>
+      </div>
+      <div className="border-t border-white/7"><div className="mx-auto flex max-w-7xl flex-col gap-2 px-6 py-5 text-xs text-white/25 sm:flex-row sm:items-center sm:justify-between"><span>© 2026 RuneVault. Upgrade One.</span><span>Built for controlled testing and iteration.</span></div></div>
+    </footer>
+  );
+}
