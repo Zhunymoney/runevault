@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2, Coins, ShieldCheck } from "lucide-react";
-import { createOrder, getSettings } from "@/lib/marketplace";
+import { getSettings } from "@/lib/marketplace";
 import type { MarketplaceSettings, OrderType } from "@/lib/types";
 
 const fallback: MarketplaceSettings = {
@@ -35,21 +35,35 @@ export function QuoteCard() {
   const rate = type === "buy" ? settings.buy_rate : settings.sell_rate;
   const total = useMemo(() => Math.max(amount, 0) * rate, [amount, rate]);
 
-  async function submit() {
+  function continueToCheckout() {
     setBusy(true);
     setMessage("");
-    try {
-      const order = await createOrder({
-        order_type: type,
-        amount_m: amount,
-        delivery_name: deliveryName,
-      });
-      router.push(`/orders?reference=${order.reference}`);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not create order.");
-    } finally {
+
+    if (settings.maintenance_mode) {
+      setMessage("Ordering is temporarily paused.");
       setBusy(false);
+      return;
     }
+
+    if (amount < settings.minimum_order_m || amount > settings.maximum_order_m) {
+      setMessage(`Orders must be between ${settings.minimum_order_m}M and ${settings.maximum_order_m}M.`);
+      setBusy(false);
+      return;
+    }
+
+    if (type === "buy" && amount > settings.inventory_m) {
+      setMessage("That amount is currently above available inventory.");
+      setBusy(false);
+      return;
+    }
+
+    const params = new URLSearchParams({
+      type,
+      amount: String(amount),
+    });
+
+    if (deliveryName.trim()) params.set("name", deliveryName.trim());
+    router.push(`/checkout?${params.toString()}`);
   }
 
   return (
@@ -117,14 +131,14 @@ export function QuoteCard() {
           <Coins className={type === "buy" ? "text-amber-300" : "text-emerald-300"} size={34} />
         </div>
 
-        <button disabled={busy || settings.maintenance_mode} onClick={submit} className={`quote-submit ${type === "sell" ? "sell-submit" : ""}`}>
-          {busy ? "Creating order..." : type === "buy" ? "Continue to Buy" : "Continue to Sell"}
+        <button disabled={busy || settings.maintenance_mode} onClick={continueToCheckout} className={`quote-submit ${type === "sell" ? "sell-submit" : ""}`}>
+          {busy ? "Opening checkout..." : type === "buy" ? "Review Buy Order" : "Review Sell Order"}
           {!busy && <ArrowRight size={18} />}
         </button>
 
         <div className="mt-5 grid grid-cols-2 gap-3 text-xs font-semibold text-white/35">
-          <span className="inline-flex items-center gap-2"><ShieldCheck size={15} /> Tracked order</span>
-          <span className="inline-flex items-center gap-2"><CheckCircle2 size={15} /> Instant estimate</span>
+          <span className="inline-flex items-center gap-2"><ShieldCheck size={15} /> Review first</span>
+          <span className="inline-flex items-center gap-2"><CheckCircle2 size={15} /> No payment yet</span>
         </div>
 
         {message && <p className="mt-4 rounded-xl border border-white/10 bg-white/[.025] p-3 text-sm text-white/60">{message}</p>}
