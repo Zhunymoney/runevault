@@ -53,9 +53,12 @@ export async function getOrderByReference(reference: string) {
   });
 
   if (!response.ok) {
-   const errorText = await response.text();
-throw new Error(`Order lookup failed (${response.status}): ${errorText}`);
-  }
+  console.log("STATUS:", response.status);
+  console.log("HEADERS:", Object.fromEntries(response.headers.entries()));
+  console.log("BODY:", await response.text());
+
+  throw new Error(`Order lookup failed (${response.status})`);
+}
 
   const rows = (await response.json()) as SupabaseOrder[];
   return rows[0] ?? null;
