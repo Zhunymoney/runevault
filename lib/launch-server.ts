@@ -29,7 +29,8 @@ export function serviceHeaders() {
   const serviceKey = required("SUPABASE_SERVICE_ROLE_KEY");
   return {
     apikey: serviceKey,
-    "Content-Type": "application/json",
+Authorization: `Bearer ${serviceKey}`,
+"Content-Type": "application/json",
   };
 }
 
@@ -52,7 +53,8 @@ export async function getOrderByReference(reference: string) {
   });
 
   if (!response.ok) {
-    throw new Error(`Order lookup failed (${response.status}).`);
+   const errorText = await response.text();
+throw new Error(`Order lookup failed (${response.status}): ${errorText}`);
   }
 
   const rows = (await response.json()) as SupabaseOrder[];
