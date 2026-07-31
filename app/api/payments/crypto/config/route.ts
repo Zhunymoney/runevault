@@ -22,7 +22,9 @@ export async function POST(request: Request) {
   if (!order) {
     return NextResponse.json({ error: "Order not found." }, { status: 404 });
   }
-
+console.log("BTC:", process.env.CRYPTO_BTC_ADDRESS);
+console.log("USDC:", process.env.CRYPTO_USDC_ADDRESS);
+console.log("NETWORK:", process.env.CRYPTO_USDC_NETWORK);
   const methods = [
     process.env.CRYPTO_BTC_ADDRESS
       ? {
