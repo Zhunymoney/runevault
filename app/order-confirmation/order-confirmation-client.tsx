@@ -7,7 +7,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Clipboard,
-  Coins,
+  CreditCard,
   FileText,
   LayoutDashboard,
   ShieldCheck,
@@ -35,6 +35,14 @@ export function OrderConfirmationClient() {
       .then((result) => {
         setOrder(result);
         if (!result) setMessage("The order was created, but it could not be loaded.");
+
+        if (result) {
+          void fetch("/api/notifications/order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reference: result.reference }),
+          }).catch(() => undefined);
+        }
       })
       .catch((reason) =>
         setMessage(reason instanceof Error ? reason.message : "Could not load confirmation."),
@@ -65,10 +73,7 @@ export function OrderConfirmationClient() {
         <div className="rounded-3xl border border-white/10 bg-white/[.025] p-8 sm:p-12">
           <h1 className="text-4xl font-black">Confirmation unavailable</h1>
           <p className="mt-4 text-white/45">{message}</p>
-          <Link
-            href="/account"
-            className="mt-7 inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 font-black text-black"
-          >
+          <Link href="/account" className="primary-button mt-7">
             Open account <ArrowRight size={18} />
           </Link>
         </div>
@@ -90,7 +95,7 @@ export function OrderConfirmationClient() {
           Your order is now trackable.
         </h1>
         <p className="mx-auto mt-5 max-w-2xl leading-7 text-white/45">
-          Save the reference below. It connects your account, tracking page, receipt, and admin workflow.
+          Save the reference below. Payment is a separate step and the order remains unpaid until a verified provider or staff confirms it.
         </p>
 
         <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-white/10 bg-black/15 p-5">
@@ -99,10 +104,7 @@ export function OrderConfirmationClient() {
           </p>
           <div className="mt-3 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <p className="text-2xl font-black">{order.reference}</p>
-            <button
-              onClick={() => void copyReference()}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-black"
-            >
+            <button onClick={() => void copyReference()} className="header-button">
               <Clipboard size={16} /> {copied ? "Copied" : "Copy"}
             </button>
           </div>
@@ -114,7 +116,10 @@ export function OrderConfirmationClient() {
           ["Order", order.order_type === "buy" ? "Buy OSRS gold" : "Sell OSRS gold"],
           ["Amount", `${order.amount_m}M`],
           ["Rate", `$${order.price_per_m.toFixed(3)} / M`],
-          [order.order_type === "buy" ? "Estimated total" : "Estimated payout", `$${order.total_price.toFixed(2)}`],
+          [
+            order.order_type === "buy" ? "Estimated total" : "Estimated payout",
+            `$${order.total_price.toFixed(2)}`,
+          ],
         ].map(([label, value]) => (
           <article key={label} className="rounded-2xl border border-white/10 bg-white/[.025] p-5">
             <p className="text-xs font-black uppercase tracking-[.14em] text-white/30">{label}</p>
@@ -133,45 +138,36 @@ export function OrderConfirmationClient() {
               <StatusPill status={order.status} />
             </div>
           </div>
-
           <p className="max-w-xl text-sm leading-6 text-white/40">
-            This is still a preview order. No payment has been collected and no automated in-game delivery has started.
+            Do not fulfill this order until its payment is independently verified.
           </p>
         </div>
 
-        <div className="mt-7 grid gap-3 sm:grid-cols-3">
+        <div className="mt-7 grid gap-3 sm:grid-cols-4">
+          {order.order_type === "buy" && (
+            <Link
+              href={`/pay?reference=${order.reference}`}
+              className="primary-button justify-center"
+            >
+              <CreditCard size={18} /> Choose payment
+            </Link>
+          )}
           <Link
             href={`/orders?reference=${order.reference}`}
-            className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 font-black text-black"
+            className="header-button justify-center"
           >
-            <ShieldCheck size={18} /> Track order
+            <ShieldCheck size={18} /> Track
           </Link>
           <Link
             href={`/receipt?reference=${order.reference}`}
-            className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[.03] px-5 font-black"
+            className="header-button justify-center"
           >
-            <FileText size={18} /> View receipt
+            <FileText size={18} /> Receipt
           </Link>
-          <Link
-            href="/account"
-            className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[.03] px-5 font-black"
-          >
+          <Link href="/account" className="header-button justify-center">
             <LayoutDashboard size={18} /> Account
           </Link>
         </div>
-      </section>
-
-      <section className="mt-6 grid gap-4 md:grid-cols-2">
-        <article className="rounded-2xl border border-white/10 bg-white/[.025] p-6">
-          <Coins className="text-amber-300" size={24} />
-          <h2 className="mt-4 font-black">OSRS character</h2>
-          <p className="mt-2 text-white/45">{order.delivery_name || "Not supplied"}</p>
-        </article>
-        <article className="rounded-2xl border border-white/10 bg-white/[.025] p-6">
-          <CheckCircle2 className="text-emerald-300" size={24} />
-          <h2 className="mt-4 font-black">Created successfully</h2>
-          <p className="mt-2 text-white/45">{new Date(order.created_at).toLocaleString()}</p>
-        </article>
       </section>
     </main>
   );
