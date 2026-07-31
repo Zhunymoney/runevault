@@ -29,6 +29,7 @@ export function SiteHeader() {
     ["Sell Gold", "/quote?type=sell"],
     ["Track Order", "/orders"],
     ["Account", "/account"],
+    ["Support", "/support"],
   ];
 
   return (
@@ -42,35 +43,27 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-7 text-sm font-semibold text-white/58 md:flex">
+        <nav className="hidden items-center gap-6 text-sm font-semibold text-white/58 lg:flex">
           {nav.map(([label, href]) => <Link key={label} href={href} className="nav-link">{label}</Link>)}
         </nav>
 
-        <div className="hidden md:block">
-          {email ? (
-            <button onClick={signOut} className="header-button">Sign out</button>
-          ) : (
-            <Link href="/auth" className="header-button">Sign in</Link>
-          )}
+        <div className="hidden lg:block">
+          {email ? <button onClick={signOut} className="header-button">Sign out</button> : <Link href="/auth" className="header-button">Sign in</Link>}
         </div>
 
-        <button aria-label="Open menu" onClick={() => setOpen((value) => !value)} className="mobile-menu-button md:hidden">
+        <button aria-label="Open menu" onClick={() => setOpen((value) => !value)} className="mobile-menu-button lg:hidden">
           {open ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
       {open && (
-        <div className="border-t border-white/8 bg-[#090c12] px-6 py-5 md:hidden">
+        <div className="border-t border-white/8 bg-[#090c12] px-6 py-5 lg:hidden">
           <nav className="grid gap-2">
             {nav.map(([label, href]) => (
               <Link key={label} href={href} onClick={() => setOpen(false)} className="mobile-nav-link">{label}</Link>
             ))}
             <Link href="/admin" onClick={() => setOpen(false)} className="mobile-nav-link">Admin</Link>
-            {email ? (
-              <button onClick={signOut} className="mobile-nav-link text-left">Sign out</button>
-            ) : (
-              <Link href="/auth" onClick={() => setOpen(false)} className="mobile-nav-link">Sign in</Link>
-            )}
+            {email ? <button onClick={signOut} className="mobile-nav-link text-left">Sign out</button> : <Link href="/auth" onClick={() => setOpen(false)} className="mobile-nav-link">Sign in</Link>}
           </nav>
         </div>
       )}
