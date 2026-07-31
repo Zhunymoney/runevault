@@ -1,0 +1,51 @@
+RUNEvault PRODUCTION CHECKLIST
+==============================
+
+THE CORE APPLICATION
+[ ] npm run build succeeds
+[ ] Vercel deployment succeeds
+[ ] /health passes
+[ ] Customer can sign up and sign in
+[ ] Customer can create a preview order
+[ ] Customer account only shows their own orders
+[ ] Admin can view and update all orders
+[ ] Realtime status updates work
+[ ] Receipt and tracking pages work on desktop and mobile
+[ ] Maintenance mode stops new orders
+
+SECURITY
+[ ] No service-role key is exposed in NEXT_PUBLIC variables
+[ ] Supabase RLS policies reviewed by a qualified developer
+[ ] Admin access tested with admin and non-admin accounts
+[ ] Production rate limiting implemented server-side
+[ ] Payment webhooks use signature verification
+[ ] Dependency and security audit completed
+[ ] Sensitive logs and error messages removed
+[ ] Backups and restore test completed
+
+PAYMENTS
+[ ] Merchant account approved for the actual business model
+[ ] Payment provider terms reviewed
+[ ] Server-side checkout implemented
+[ ] Webhooks verified and idempotent
+[ ] Refund, cancellation, dispute, and chargeback procedures written
+[ ] Test and live keys separated
+[ ] No card information stored by RuneVault
+
+EMAIL / NOTIFICATIONS
+[ ] Sending domain verified
+[ ] Transactional templates tested
+[ ] Failed-delivery monitoring configured
+[ ] Customer preferences and unsubscribe rules handled where required
+[ ] Discord/webhook secrets stored server-side
+
+LEGAL / OPERATIONS
+[ ] Business identity and tax setup complete
+[ ] Privacy policy reviewed
+[ ] Terms and refund policy reviewed
+[ ] Data-retention policy documented
+[ ] Game/platform and processor rules reviewed
+[ ] Staff procedures and incident response documented
+[ ] Uptime, database, error, and payment alerts configured
+
+DO NOT ACCEPT REAL MONEY UNTIL ALL APPLICABLE ITEMS ARE COMPLETE.
