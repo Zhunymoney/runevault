@@ -5,13 +5,15 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   AlertTriangle,
-  BarChart3,
   Boxes,
   CheckCircle2,
   CircleDollarSign,
   Coins,
+  Download,
+  Filter,
   RefreshCw,
   Save,
+  Search,
   Settings2,
   ShoppingCart,
   TrendingUp,
@@ -48,6 +50,9 @@ export default function AdminPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | OrderStatus>("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "buy" | "sell">("all");
 
   async function load() {
     setLoading(true);
@@ -56,6 +61,7 @@ export default function AdminPage() {
       const currentProfile = await getCurrentProfile();
       setProfile(currentProfile);
       if (!currentProfile || !["admin", "staff"].includes(currentProfile.role)) return;
+
       const [currentOrders, currentSettings] = await Promise.all([
         getAdminOrders(),
         getSettings(),
@@ -106,25 +112,86 @@ export default function AdminPage() {
     }
   }
 
+  const filteredOrders = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return orders.filter((order) => {
+      const matchesSearch =
+        !needle ||
+        order.reference.toLowerCase().includes(needle) ||
+        (order.delivery_name ?? "").toLowerCase().includes(needle);
+
+      const matchesStatus =
+        statusFilter === "all" || order.status === statusFilter;
+
+      const matchesType =
+        typeFilter === "all" || order.order_type === typeFilter;
+
+      return matchesSearch && matchesStatus && matchesType;
+    });
+  }, [orders, search, statusFilter, typeFilter]);
+
   const metrics = useMemo(() => {
     const active = orders.filter(
       (order) => !["completed", "cancelled"].includes(order.status),
     );
+    const completed = orders.filter((order) => order.status === "completed");
     const buyOrders = orders.filter((order) => order.order_type === "buy");
     const sellOrders = orders.filter((order) => order.order_type === "sell");
+
     return {
       active: active.length,
+      completed: completed.length,
       buyVolume: buyOrders.reduce((sum, order) => sum + order.amount_m, 0),
       sellVolume: sellOrders.reduce((sum, order) => sum + order.amount_m, 0),
-      grossBuyValue: buyOrders.reduce((sum, order) => sum + order.total_price, 0),
+      totalValue: orders.reduce((sum, order) => sum + order.total_price, 0),
     };
   }, [orders]);
+
+  function exportCsv() {
+    const header = [
+      "Reference",
+      "Type",
+      "Amount M",
+      "Rate",
+      "Total",
+      "Status",
+      "OSRS Name",
+      "Created",
+    ];
+
+    const rows = filteredOrders.map((order) => [
+      order.reference,
+      order.order_type,
+      order.amount_m,
+      order.price_per_m,
+      order.total_price,
+      order.status,
+      order.delivery_name ?? "",
+      order.created_at,
+    ]);
+
+    const csv = [header, ...rows]
+      .map((row) =>
+        row
+          .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+          .join(","),
+      )
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `runevault-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
 
   if (loading) {
     return (
       <main className="mx-auto min-h-[700px] max-w-7xl px-6 py-16">
         <div className="animate-pulse rounded-3xl border border-white/10 bg-white/[.025] p-10 text-white/45">
-          Loading operations dashboard…
+          Loading RuneVault operations…
         </div>
       </main>
     );
@@ -137,7 +204,8 @@ export default function AdminPage() {
           <AlertTriangle className="text-amber-300" size={34} />
           <h1 className="mt-5 text-4xl font-black">Admin access required</h1>
           <p className="mt-4 leading-7 text-white/45">
-            Your profile must have the admin or staff role before this operations dashboard can be opened.
+            Run the included Upgrade 6 Supabase SQL file to promote your account
+            and install the admin database policies.
           </p>
           <Link
             href="/account"
@@ -158,18 +226,28 @@ export default function AdminPage() {
             RuneVault operations
           </p>
           <h1 className="mt-3 text-4xl font-black tracking-[-.04em] sm:text-5xl">
-            Admin command center
+            Admin order control.
           </h1>
           <p className="mt-4 max-w-2xl leading-7 text-white/45">
-            Control OSRS pricing, inventory, maintenance mode, and every customer order status.
+            Search orders, filter the queue, update customer statuses, export records,
+            and control public OSRS rates.
           </p>
         </div>
-        <button
-          onClick={() => void load()}
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[.03] px-5 font-black"
-        >
-          <RefreshCw size={18} /> Refresh data
-        </button>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button
+            onClick={exportCsv}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[.03] px-5 font-black"
+          >
+            <Download size={18} /> Export CSV
+          </button>
+          <button
+            onClick={() => void load()}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 font-black text-black"
+          >
+            <RefreshCw size={18} /> Refresh
+          </button>
+        </div>
       </section>
 
       {message && (
@@ -178,13 +256,14 @@ export default function AdminPage() {
         </div>
       )}
 
-      <section className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <section className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
         {[
           { label: "All orders", value: orders.length, icon: ShoppingCart },
           { label: "Active queue", value: metrics.active, icon: Activity },
+          { label: "Completed", value: metrics.completed, icon: CheckCircle2 },
           { label: "Buy volume", value: `${metrics.buyVolume}M`, icon: Coins },
           { label: "Sell volume", value: `${metrics.sellVolume}M`, icon: TrendingUp },
-          { label: "Gross buy value", value: `$${metrics.grossBuyValue.toFixed(2)}`, icon: CircleDollarSign },
+          { label: "Order value", value: `$${metrics.totalValue.toFixed(2)}`, icon: CircleDollarSign },
         ].map(({ label, value, icon: Icon }) => (
           <article key={label} className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
             <div className="flex items-center justify-between">
@@ -205,7 +284,7 @@ export default function AdminPage() {
                 <h2 className="text-2xl font-black">Pricing and inventory</h2>
               </div>
               <p className="mt-2 text-sm leading-6 text-white/40">
-                These values power the public OSRS calculator.
+                These values power the public OSRS quote calculator.
               </p>
             </div>
 
@@ -216,7 +295,11 @@ export default function AdminPage() {
                   : "border-emerald-400/20 bg-emerald-400/[.07] text-emerald-200"
               }`}
             >
-              <span className={`h-2 w-2 rounded-full ${settings.maintenance_mode ? "bg-red-400" : "bg-emerald-400"}`} />
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  settings.maintenance_mode ? "bg-red-400" : "bg-emerald-400"
+                }`}
+              />
               {settings.maintenance_mode ? "Ordering paused" : "Ordering available"}
             </div>
           </div>
@@ -265,28 +348,73 @@ export default function AdminPage() {
               disabled={saving}
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-400 px-6 font-black text-black disabled:opacity-50"
             >
-              <Save size={18} /> {saving ? "Saving…" : "Save marketplace settings"}
+              <Save size={18} /> {saving ? "Saving…" : "Save settings"}
             </button>
           </div>
         </section>
       )}
 
       <section className="mt-10">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
           <div>
             <div className="flex items-center gap-3">
               <Boxes className="text-amber-300" size={23} />
               <h2 className="text-2xl font-black">Order queue</h2>
             </div>
             <p className="mt-2 text-sm text-white/40">
-              Change a status and the customer tracking page updates from Supabase.
+              Status changes appear on the customer tracking page.
             </p>
           </div>
-          <p className="text-sm font-bold text-white/35">{orders.length} total orders</p>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="flex min-h-12 items-center gap-3 rounded-xl border border-white/10 bg-white/[.025] px-4">
+              <Search size={17} className="text-white/30" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Reference or OSRS name"
+                className="w-full bg-transparent text-sm outline-none placeholder:text-white/25"
+              />
+            </div>
+
+            <label className="flex min-h-12 items-center gap-3 rounded-xl border border-white/10 bg-white/[.025] px-4">
+              <Filter size={17} className="text-white/30" />
+              <select
+                value={statusFilter}
+                onChange={(event) =>
+                  setStatusFilter(event.target.value as "all" | OrderStatus)
+                }
+                className="w-full bg-[#0d1118] text-sm outline-none"
+              >
+                <option value="all">All statuses</option>
+                {statuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <select
+              value={typeFilter}
+              onChange={(event) =>
+                setTypeFilter(event.target.value as "all" | "buy" | "sell")
+              }
+              className="min-h-12 rounded-xl border border-white/10 bg-[#0d1118] px-4 text-sm outline-none"
+            >
+              <option value="all">Buy and sell</option>
+              <option value="buy">Buy orders</option>
+              <option value="sell">Sell orders</option>
+            </select>
+          </div>
         </div>
 
-        <div className="mt-6 overflow-x-auto rounded-3xl border border-white/10 bg-white/[.02]">
-          <table className="w-full min-w-[1000px] text-left text-sm">
+        <p className="mt-5 text-sm font-bold text-white/35">
+          Showing {filteredOrders.length} of {orders.length} orders
+        </p>
+
+        <div className="mt-4 overflow-x-auto rounded-3xl border border-white/10 bg-white/[.02]">
+          <table className="w-full min-w-[1050px] text-left text-sm">
             <thead className="bg-white/[.04] text-xs font-black uppercase tracking-[.12em] text-white/35">
               <tr>
                 <th className="p-5">Reference</th>
@@ -294,21 +422,23 @@ export default function AdminPage() {
                 <th>Amount</th>
                 <th>Rate</th>
                 <th>Total</th>
-                <th>Status</th>
+                <th>Status control</th>
                 <th>OSRS name</th>
                 <th>Created</th>
               </tr>
             </thead>
             <tbody>
-              {orders.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr key={order.id} className="border-t border-white/8">
                   <td className="p-5 font-black">{order.reference}</td>
                   <td>
-                    <span className={`rounded-full px-3 py-1 text-xs font-black capitalize ${
-                      order.order_type === "buy"
-                        ? "bg-amber-300/10 text-amber-200"
-                        : "bg-emerald-300/10 text-emerald-200"
-                    }`}>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-black capitalize ${
+                        order.order_type === "buy"
+                          ? "bg-amber-300/10 text-amber-200"
+                          : "bg-emerald-300/10 text-emerald-200"
+                      }`}
+                    >
                       {order.order_type}
                     </span>
                   </td>
@@ -321,7 +451,10 @@ export default function AdminPage() {
                       <select
                         value={order.status}
                         onChange={(event) =>
-                          void changeStatus(order.id, event.target.value as OrderStatus)
+                          void changeStatus(
+                            order.id,
+                            event.target.value as OrderStatus,
+                          )
                         }
                         className="rounded-lg border border-white/10 bg-[#11151c] px-3 py-2"
                       >
@@ -338,40 +471,16 @@ export default function AdminPage() {
                 </tr>
               ))}
 
-              {orders.length === 0 && (
+              {filteredOrders.length === 0 && (
                 <tr>
                   <td colSpan={8} className="p-10 text-center text-white/35">
-                    No customer orders are currently in the database.
+                    No orders match the current filters.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      </section>
-
-      <section className="mt-10 grid gap-4 md:grid-cols-3">
-        <article className="rounded-2xl border border-white/10 bg-white/[.025] p-6">
-          <BarChart3 className="text-amber-300" size={24} />
-          <h3 className="mt-4 font-black">Admin-controlled prices</h3>
-          <p className="mt-2 text-sm leading-6 text-white/40">
-            Public estimates update when saved pricing changes are loaded from Supabase.
-          </p>
-        </article>
-        <article className="rounded-2xl border border-white/10 bg-white/[.025] p-6">
-          <Boxes className="text-emerald-300" size={24} />
-          <h3 className="mt-4 font-black">Inventory protection</h3>
-          <p className="mt-2 text-sm leading-6 text-white/40">
-            Buy orders above available inventory are rejected by the current marketplace logic.
-          </p>
-        </article>
-        <article className="rounded-2xl border border-white/10 bg-white/[.025] p-6">
-          <AlertTriangle className="text-red-300" size={24} />
-          <h3 className="mt-4 font-black">Still a preview system</h3>
-          <p className="mt-2 text-sm leading-6 text-white/40">
-            This package does not enable live payments, automated delivery, or production fraud controls.
-          </p>
-        </article>
       </section>
     </main>
   );
