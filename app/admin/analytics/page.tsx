@@ -85,14 +85,14 @@ export default function AnalyticsPage() {
       <h1 className="mt-3 text-4xl font-black sm:text-5xl">RuneVault performance.</h1>
 
       <section className="mt-9 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-        {[
+        {([
           ["Orders", data.total, ShoppingCart],
           ["Paid", data.paid, CircleDollarSign],
           ["Completed", data.completed, TrendingUp],
           ["Gold volume", `${data.volume}M`, Coins],
           ["Paid value", `$${data.revenue.toFixed(2)}`, BarChart3],
           ["Conversion", `${data.conversion}%`, TrendingUp],
-        ].map(([label, value, Icon]) => (
+        ] as const).map(([label, value, Icon]) => (
           <article key={String(label)} className="rounded-2xl border border-white/10 bg-white/[.025] p-5">
             <Icon className="text-amber-300" size={20} />
             <p className="mt-4 text-sm text-white/35">{label}</p>
