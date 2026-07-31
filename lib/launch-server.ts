@@ -29,7 +29,6 @@ export function serviceHeaders() {
   const serviceKey = required("SUPABASE_SERVICE_ROLE_KEY");
   return {
     apikey: serviceKey,
-    Authorization: `Bearer ${serviceKey}`,
     "Content-Type": "application/json",
   };
 }
