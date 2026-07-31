@@ -9,11 +9,14 @@ import {
   Clipboard,
   Coins,
   FileText,
+  Radio,
+  RefreshCw,
   Search,
   ShieldCheck,
   TimerReset,
 } from "lucide-react";
 import { findOrder } from "@/lib/marketplace";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase-browser";
 import type { Order } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
 
@@ -64,6 +67,8 @@ export function OrdersClient() {
   const [order, setOrder] = useState<Order | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [liveConnected, setLiveConnected] = useState(false);
+  const [lastLiveUpdate, setLastLiveUpdate] = useState<string | null>(null);
 
   async function searchOrder(value = reference) {
     const cleaned = value.trim().toUpperCase();
@@ -92,6 +97,40 @@ export function OrdersClient() {
     if (initialReference) void searchOrder(initialReference);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialReference]);
+
+  useEffect(() => {
+    if (!order || !isSupabaseConfigured()) {
+      setLiveConnected(false);
+      return;
+    }
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`runevault-order-${order.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `id=eq.${order.id}`,
+        },
+        (payload) => {
+          const updatedOrder = payload.new as Order;
+          setOrder(updatedOrder);
+          setLastLiveUpdate(new Date().toLocaleTimeString());
+          setMessage("Order updated live.");
+        },
+      )
+      .subscribe((status) => {
+        setLiveConnected(status === "SUBSCRIBED");
+      });
+
+    return () => {
+      void supabase.removeChannel(channel);
+      setLiveConnected(false);
+    };
+  }, [order?.id]);
 
   const activeIndex = order
     ? order.status === "cancelled"
@@ -133,6 +172,7 @@ export function OrdersClient() {
               className="min-h-12 w-full bg-transparent font-bold uppercase outline-none placeholder:normal-case placeholder:text-white/25"
             />
           </div>
+
           <button
             onClick={() => void searchOrder()}
             disabled={busy}
@@ -156,6 +196,7 @@ export function OrdersClient() {
               <p className="text-xs font-black uppercase tracking-[.18em] text-white/30">
                 RuneVault reference
               </p>
+
               <div className="mt-2 flex items-center gap-3">
                 <h2 className="text-2xl font-black">{order.reference}</h2>
                 <button
@@ -166,16 +207,45 @@ export function OrdersClient() {
                   <Clipboard size={16} />
                 </button>
               </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-black ${
+                    liveConnected
+                      ? "border-emerald-300/20 bg-emerald-300/[.07] text-emerald-200"
+                      : "border-white/10 bg-white/[.03] text-white/35"
+                  }`}
+                >
+                  <Radio size={14} />
+                  {liveConnected ? "Live updates connected" : "Live updates connecting"}
+                </span>
+
+                {lastLiveUpdate && (
+                  <span className="text-xs font-bold text-white/30">
+                    Last live update: {lastLiveUpdate}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-col gap-3 sm:items-end">
               <StatusPill status={order.status} />
-              <Link
-                href={`/receipt?reference=${order.reference}`}
-                className="inline-flex items-center gap-2 text-sm font-black text-amber-300"
-              >
-                <FileText size={16} /> View receipt
-              </Link>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => void searchOrder(order.reference)}
+                  className="inline-flex items-center gap-2 text-sm font-black text-white/45 hover:text-white"
+                >
+                  <RefreshCw size={16} /> Refresh
+                </button>
+
+                <Link
+                  href={`/receipt?reference=${order.reference}`}
+                  className="inline-flex items-center gap-2 text-sm font-black text-amber-300"
+                >
+                  <FileText size={16} /> View receipt
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -205,6 +275,7 @@ export function OrdersClient() {
                     {statusInfo.text}
                   </p>
                 </div>
+
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-black/20 text-2xl font-black text-amber-300">
                   {progressPercent}%
                 </div>
@@ -229,6 +300,7 @@ export function OrdersClient() {
               <div className="mt-6 grid gap-3 md:grid-cols-6">
                 {progress.map((status, index) => {
                   const complete = index <= activeIndex;
+
                   return (
                     <div
                       key={status}
@@ -242,7 +314,11 @@ export function OrdersClient() {
                         size={19}
                         className={complete ? "text-amber-300" : "text-white/15"}
                       />
-                      <p className={`mt-3 text-xs font-black capitalize ${complete ? "text-white" : "text-white/25"}`}>
+                      <p
+                        className={`mt-3 text-xs font-black capitalize ${
+                          complete ? "text-white" : "text-white/25"
+                        }`}
+                      >
                         {status.replaceAll("_", " ")}
                       </p>
                     </div>
@@ -287,6 +363,7 @@ export function OrdersClient() {
             Use the OSRS calculator to create another buy or sell order.
           </p>
         </div>
+
         <Link
           href="/quote"
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 font-black text-black"
