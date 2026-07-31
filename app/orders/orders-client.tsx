@@ -24,7 +24,7 @@ const progress = [
   "completed",
 ];
 
-export default function OrdersPage() {
+export function OrdersClient() {
   const params = useSearchParams();
   const initialReference = params.get("reference") ?? "";
   const [reference, setReference] = useState(initialReference);
