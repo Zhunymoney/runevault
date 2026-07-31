@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   CheckCircle2,
   Clipboard,
   Coins,
+  FileText,
   Search,
   ShieldCheck,
+  TimerReset,
 } from "lucide-react";
 import { findOrder } from "@/lib/marketplace";
 import type { Order } from "@/lib/types";
@@ -23,6 +25,37 @@ const progress = [
   "delivering",
   "completed",
 ];
+
+const statusCopy: Record<string, { title: string; text: string }> = {
+  pending: {
+    title: "Order received",
+    text: "RuneVault has created your order and it is waiting for staff review.",
+  },
+  awaiting_payment: {
+    title: "Awaiting payment",
+    text: "Payment instructions or confirmation are still required before processing.",
+  },
+  paid: {
+    title: "Payment confirmed",
+    text: "The order is ready to be assigned for fulfillment.",
+  },
+  assigned: {
+    title: "Order assigned",
+    text: "A staff member has accepted the order and is preparing the next step.",
+  },
+  delivering: {
+    title: "Delivery in progress",
+    text: "The order is actively being fulfilled. Keep your OSRS name available.",
+  },
+  completed: {
+    title: "Order completed",
+    text: "RuneVault marked this order as completed.",
+  },
+  cancelled: {
+    title: "Order cancelled",
+    text: "This order will not continue unless staff reopens it.",
+  },
+};
 
 export function OrdersClient() {
   const params = useSearchParams();
@@ -42,6 +75,7 @@ export function OrdersClient() {
 
     setBusy(true);
     setMessage("");
+
     try {
       const result = await findOrder(cleaned);
       setOrder(result);
@@ -64,6 +98,14 @@ export function OrdersClient() {
       ? -1
       : progress.indexOf(order.status)
     : -1;
+
+  const statusInfo = order ? statusCopy[order.status] ?? statusCopy.pending : null;
+
+  const progressPercent = useMemo(() => {
+    if (!order || order.status === "cancelled") return 0;
+    if (activeIndex < 0) return 0;
+    return Math.round(((activeIndex + 1) / progress.length) * 100);
+  }, [activeIndex, order]);
 
   return (
     <main className="mx-auto min-h-[760px] max-w-6xl px-6 py-16 sm:py-20">
@@ -107,7 +149,7 @@ export function OrdersClient() {
         )}
       </section>
 
-      {order && (
+      {order && statusInfo && (
         <section className="mt-10 overflow-hidden rounded-3xl border border-white/10 bg-white/[.025]">
           <div className="flex flex-col justify-between gap-5 border-b border-white/10 p-6 sm:flex-row sm:items-center sm:p-8">
             <div>
@@ -125,7 +167,16 @@ export function OrdersClient() {
                 </button>
               </div>
             </div>
-            <StatusPill status={order.status} />
+
+            <div className="flex flex-col gap-3 sm:items-end">
+              <StatusPill status={order.status} />
+              <Link
+                href={`/receipt?reference=${order.reference}`}
+                className="inline-flex items-center gap-2 text-sm font-black text-amber-300"
+              >
+                <FileText size={16} /> View receipt
+              </Link>
+            </div>
           </div>
 
           <div className="grid gap-px bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
@@ -143,7 +194,29 @@ export function OrdersClient() {
           </div>
 
           <div className="p-6 sm:p-8">
-            <h3 className="text-xl font-black">Order progress</h3>
+            <div className="rounded-2xl border border-amber-300/15 bg-amber-300/[.045] p-5">
+              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[.16em] text-amber-300">
+                    Current stage
+                  </p>
+                  <h3 className="mt-2 text-2xl font-black">{statusInfo.title}</h3>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-white/45">
+                    {statusInfo.text}
+                  </p>
+                </div>
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-black/20 text-2xl font-black text-amber-300">
+                  {progressPercent}%
+                </div>
+              </div>
+
+              <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/8">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-500 transition-all"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
 
             {order.status === "cancelled" ? (
               <div className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/[.06] p-5">
@@ -186,6 +259,7 @@ export function OrdersClient() {
                 </p>
                 <p className="mt-2 font-bold">{order.delivery_name || "Not supplied"}</p>
               </div>
+
               <div className="rounded-2xl border border-white/10 bg-black/10 p-5">
                 <ShieldCheck className="text-emerald-300" size={22} />
                 <p className="mt-4 text-xs font-bold uppercase tracking-[.14em] text-white/30">
@@ -193,8 +267,9 @@ export function OrdersClient() {
                 </p>
                 <p className="mt-2 font-bold">{new Date(order.created_at).toLocaleString()}</p>
               </div>
+
               <div className="rounded-2xl border border-white/10 bg-black/10 p-5">
-                <CheckCircle2 className="text-sky-300" size={22} />
+                <TimerReset className="text-sky-300" size={22} />
                 <p className="mt-4 text-xs font-bold uppercase tracking-[.14em] text-white/30">
                   Last updated
                 </p>
