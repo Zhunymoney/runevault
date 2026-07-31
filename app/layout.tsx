@@ -5,10 +5,10 @@ import { SiteFooter } from "@/components/site-footer";
 
 export const metadata: Metadata = {
   title: {
-    default: "RuneVault — OSRS Marketplace Platform",
+    default: "RuneVault — Buy & Sell OSRS Gold",
     template: "%s | RuneVault",
   },
-  description: "A premium test-mode OSRS marketplace platform for quotes, tracked orders, customer accounts, pricing, inventory, and operations.",
+  description: "Buy and sell Old School RuneScape gold with instant quotes, customer accounts, and trackable RuneVault orders.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

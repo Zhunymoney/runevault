@@ -1,18 +1,50 @@
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import { Coins, ShieldCheck } from "lucide-react";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-white/8 bg-[#06080c]">
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 md:grid-cols-[1.2fr_.8fr_.8fr]">
+    <footer className="border-t border-white/10 bg-[#06080c]">
+      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 md:grid-cols-[1.2fr_.8fr_.8fr]">
         <div>
-          <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 font-black text-black">R</span><div><b>RuneVault</b><p className="text-xs font-bold uppercase tracking-[.16em] text-amber-300">Marketplace platform</p></div></div>
-          <p className="mt-5 max-w-md text-sm leading-6 text-white/35">A database-backed test environment for marketplace quotes, customer accounts, order tracking, pricing, inventory, and administrative operations.</p>
+          <div className="flex items-center gap-3">
+            <span className="logo-mark">R</span>
+            <div>
+              <b className="text-lg">RuneVault</b>
+              <p className="text-xs font-bold uppercase tracking-[.16em] text-amber-400">OSRS Gold Marketplace</p>
+            </div>
+          </div>
+          <p className="mt-5 max-w-md text-sm leading-6 text-white/35">
+            A focused Old School RuneScape marketplace experience for instant quotes, customer accounts, and trackable orders.
+          </p>
         </div>
-        <div><p className="text-xs font-black uppercase tracking-[.18em] text-white/30">Platform</p><div className="mt-4 grid gap-3 text-sm font-bold text-white/55"><Link href="/quote">Create quote</Link><Link href="/orders">Track order</Link><Link href="/account">Customer account</Link><Link href="/admin">Admin dashboard</Link></div></div>
-        <div><p className="text-xs font-black uppercase tracking-[.18em] text-white/30">Current status</p><div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-400/15 bg-amber-400/8 px-3 py-2 text-xs font-black text-amber-300"><ShieldCheck size={14} /> TEST MODE ACTIVE</div><p className="mt-4 text-sm leading-6 text-white/35">No live payment or in-game transaction is processed by this version.</p></div>
+
+        <div>
+          <p className="footer-title">Marketplace</p>
+          <div className="footer-links">
+            <Link href="/quote?type=buy">Buy OSRS Gold</Link>
+            <Link href="/quote?type=sell">Sell OSRS Gold</Link>
+            <Link href="/orders">Track Order</Link>
+            <Link href="/account">Account</Link>
+          </div>
+        </div>
+
+        <div>
+          <p className="footer-title">Platform</p>
+          <div className="footer-links">
+            <Link href="/auth">Sign In</Link>
+            <Link href="/admin">Admin</Link>
+            <span className="inline-flex items-center gap-2"><ShieldCheck size={14} /> Protected accounts</span>
+            <span className="inline-flex items-center gap-2"><Coins size={14} /> OSRS only</span>
+          </div>
+        </div>
       </div>
-      <div className="border-t border-white/7"><div className="mx-auto flex max-w-7xl flex-col gap-2 px-6 py-5 text-xs text-white/25 sm:flex-row sm:items-center sm:justify-between"><span>© 2026 RuneVault. Upgrade One.</span><span>Built for controlled testing and iteration.</span></div></div>
+
+      <div className="border-t border-white/8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-6 text-xs leading-5 text-white/28 md:flex-row md:items-center md:justify-between">
+          <p>© 2026 RuneVault. Not affiliated with Jagex Ltd.</p>
+          <p>Preview environment — no live payment or automated game transaction is processed.</p>
+        </div>
+      </div>
     </footer>
   );
 }
