@@ -70,6 +70,7 @@ export default function CheckoutPage() {
     }
 
     setBusy(true);
+
     try {
       const order = await createOrder({
         order_type: type,
@@ -77,29 +78,32 @@ export default function CheckoutPage() {
         delivery_name: deliveryName,
         notes,
       });
-      router.push(`/orders?reference=${order.reference}`);
+
+      router.push(`/order-confirmation?reference=${encodeURIComponent(order.reference)}`);
     } catch (reason) {
       setMessage(reason instanceof Error ? reason.message : "Could not create the order.");
-    } finally {
       setBusy(false);
     }
   }
 
   return (
     <main className="mx-auto min-h-[800px] max-w-6xl px-6 py-14 sm:py-20">
-      <Link href="/quote" className="inline-flex items-center gap-2 text-sm font-bold text-white/45 hover:text-amber-300">
+      <Link
+        href="/quote"
+        className="inline-flex items-center gap-2 text-sm font-bold text-white/45 hover:text-amber-300"
+      >
         <ArrowLeft size={17} /> Return to calculator
       </Link>
 
       <section className="mt-7">
         <p className="text-sm font-black uppercase tracking-[.2em] text-amber-400">
-          Review order
+          Secure review
         </p>
         <h1 className="mt-3 text-4xl font-black tracking-[-.04em] sm:text-5xl">
           Confirm your OSRS gold order.
         </h1>
         <p className="mt-4 max-w-2xl leading-7 text-white/45">
-          Check the order details, add your OSRS name, and create a trackable RuneVault reference.
+          Review the amount and rate, confirm your character name, and create a private tracking reference.
         </p>
       </section>
 
@@ -120,8 +124,8 @@ export default function CheckoutPage() {
             </button>
           </div>
 
-          <div className="mt-7">
-            <label className="text-sm font-bold text-white/50">Gold amount</label>
+          <label className="mt-7 block text-sm font-bold text-white/50">
+            Gold amount
             <div className="mt-2 flex rounded-2xl border border-white/10 bg-black/15 px-5">
               <input
                 type="number"
@@ -133,7 +137,7 @@ export default function CheckoutPage() {
               />
               <span className="self-center text-xl font-black text-white/35">M</span>
             </div>
-          </div>
+          </label>
 
           <label className="mt-5 block text-sm font-bold text-white/50">
             OSRS character name
@@ -169,7 +173,7 @@ export default function CheckoutPage() {
               onChange={(event) => setTermsAccepted(event.target.checked)}
               className="mt-1 h-5 w-5 shrink-0 accent-amber-400"
             />
-            I understand this is a preview/test order. No payment is collected and no automated in-game transaction occurs.
+            I understand this creates a preview order and tracking record. No live payment or automated in-game delivery occurs.
           </label>
 
           {message && (
@@ -183,11 +187,14 @@ export default function CheckoutPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[.16em] text-amber-300">
-                Order summary
+                Final review
               </p>
               <h2 className="mt-2 text-2xl font-black capitalize">{type} OSRS gold</h2>
             </div>
-            <Coins size={32} className={type === "buy" ? "text-amber-300" : "text-emerald-300"} />
+            <Coins
+              size={32}
+              className={type === "buy" ? "text-amber-300" : "text-emerald-300"}
+            />
           </div>
 
           <div className="mt-7 space-y-4 border-y border-white/10 py-6">
@@ -200,7 +207,9 @@ export default function CheckoutPage() {
               <b>${rate.toFixed(3)} / M</b>
             </div>
             <div className="flex justify-between gap-5">
-              <span className="text-white/40">{type === "buy" ? "Estimated total" : "Estimated payout"}</span>
+              <span className="text-white/40">
+                {type === "buy" ? "Estimated total" : "Estimated payout"}
+              </span>
               <b className="text-2xl">${total.toFixed(2)}</b>
             </div>
           </div>
@@ -210,14 +219,20 @@ export default function CheckoutPage() {
             disabled={busy || settings.maintenance_mode}
             className={`quote-submit ${type === "sell" ? "sell-submit" : ""}`}
           >
-            {busy ? "Creating order..." : "Create Trackable Order"}
+            {busy ? "Creating order…" : "Confirm Preview Order"}
             {!busy && <ArrowRight size={18} />}
           </button>
 
           <div className="mt-6 space-y-3 text-sm text-white/40">
-            <p className="flex items-center gap-3"><LockKeyhole size={17} className="text-amber-300" /> Sign-in required</p>
-            <p className="flex items-center gap-3"><ShieldCheck size={17} className="text-emerald-300" /> Private order history</p>
-            <p className="flex items-center gap-3"><CheckCircle2 size={17} className="text-sky-300" /> Unique tracking reference</p>
+            <p className="flex items-center gap-3">
+              <LockKeyhole size={17} className="text-amber-300" /> Signed-in account required
+            </p>
+            <p className="flex items-center gap-3">
+              <ShieldCheck size={17} className="text-emerald-300" /> Private tracking reference
+            </p>
+            <p className="flex items-center gap-3">
+              <CheckCircle2 size={17} className="text-sky-300" /> Confirmation screen included
+            </p>
           </div>
         </aside>
       </section>
