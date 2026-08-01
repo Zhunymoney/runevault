@@ -145,7 +145,7 @@ This document is the implementation checklist and evidence log for the complete 
 ## Section 14 — OSRS features and content
 
 - [ ] RuneVault pricing/history and clearly separated external market references. (RuneVault quote rates/history foundations are explicitly distinguished from external references; unavailable external provider data is never invented.)
-- [ ] XP/skill calculators, quest helpers, news, blog, guides, search, and admin content management. (Accurate OSRS level-XP calculator, news and marketplace guides, and searchable reviewed publishing/CMS schema with admin RLS implemented; dynamic post rendering/admin editor and live migration tests remain.)
+- [ ] XP/skill calculators, quest helpers, news, blog, guides, search, and admin content management. (Accurate OSRS level-XP calculator, database-backed news/blog/guides/quest helpers, indexed full-text search, safe article rendering, draft/review/publish editor, public RLS, and empty states implemented; additional skill calculators and live migration tests remain.)
 - [ ] Section 14 live tests and deployment.
 
 ## Section 15 — SEO, business, and legal structure

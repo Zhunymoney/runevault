@@ -10,7 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/orders",
     "/auth",
     "/support",
-    "/osrs", "/news", "/guides",
+    "/osrs", "/news", "/guides", "/learn",
     "/privacy",
     "/terms",
     "/refund-policy", "/cancellation-policy", "/delivery-policy", "/cookie-policy", "/acceptable-use", "/fraud-prevention",

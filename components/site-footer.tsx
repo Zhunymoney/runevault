@@ -25,6 +25,7 @@ export function SiteFooter() {
             <Link href="/orders">Track order</Link>
             <Link href="/account">Customer account</Link>
             <Link href="/support">Support</Link>
+            <Link href="/learn">Learning center</Link>
             <Link href="/admin">Admin dashboard</Link>
           </div>
         </div>
