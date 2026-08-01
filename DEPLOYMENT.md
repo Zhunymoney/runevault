@@ -43,4 +43,6 @@ The current workstation has no Supabase CLI access token or database password, s
 
 Push reviewed commits to `main`; GitHub integration creates a production deployment. Confirm `Ready`, then run `npm run verify:deployment -- https://runevault-beta.vercel.app`. Review `/health`, Vercel function logs, automation failures, payment errors, and Supabase logs without logging secrets.
 
+The Hobby-plan cron runs operations once daily at 09:15 UTC. Hourly stale-order and inventory checks require a Vercel Pro upgrade or an authorized external scheduler calling the same secret-protected endpoint.
+
 For app-only rollback, promote the last known-good Vercel deployment after confirming it is schema-compatible. For database recovery, follow `SECURITY-OPERATIONS.md`: restore into isolation, validate counts/RLS/payment and inventory invariants, rotate affected secrets, then promote. Never delete or reverse production data to make an older app build appear compatible.
