@@ -13,8 +13,8 @@ import {
   ShoppingCart,
   TrendingUp,
 } from "lucide-react";
-import { addSavedCharacter, deleteSavedCharacter, getCurrentProfile, getMyOrders, getSavedCharacters, requestAccountDeletion, updateMyProfile } from "@/lib/marketplace";
-import type { Order, Profile, SavedCharacter } from "@/lib/types";
+import { addSavedCharacter, deleteSavedCharacter, getCurrentProfile, getMyOrders, getMyRewards, getSavedCharacters, requestAccountDeletion, updateMyProfile } from "@/lib/marketplace";
+import type { LoyaltyAccount, LoyaltyTransaction, Order, Profile, SavedCharacter } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
 
 export default function AccountPage() {
@@ -32,6 +32,8 @@ export default function AccountPage() {
   const [characterName, setCharacterName] = useState("");
   const [preferredWorld, setPreferredWorld] = useState("");
   const [saving, setSaving] = useState(false);
+  const [rewards, setRewards] = useState<LoyaltyAccount | null>(null);
+  const [rewardHistory, setRewardHistory] = useState<LoyaltyTransaction[]>([]);
 
   useEffect(() => {
     void Promise.all([getCurrentProfile(), getMyOrders()])
@@ -46,6 +48,7 @@ export default function AccountPage() {
           setEmailUpdates(currentProfile.notification_preferences?.email !== false);
         }
         void getSavedCharacters().then(setCharacters).catch(() => setMessage("Account profile migration is required before saved characters can load."));
+        void getMyRewards().then(({account,history})=>{setRewards(account);setRewardHistory(history);}).catch(()=>setMessage("Rewards will appear after the rewards migration is applied."));
       })
       .catch((reason) => {
         setError(reason instanceof Error ? reason.message : "Could not load account.");
@@ -276,6 +279,7 @@ export default function AccountPage() {
           </article>
         </aside>
       </section>
+      <section className="mt-10 rounded-3xl border border-white/10 bg-white/[.025] p-6 sm:p-8"><p className="text-sm font-black uppercase tracking-[.16em] text-amber-400">Vault rewards</p><div className="mt-5 grid gap-4 sm:grid-cols-3"><div className="rounded-2xl border border-white/10 p-5"><p className="text-sm text-white/40">Available points</p><p className="mt-2 text-3xl font-black">{rewards?.points_balance??0}</p></div><div className="rounded-2xl border border-white/10 p-5"><p className="text-sm text-white/40">Lifetime points</p><p className="mt-2 text-3xl font-black">{rewards?.lifetime_points??0}</p></div><div className="rounded-2xl border border-white/10 p-5"><p className="text-sm text-white/40">VIP tier</p><p className="mt-2 text-3xl font-black capitalize">{rewards?.vip_tier??"standard"}</p></div></div><div className="mt-5 space-y-2">{rewardHistory.slice(0,10).map(item=><div key={item.id} className="flex justify-between rounded-xl border border-white/10 p-3 text-sm"><span>{item.reason.replaceAll("_"," ")}</span><b className={item.points>=0?"text-emerald-300":"text-rose-300"}>{item.points>0?"+":""}{item.points}</b></div>)}{!rewardHistory.length&&<p className="text-sm text-white/35">Points are awarded once eligible buy orders are completed.</p>}</div></section>
     </main>
   );
 }

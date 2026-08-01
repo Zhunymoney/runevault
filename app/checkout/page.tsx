@@ -45,6 +45,8 @@ export default function CheckoutPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [requestId, setRequestId] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -63,6 +65,10 @@ export default function CheckoutPage() {
     if (requestedName) {
       setDeliveryName(requestedName);
     }
+    const storedRequest = window.sessionStorage.getItem("runevault-checkout-request");
+    const nextRequest = storedRequest || crypto.randomUUID();
+    window.sessionStorage.setItem("runevault-checkout-request", nextRequest);
+    setRequestId(nextRequest);
 
     void getSettings()
       .then(setSettings)
@@ -87,7 +93,7 @@ export default function CheckoutPage() {
     }
 
     if (!termsAccepted) {
-      setMessage("Confirm that you understand this is a preview order.");
+      setMessage("Accept the RuneVault terms before continuing.");
       return;
     }
 
@@ -128,7 +134,11 @@ export default function CheckoutPage() {
         contact_details: contactDetails.trim(),
         payout_method: payoutMethod || undefined,
         payout_details: payoutDetails.trim() || undefined,
+        coupon_code: couponCode.trim() || undefined,
+        request_id: requestId || crypto.randomUUID(),
       });
+
+window.sessionStorage.removeItem("runevault-checkout-request");
 
 router.push(
   `/pay?reference=${encodeURIComponent(order.reference)}`,
@@ -281,9 +291,10 @@ router.push(
               className="mt-1 h-5 w-5 shrink-0 accent-amber-400"
             />
 
-            I understand this creates an order and private tracking
-            reference before payment selection.
+            I accept the RuneVault terms, cancellation, delivery, and refund policies and confirm these order details are accurate.
           </label>
+
+          <label className="mt-5 block text-sm font-bold text-white/50">Coupon code <span className="font-normal text-white/25">(optional)</span><input value={couponCode} onChange={(event)=>setCouponCode(event.target.value.toUpperCase())} maxLength={40} placeholder="Enter code" className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-black/15 px-4 uppercase outline-none"/><span className="mt-2 block text-xs font-normal text-white/30">Eligibility and the final discounted total are verified securely when the order is created.</span></label>
 
           {message && (
             <p className="mt-5 rounded-xl border border-amber-300/15 bg-amber-300/[.055] p-4 text-sm text-white/65">

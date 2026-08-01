@@ -32,6 +32,9 @@ export interface SavedCharacter {
   updated_at: string;
 }
 
+export interface LoyaltyAccount { user_id: string; points_balance: number; lifetime_points: number; vip_tier: "standard"|"silver"|"gold"|"vault"; updated_at: string }
+export interface LoyaltyTransaction { id: string; order_id: string|null; points: number; reason: string; created_at: string }
+
 export interface OrderStatusHistory {
   id: string;
   order_id: string;

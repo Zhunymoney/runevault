@@ -57,7 +57,7 @@ This document is the implementation checklist and evidence log for the complete 
 - [x] BTC selection sends `paymentMethod: "btc"` and succeeds through the live customer flow.
 - [x] USDC selection sends `paymentMethod: "usdc"` and succeeds through the live customer flow.
 - [x] Non-JSON/empty API responses display cleanly.
-- [ ] One-page checkout, cart, validation, discounts, terms, inventory/price verification, cancellation/retry, and mobile tests.
+- [ ] One-page checkout, cart, validation, discounts, terms, inventory/price verification, cancellation/retry, and mobile tests. (One-page responsive checkout, server pricing/settings/limits, stable request idempotency, coupon input/atomic rules, terms evidence, inventory check/reservation attempt, cancellation/retry implemented; multi-item cart and live mobile/auth tests remain.)
 - [ ] Complete payment status model and secure proof upload. (Implementation and additive migration created; production migration and live proof test remain.)
 - [ ] Required Section 1 live tests and deployment.
 
@@ -105,7 +105,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 8 — rewards and marketing
 
-- [ ] Loyalty, referrals, coupons, promotions, tiers, limits, abuse controls, and admin management. (Normalized ledger/schema, limits, date windows, RLS, and indexes implemented; transaction RPC/admin UI/live tests remain.)
+- [ ] Loyalty, referrals, coupons, promotions, tiers, limits, abuse controls, and admin management. (Atomic coupon redemption with spend/global/customer/date/max-discount rules, admin coupon/promotion scheduling, idempotent completed-order points/VIP tiers, customer rewards history, normalized schema/RLS/indexes implemented; referral issuance UI and live migration tests remain.)
 - [ ] Seasonal/flash scheduling and safe affiliate/gift-card foundations. (Scheduled promotions and affiliate attribution implemented; gift cards remain intentionally deferred pending a regulated stored-value design.)
 - [ ] Section 8 live tests and deployment.
 

@@ -1,4 +1,4 @@
-import type { MarketplaceSettings, Order, OrderStatus, OrderStatusHistory, OrderType, Profile, SavedCharacter } from "@/lib/types";
+import type { LoyaltyAccount, LoyaltyTransaction, MarketplaceSettings, Order, OrderStatus, OrderStatusHistory, OrderType, Profile, SavedCharacter } from "@/lib/types";
 import { createClient } from "@/lib/supabase-browser";
 import { parseApiResponse } from "@/lib/client-api";
 
@@ -87,6 +87,13 @@ export async function requestAccountDeletion() {
   if (error) throw error;
 }
 
+export async function getMyRewards(): Promise<{ account: LoyaltyAccount|null; history: LoyaltyTransaction[] }> {
+  const supabase=createClient(); const {data:userData}=await supabase.auth.getUser(); if(!userData.user) throw new Error("Sign in to view rewards.");
+  const[account,history]=await Promise.all([supabase.from("loyalty_accounts").select("*").eq("user_id",userData.user.id).maybeSingle(),supabase.from("loyalty_transactions").select("*").eq("user_id",userData.user.id).order("created_at",{ascending:false}).limit(50)]);
+  if(account.error||history.error) throw new Error("Rewards migration is required before rewards can load.");
+  return{account:account.data as LoyaltyAccount|null,history:(history.data??[]) as LoyaltyTransaction[]};
+}
+
 export async function createOrder(input: {
   order_type: OrderType;
   amount_m: number;
@@ -96,51 +103,13 @@ export async function createOrder(input: {
   contact_details?: string;
   payout_method?: string;
   payout_details?: string;
+  coupon_code?: string;
+  request_id: string;
 }) {
-  const supabase = createClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user) throw new Error("Sign in before creating an order.");
-
-  const settings = await getSettings();
-  const rate = input.order_type === "buy" ? settings.buy_rate : settings.sell_rate;
-
-  if (settings.maintenance_mode) throw new Error("Ordering is temporarily paused.");
-  if (input.order_type === "buy" && settings.buy_enabled === false) throw new Error(settings.pause_message || "Buying is temporarily paused.");
-  if (input.order_type === "sell" && settings.sell_enabled === false) throw new Error(settings.pause_message || "Selling is temporarily paused.");
-  if (input.amount_m < settings.minimum_order_m || input.amount_m > settings.maximum_order_m) {
-    throw new Error(`Orders must be between ${settings.minimum_order_m}M and ${settings.maximum_order_m}M.`);
-  }
-  if (input.order_type === "buy" && input.amount_m > settings.inventory_m) {
-    throw new Error("That amount is currently above available test inventory.");
-  }
-
-  const baseOrder = {
-      user_id: userData.user.id,
-      order_type: input.order_type,
-      amount_m: input.amount_m,
-      price_per_m: rate,
-      total_price: Number((input.amount_m * rate).toFixed(2)),
-      delivery_name: input.delivery_name?.trim() || null,
-      notes: input.notes?.trim() || null,
-      status: "pending",
-  };
-  const workflowOrder = {
-    ...baseOrder,
-    preferred_world: input.preferred_world || null,
-    contact_details: input.contact_details?.trim() || null,
-    payout_method: input.order_type === "sell" ? input.payout_method?.trim() || null : null,
-    payout_details: input.order_type === "sell" ? input.payout_details?.trim() || null : null,
-    seller_status: input.order_type === "sell" ? "awaiting_meetup" : null,
-  };
-  let result = await supabase.from("orders").insert(workflowOrder)
-    .select("*")
-    .single();
-  if (result.error && /preferred_world|contact_details|payout_method|seller_status/i.test(result.error.message)) {
-    const legacyNotes = [input.notes?.trim(), input.preferred_world ? `Preferred world: ${input.preferred_world}` : "", input.contact_details ? `Contact: ${input.contact_details.trim()}` : "", input.payout_method ? `Payout method: ${input.payout_method}` : ""].filter(Boolean).join("\n");
-    result = await supabase.from("orders").insert({ ...baseOrder, notes: legacyNotes || null }).select("*").single();
-  }
-  if (result.error) throw result.error;
-  return result.data as Order;
+  const response = await fetch("/api/orders/create", { method: "POST", headers: await authenticatedApiHeaders(), body: JSON.stringify(input) });
+  const data = await parseApiResponse(response);
+  if (!data.order || typeof data.order !== "object") throw new Error("Order service returned no order.");
+  return normalizeOrder(data.order as Record<string, unknown>);
 }
 
 export async function getMyOrders(): Promise<Order[]> {
