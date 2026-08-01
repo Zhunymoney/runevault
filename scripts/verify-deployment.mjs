@@ -21,6 +21,7 @@ for (const [name,path,init] of [
   ["admin customer auth JSON","/api/admin/customers",{ headers:{Accept:"application/json"} }],
   ["admin announcement auth JSON","/api/admin/announcements",{ headers:{Accept:"application/json"} }],
   ["admin automation auth JSON","/api/admin/automation",{ headers:{Accept:"application/json"} }],
+  ["referral auth JSON","/api/rewards/referrals",{ headers:{Accept:"application/json"} }],
 ]) {
   const response = await fetch(`${base}${path}`, init); let valid=false; try { const data=await response.json(); valid=Boolean(data&&typeof data.error==="string"); } catch {}
   checks.push({name,ok:valid&&!response.ok,detail:`${response.status}`});

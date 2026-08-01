@@ -105,7 +105,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 8 — rewards and marketing
 
-- [ ] Loyalty, referrals, coupons, promotions, tiers, limits, abuse controls, and admin management. (Atomic coupon redemption with spend/global/customer/date/max-discount rules, admin coupon/promotion scheduling, idempotent completed-order points/VIP tiers, customer rewards history, normalized schema/RLS/indexes implemented; referral issuance UI and live migration tests remain.)
+- [ ] Loyalty, referrals, coupons, promotions, tiers, limits, abuse controls, and admin management. (Atomic coupon redemption with spend/global/customer/date/max-discount rules; reusable referral issuance/claim UI; one-claim, self-referral, late-claim, and $20 qualification controls; idempotent two-party referral and completed-order points; VIP tiers; customer history; admin coupon/promotion/referral oversight; normalized schema/RLS/indexes; and durable claim/admin limits implemented. Live migration and authenticated qualification tests remain.)
 - [ ] Seasonal/flash scheduling and safe affiliate/gift-card foundations. (Scheduled promotions and affiliate attribution implemented; gift cards remain intentionally deferred pending a regulated stored-value design.)
 - [ ] Section 8 live tests and deployment.
 
