@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { ChatWidget } from "@/components/chat-widget";
+import { JsonLd } from "@/components/structured-data";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://runevault-beta.vercel.app";
@@ -46,6 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <JsonLd data={[{"@context":"https://schema.org","@type":"Organization",name:"RuneVault",url:siteUrl},{"@context":"https://schema.org","@type":"WebSite",name:"RuneVault",url:siteUrl,potentialAction:{"@type":"SearchAction",target:`${siteUrl}/learn?q={search_term_string}`,"query-input":"required name=search_term_string"}}]} />
         <AnalyticsTracker />
         <SiteHeader />
         {children}

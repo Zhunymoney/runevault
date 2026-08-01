@@ -4,7 +4,7 @@ const checks = [];
 for (const path of ["/", "/quote", "/marketplace", "/support", "/health", "/pay"]) {
   const response = await fetch(`${base}${path}`, { redirect: "follow" });
   checks.push({ name: path, ok: response.ok, detail: `${response.status}` });
-  if (path === "/") for (const header of ["content-security-policy", "strict-transport-security", "x-content-type-options"]) checks.push({ name: header, ok: Boolean(response.headers.get(header)), detail: response.headers.get(header) ? "present" : "missing" });
+  if (path === "/") { for (const header of ["content-security-policy", "strict-transport-security", "x-content-type-options"]) checks.push({ name: header, ok: Boolean(response.headers.get(header)), detail: response.headers.get(header) ? "present" : "missing" }); const html=await response.text(); checks.push({name:"structured data",ok:html.includes('application/ld+json')&&html.includes('FAQPage')&&html.includes('Organization'),detail:"homepage schemas"}); }
 }
 const api = await fetch(`${base}/api/payments/crypto/config`, { method: "POST", headers: { Accept: "application/json", "Content-Type": "application/json" }, body: JSON.stringify({ reference: "RV-INVALID" }) });
 let apiJson = false; try { await api.json(); apiJson = true; } catch {}

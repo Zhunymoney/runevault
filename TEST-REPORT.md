@@ -12,6 +12,7 @@
 - Local admin verification: the authenticated audit API and searchable audit viewer compile successfully; deployment verification asserts anonymous requests receive a JSON authorization error.
 - Local customer-management verification: server-authorized search, deletion-request resolution, owner-only role changes, self-demotion protection, and audit writes pass lint/type/build; deployment verification asserts anonymous access is rejected as JSON.
 - Local marketplace verification: public listing search, stock/limit cards, scheduled announcements, admin publishing, public/admin RLS migration, navigation, sitemap, and clean API errors pass lint, TypeScript, and the 60-route production build; live data remains migration-dependent.
+- Local SEO verification: reusable escaped JSON-LD, Organization/WebSite search, FAQ, Article/HowTo, BreadcrumbList, dynamic article canonicals/Open Graph metadata, and accessible article breadcrumbs pass lint/type/build; deployment verification checks homepage schemas render.
 - Live crypto API error contract: correct POST request with invalid context returns parseable JSON instead of an empty response.
 - API protections: unauthenticated admin/support/payment routes inspected; customer/admin bearer and RLS checks are implemented server-side.
 - Static responsive review: customer, payment, support, OSRS, policy, error, loading, and empty states compile at mobile/tablet/desktop breakpoints.

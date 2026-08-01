@@ -12,6 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 import { QuoteCard } from "@/components/quote-card";
+import { JsonLd } from "@/components/structured-data";
 
 const benefits = [
   { icon: Clock3, title: "Fast order flow", text: "Create an OSRS gold quote in seconds and receive a trackable order reference." },
@@ -42,6 +43,7 @@ const faqs = [
 export default function Home() {
   return (
     <main className="overflow-hidden">
+      <JsonLd data={{"@context":"https://schema.org","@type":"FAQPage",mainEntity:faqs.map(([question,answer])=>({"@type":"Question",name:question,acceptedAnswer:{"@type":"Answer",text:answer}}))}} />
       <section className="relative">
         <div className="hero-grid absolute inset-0 opacity-50" />
         <div className="hero-glow absolute left-1/2 top-0 h-[560px] w-[960px] -translate-x-1/2 rounded-full" />
