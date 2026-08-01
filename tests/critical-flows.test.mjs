@@ -4,6 +4,7 @@ import { buildCryptoSubmission } from "../lib/payment-submission.ts";
 import { parseApiResponse } from "../lib/client-api.ts";
 import { combatLevel, levelForXp, xpForLevel } from "../lib/osrs-calculators.ts";
 import { sellerTransitionError } from "../lib/order-lifecycle.ts";
+import { browserFamily } from "../lib/security-fingerprint.ts";
 
 test("BTC selection produces the exact API payment method", () => {
   assert.deepEqual(buildCryptoSubmission("rv-test123", { id: "btc", quoteToken: "signed-btc" }, " tx-btc-123 "), { reference: "RV-TEST123", paymentMethod: "btc", quoteToken: "signed-btc", txid: "tx-btc-123" });
@@ -51,4 +52,9 @@ test("seller payout lifecycle rejects backward and post-receipt rejection",()=>{
 
 test("fulfillment cannot authorize seller payouts",()=>{
   assert.match(sellerTransitionError("verification","payout_pending","fulfillment"),/cannot authorize/i);
+});
+
+test("login history stores coarse browser and platform labels",()=>{
+  assert.equal(browserFamily("Mozilla/5.0 (Windows NT 10.0) Chrome/120.0"),"Chrome on Windows");
+  assert.equal(browserFamily("Mozilla/5.0 (iPhone) Version/17.0 Safari/605.1"),"Safari on iOS");
 });

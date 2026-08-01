@@ -23,8 +23,9 @@ export default function AuthPage() {
     try {
       const supabase = createClient();
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if(data.session?.access_token)await fetch("/api/account/login-event",{method:"POST",headers:{Authorization:`Bearer ${data.session.access_token}`}}).catch(()=>null);
         router.push("/account");
         router.refresh();
       } else if (mode === "signup") {

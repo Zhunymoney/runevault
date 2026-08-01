@@ -63,7 +63,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 2 — customer accounts, dashboard, and email
 
-- [ ] Registration, verification, login/logout, password recovery/update, sessions, security alerts, and deletion request. (Recovery/update and deletion-request flows, privacy-preserving active-session tracking, customer security-event history, and global device sign-out are implemented; live email, migration, and authenticated multi-device tests remain.)
+- [ ] Registration, verification, login/logout, password recovery/update, sessions, security alerts, and deletion request. (Recovery/update and deletion-request flows, verified-success login history, privacy-preserving active-session tracking, unfamiliar-device security events, customer security history, and global device sign-out are implemented; alert email delivery, migration, and authenticated multi-device tests remain.)
 - [ ] Profile, characters, contact and payment preferences, and notification preferences. (UI, data access, migration, and RLS implemented; live migration test remains.)
 - [ ] Dashboard, order/payment history, invoices, timelines, reorders, saved carts, and linked support. (Customer dashboard, histories, printable invoices/receipts, timelines, reorder/support actions, and owner-isolated saved checkout drafts with resume/delete controls are implemented; multi-item carts and live migration tests remain.)
 - [ ] Branded transactional email templates and provider integration. (All requested branded responsive HTML/plain-text template variants implemented; Resend credentials and event wiring tests remain.)
@@ -138,7 +138,7 @@ This document is the implementation checklist and evidence log for the complete 
 ## Section 13 — performance and code quality
 
 - [ ] Caching, query/index optimization, images, lazy loading, bundle/API optimization, SSR/code splitting, and duplicate/dead-code cleanup. (Indexed reporting/operational queries, server-rendered static surfaces, route-level bundles, and duplicate client JSON parser cleanup implemented; profiling and live cache validation remain.)
-- [ ] Central API/errors/env validation, migrations, automated critical-flow tests, and deployment verifier. (Reusable safe client API parser, environment validation including secret-leak checks, strict typecheck, ten executable payment/API/OSRS/seller-lifecycle critical-flow tests, GitHub CI, and executable page/header/schema/API-JSON deployment smoke test implemented; authenticated browser/database flow automation remains.)
+- [ ] Central API/errors/env validation, migrations, automated critical-flow tests, and deployment verifier. (Reusable safe client API parser, environment validation including secret-leak checks, strict typecheck, eleven executable payment/API/OSRS/seller/security-label critical-flow tests, GitHub CI, and executable page/header/schema/API-JSON deployment smoke test implemented; authenticated browser/database flow automation remains.)
 - [ ] Zero TypeScript/build errors, broken links, dead controls, unsafe secrets, and unhandled failures. (Lint, TypeScript, and production build are enforced locally; deployment verifier covers primary links and invalid API JSON behavior; full live control audit remains.)
 - [ ] Section 13 live tests and deployment.
 
@@ -163,7 +163,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 17 — complete end-to-end testing
 
-- [ ] Execute and record every available desktop, mobile, customer, admin, payment, inventory, analytics, notification, support, security, build, and production test. (Ten executable payment/API/OSRS/seller-lifecycle tests plus all available lint/type/build/deployment/public-route/header/schema/API-JSON checks are recorded in `TEST-REPORT.md`; authenticated database/provider/device/browser tests remain.)
+- [ ] Execute and record every available desktop, mobile, customer, admin, payment, inventory, analytics, notification, support, security, build, and production test. (Eleven executable payment/API/OSRS/seller/security-label tests plus all available lint/type/build/deployment/public-route/header/schema/API-JSON checks are recorded in `TEST-REPORT.md`; authenticated database/provider/device/browser tests remain.)
 - [x] Clearly record tests blocked by unconfigured external providers without claiming success. (`TEST-REPORT.md` and `FINAL-REPORT.md` identify each external or migration blocker.)
 
 ## Section 18 — completion report

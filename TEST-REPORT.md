@@ -2,7 +2,7 @@
 
 ## Passed
 
-- `npm run test:critical`: 10 passed, 0 failed; BTC and USDC payload mapping, unsupported-asset rejection, valid/structured/non-JSON/empty API response handling, canonical OSRS XP thresholds, starter/maxed combat formulas, and seller-payout transition/role invariants are executable assertions.
+- `npm run test:critical`: 11 passed, 0 failed; BTC and USDC payload mapping, unsupported-asset rejection, valid/structured/non-JSON/empty API response handling, canonical OSRS XP thresholds, starter/maxed combat formulas, seller-payout transition/role invariants, and privacy-safe browser labels are executable assertions.
 - Local OSRS tools verification: level-to-XP, XP-to-virtual-level (through 200M), and combat-level calculators pass canonical threshold/formula tests, lint, TypeScript, and build.
 - GitHub Actions runs critical tests, lint, TypeScript, and production build on `main` pushes and pull requests.
 
@@ -14,6 +14,7 @@
 - Live security headers: Content Security Policy, HSTS, and `X-Content-Type-Options` present.
 - Local security verification: database-backed rate limiting compiles on crypto configuration/submission, Stripe creation, payment proof upload, order cancellation, and customer ticket mutation routes; the production migration still requires Supabase access before distributed enforcement can be live-verified.
 - Local session-security verification: authenticated session registration/listing and global revocation use keyed token/IP fingerprints, coarse browser labels, owner-scoped responses, durable mutation limits, and safe JSON errors; lint and TypeScript pass. Live multi-device revocation remains migration/test-account dependent.
+- Local login-history verification: only a Supabase-verified successful bearer session can create a login record; token/IP values are keyed fingerprints, browser information is coarse, repeated known devices are distinguished from unfamiliar devices, and new devices create customer-visible security events. Email alert delivery and live authenticated history remain provider/migration dependent.
 - Local fraud-operations verification: medium/high server-calculated order risk transactionally creates one review per order; the permission-protected queue supports prioritization, assignment, cleared/blocked outcomes, notes, durable limits, and audit writes. Live queue tests remain migration/test-identity dependent.
 - Local seller-payout verification: server-authorized seller lifecycle updates reject buy orders and backward transitions, prevent fulfillment staff from authorizing payouts, synchronize completed payouts to completed orders, and write audit records; customer tracking already displays the resulting status. Live authenticated transitions remain migration/test-identity dependent.
 - Local saved-draft verification: authenticated customers can persist, resume, and delete owner-isolated buy/sell checkout drafts under RLS without storing terms acceptance or creating an order; lint, TypeScript, and build verification cover the UI/data contract, while live CRUD remains migration/test-account dependent.

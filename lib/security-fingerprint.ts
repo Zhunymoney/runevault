@@ -1,0 +1,3 @@
+import { createHmac } from "node:crypto";
+export function securityFingerprint(value:string){const key=process.env.SUPABASE_SERVICE_ROLE_KEY;if(!key)throw new Error("Session security is not configured.");return createHmac("sha256",key).update(value).digest("hex");}
+export function browserFamily(value:string){const a=value.toLowerCase(),browser=a.includes("edg/")?"Edge":a.includes("firefox/")?"Firefox":a.includes("chrome/")?"Chrome":a.includes("safari/")?"Safari":"Other browser",platform=a.includes("windows")?"Windows":a.includes("android")?"Android":a.includes("iphone")||a.includes("ipad")?"iOS":a.includes("mac os")?"macOS":a.includes("linux")?"Linux":"Unknown device";return `${browser} on ${platform}`;}
