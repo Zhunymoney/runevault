@@ -79,14 +79,14 @@ This document is the implementation checklist and evidence log for the complete 
 ## Section 4 — admin system
 
 - [ ] Server-protected roles and permissions. (Authenticated admin order/settings APIs, explicit role schema, validation, RLS, and audit writes implemented; production migration and role tests remain.)
-- [ ] Complete operational queues, searches, actions, notes, refunds, inventory, customers, support, and chat. (Order, support/chat, and inventory/listing queues now have server-authorized search/actions, staff notes, assignment/status controls, and audits; customer manager and Stripe refund UI remain.)
+- [ ] Complete operational queues, searches, actions, notes, refunds, inventory, customers, support, and chat. (Order, support/chat, inventory/listing, and customer queues now have server-authorized search/actions, staff notes, assignment/status controls, deletion-request handling, owner-only role management, and audits; Stripe refund UI remains.)
 - [ ] Complete editable settings and audit trail. (Editable marketplace settings, server-authorized audit writes, and a read-only searchable admin audit viewer are implemented; fine-grained permission enforcement, production migration, and live admin tests remain.)
 - [ ] Section 4 live tests and deployment.
 
 ## Section 5 — inventory, listings, and operations
 
 - [ ] Transactional inventory ledger, reservations, reconciliation, thresholds, and alerts. (Advisory-locked balance/adjust/reserve/release/expire RPCs, idempotent source keys, negative-balance prevention, lifecycle trigger, transactional cron expiry, admin ledger/reservation controls, indexes, and RLS implemented; order-create wiring and live migration tests remain.)
-- [ ] Listings, categories, stock, bulk ordering, search, and announcements. (Listing schema, safe public/admin RLS, admin create/pause/activate controls, stock/limits/category fields, and indexes implemented; public listing search and announcements remain.)
+- [ ] Listings, categories, stock, bulk ordering, search, and announcements. (Listing schema, safe public/admin RLS, admin create/pause/activate controls, public searchable listing cards, stock/limits/category fields, scheduled operational announcements, admin publishing, navigation, and indexes implemented; multi-listing cart/bulk ordering and live migration tests remain.)
 - [ ] Assignments, queues, history, notes, and reconciliation. (Order/support assignments, status history, internal/customer notes, inventory reservations/ledger, staff queues, and audit writes implemented; live reconciliation tests remain.)
 - [ ] Section 5 live tests and deployment.
 

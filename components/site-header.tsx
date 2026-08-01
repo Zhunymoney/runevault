@@ -27,6 +27,7 @@ export function SiteHeader() {
   const nav = [
     ["Buy Gold", "/quote?type=buy"],
     ["Sell Gold", "/quote?type=sell"],
+    ["Marketplace", "/marketplace"],
     ["Track Order", "/orders"],
     ["Account", "/account"],
     ["Support", "/support"],
