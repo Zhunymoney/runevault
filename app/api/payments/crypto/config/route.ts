@@ -1,57 +1,90 @@
 import { NextResponse } from "next/server";
 import { rateLimit, requestIp } from "@/lib/launch-server";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   const limit = rateLimit(`crypto-config:${requestIp(request)}`, 10);
 
   if (!limit.allowed) {
     return NextResponse.json(
-      { error: "Too many requests." },
+      { error: "Too many requests. Please try again shortly." },
       { status: 429 },
     );
   }
 
-  const body = (await request.json().catch(() => ({}))) as {
-    reference?: string;
-  };
+  const body = (await request.json().catch(() => null)) as {
+    reference?: unknown;
+  } | null;
 
-  const reference = body.reference?.trim().toUpperCase();
+  const reference =
+    typeof body?.reference === "string"
+      ? body.reference.trim().toUpperCase()
+      : "";
 
   if (!reference) {
     return NextResponse.json(
-      { error: "Reference required." },
+      { error: "Order reference required." },
       { status: 400 },
     );
   }
 
-  const btcAddress = process.env.CRYPTO_BTC_ADDRESS?.trim();
-  const usdcAddress = process.env.CRYPTO_USDC_ADDRESS?.trim();
-  const usdcNetwork =
-    process.env.CRYPTO_USDC_NETWORK?.trim() || "Base";
+  const btcAddress = process.env.CRYPTO_BTC_ADDRESS?.trim() ?? "";
+  const usdcAddress = process.env.CRYPTO_USDC_ADDRESS?.trim() ?? "";
+  const usdcNetwork = process.env.CRYPTO_USDC_NETWORK?.trim() || "Base";
 
-  const methods = [
-    btcAddress
-      ? {
-          id: "btc",
-          name: "Bitcoin",
-          network: "Bitcoin",
-          address: btcAddress,
-        }
-      : null,
-    usdcAddress
-      ? {
-          id: "usdc",
-          name: "USDC",
-          network: usdcNetwork,
-          address: usdcAddress,
-        }
-      : null,
-  ].filter(Boolean);
+  const methods: Array<{
+    id: "btc" | "usdc";
+    name: string;
+    network: string;
+    address: string;
+  }> = [];
 
-  return NextResponse.json({
-    reference,
-    methods,
-    warning:
-      "Send only the selected asset on the stated network. Crypto orders remain under manual review until receipt is verified.",
-  });
+  if (btcAddress) {
+    methods.push({
+      id: "btc",
+      name: "Bitcoin",
+      network: "Bitcoin",
+      address: btcAddress,
+    });
+  }
+
+  if (usdcAddress) {
+    methods.push({
+      id: "usdc",
+      name: "USDC",
+      network: usdcNetwork,
+      address: usdcAddress,
+    });
+  }
+
+  if (methods.length === 0) {
+    console.error(
+      "Crypto configuration missing: CRYPTO_BTC_ADDRESS and CRYPTO_USDC_ADDRESS are not available.",
+    );
+
+    return NextResponse.json(
+      {
+        error:
+          "Crypto payment addresses are not configured on this deployment.",
+      },
+      { status: 503 },
+    );
+  }
+
+  return NextResponse.json(
+    {
+      reference,
+      methods,
+      warning:
+        "Send only the selected asset on the stated network. Crypto orders remain under manual review until receipt is verified.",
+    },
+    {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
+    },
+  );
 }

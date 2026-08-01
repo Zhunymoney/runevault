@@ -44,16 +44,30 @@ export default function CheckoutPage() {
     const requestedAmount = Number(params.get("amount"));
     const requestedName = params.get("name");
 
-    if (requestedType === "sell") setType("sell");
-    if (Number.isFinite(requestedAmount) && requestedAmount > 0) setAmount(requestedAmount);
-    if (requestedName) setDeliveryName(requestedName);
+    if (requestedType === "sell") {
+      setType("sell");
+    }
+
+    if (Number.isFinite(requestedAmount) && requestedAmount > 0) {
+      setAmount(requestedAmount);
+    }
+
+    if (requestedName) {
+      setDeliveryName(requestedName);
+    }
 
     void getSettings()
       .then(setSettings)
-      .catch(() => setMessage("Could not load live settings. Preview values are shown."));
+      .catch(() =>
+        setMessage(
+          "Could not load live settings. Preview values are shown.",
+        ),
+      );
   }, []);
 
-  const rate = type === "buy" ? settings.buy_rate : settings.sell_rate;
+  const rate =
+    type === "buy" ? settings.buy_rate : settings.sell_rate;
+
   const total = useMemo(() => amount * rate, [amount, rate]);
 
   async function placeOrder() {
@@ -69,19 +83,38 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (
+      amount < settings.minimum_order_m ||
+      amount > settings.maximum_order_m
+    ) {
+      setMessage(
+        `Order amount must be between ${settings.minimum_order_m}M and ${settings.maximum_order_m}M.`,
+      );
+      return;
+    }
+
     setBusy(true);
 
     try {
       const order = await createOrder({
         order_type: type,
         amount_m: amount,
-        delivery_name: deliveryName,
-        notes,
+        delivery_name: deliveryName.trim(),
+        notes: notes.trim(),
       });
 
-      router.push(`/order-confirmation?reference=${encodeURIComponent(order.reference)}`);
+      router.push(
+        `/payment-selection?reference=${encodeURIComponent(
+          order.reference,
+        )}`,
+      );
     } catch (reason) {
-      setMessage(reason instanceof Error ? reason.message : "Could not create the order.");
+      setMessage(
+        reason instanceof Error
+          ? reason.message
+          : "Could not create the order.",
+      );
+
       setBusy(false);
     }
   }
@@ -92,18 +125,22 @@ export default function CheckoutPage() {
         href="/quote"
         className="inline-flex items-center gap-2 text-sm font-bold text-white/45 hover:text-amber-300"
       >
-        <ArrowLeft size={17} /> Return to calculator
+        <ArrowLeft size={17} />
+        Return to calculator
       </Link>
 
       <section className="mt-7">
         <p className="text-sm font-black uppercase tracking-[.2em] text-amber-400">
           Secure review
         </p>
+
         <h1 className="mt-3 text-4xl font-black tracking-[-.04em] sm:text-5xl">
           Confirm your OSRS gold order.
         </h1>
+
         <p className="mt-4 max-w-2xl leading-7 text-white/45">
-          Review the amount and rate, confirm your character name, and create a private tracking reference.
+          Review the amount and rate, confirm your character name,
+          and create a private tracking reference.
         </p>
       </section>
 
@@ -111,14 +148,21 @@ export default function CheckoutPage() {
         <div className="rounded-3xl border border-white/10 bg-white/[.025] p-6 sm:p-8">
           <div className="grid grid-cols-2 rounded-2xl bg-white/5 p-1">
             <button
+              type="button"
               onClick={() => setType("buy")}
-              className={`quote-tab ${type === "buy" ? "active-buy" : ""}`}
+              className={`quote-tab ${
+                type === "buy" ? "active-buy" : ""
+              }`}
             >
               Buy OSRS Gold
             </button>
+
             <button
+              type="button"
               onClick={() => setType("sell")}
-              className={`quote-tab ${type === "sell" ? "active-sell" : ""}`}
+              className={`quote-tab ${
+                type === "sell" ? "active-sell" : ""
+              }`}
             >
               Sell OSRS Gold
             </button>
@@ -126,26 +170,42 @@ export default function CheckoutPage() {
 
           <label className="mt-7 block text-sm font-bold text-white/50">
             Gold amount
+
             <div className="mt-2 flex rounded-2xl border border-white/10 bg-black/15 px-5">
               <input
                 type="number"
                 min={settings.minimum_order_m}
                 max={settings.maximum_order_m}
                 value={amount}
-                onChange={(event) => setAmount(Math.max(1, Number(event.target.value)))}
+                onChange={(event) => {
+                  const nextAmount = Number(event.target.value);
+
+                  setAmount(
+                    Number.isFinite(nextAmount)
+                      ? Math.max(1, nextAmount)
+                      : 1,
+                  );
+                }}
                 className="w-full bg-transparent py-5 text-3xl font-black outline-none"
               />
-              <span className="self-center text-xl font-black text-white/35">M</span>
+
+              <span className="self-center text-xl font-black text-white/35">
+                M
+              </span>
             </div>
           </label>
 
           <label className="mt-5 block text-sm font-bold text-white/50">
             OSRS character name
+
             <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/15 px-4">
               <UserRound size={19} className="text-white/30" />
+
               <input
                 value={deliveryName}
-                onChange={(event) => setDeliveryName(event.target.value)}
+                onChange={(event) =>
+                  setDeliveryName(event.target.value)
+                }
                 placeholder="Enter your in-game name"
                 className="min-h-14 w-full bg-transparent outline-none placeholder:text-white/25"
               />
@@ -153,9 +213,17 @@ export default function CheckoutPage() {
           </label>
 
           <label className="mt-5 block text-sm font-bold text-white/50">
-            Order notes <span className="font-normal text-white/25">(optional)</span>
+            Order notes{" "}
+            <span className="font-normal text-white/25">
+              (optional)
+            </span>
+
             <div className="mt-2 flex items-start gap-3 rounded-2xl border border-white/10 bg-black/15 px-4 py-4">
-              <FileText size={19} className="mt-1 text-white/30" />
+              <FileText
+                size={19}
+                className="mt-1 text-white/30"
+              />
+
               <textarea
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
@@ -170,10 +238,14 @@ export default function CheckoutPage() {
             <input
               type="checkbox"
               checked={termsAccepted}
-              onChange={(event) => setTermsAccepted(event.target.checked)}
+              onChange={(event) =>
+                setTermsAccepted(event.target.checked)
+              }
               className="mt-1 h-5 w-5 shrink-0 accent-amber-400"
             />
-            I understand this creates a preview order and tracking record. No live payment or automated in-game delivery occurs.
+
+            I understand this creates an order and private tracking
+            reference before payment selection.
           </label>
 
           {message && (
@@ -189,11 +261,19 @@ export default function CheckoutPage() {
               <p className="text-xs font-black uppercase tracking-[.16em] text-amber-300">
                 Final review
               </p>
-              <h2 className="mt-2 text-2xl font-black capitalize">{type} OSRS gold</h2>
+
+              <h2 className="mt-2 text-2xl font-black capitalize">
+                {type} OSRS gold
+              </h2>
             </div>
+
             <Coins
               size={32}
-              className={type === "buy" ? "text-amber-300" : "text-emerald-300"}
+              className={
+                type === "buy"
+                  ? "text-amber-300"
+                  : "text-emerald-300"
+              }
             />
           </div>
 
@@ -202,36 +282,59 @@ export default function CheckoutPage() {
               <span className="text-white/40">Gold amount</span>
               <b>{amount}M</b>
             </div>
+
             <div className="flex justify-between gap-5">
               <span className="text-white/40">Current rate</span>
               <b>${rate.toFixed(3)} / M</b>
             </div>
+
             <div className="flex justify-between gap-5">
               <span className="text-white/40">
-                {type === "buy" ? "Estimated total" : "Estimated payout"}
+                {type === "buy"
+                  ? "Estimated total"
+                  : "Estimated payout"}
               </span>
+
               <b className="text-2xl">${total.toFixed(2)}</b>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={() => void placeOrder()}
             disabled={busy || settings.maintenance_mode}
-            className={`quote-submit ${type === "sell" ? "sell-submit" : ""}`}
+            className={`quote-submit ${
+              type === "sell" ? "sell-submit" : ""
+            }`}
           >
-            {busy ? "Creating order…" : "Confirm Preview Order"}
+            {busy ? "Creating order…" : "Continue to Payment"}
+
             {!busy && <ArrowRight size={18} />}
           </button>
 
           <div className="mt-6 space-y-3 text-sm text-white/40">
             <p className="flex items-center gap-3">
-              <LockKeyhole size={17} className="text-amber-300" /> Signed-in account required
+              <LockKeyhole
+                size={17}
+                className="text-amber-300"
+              />
+              Signed-in account required
             </p>
+
             <p className="flex items-center gap-3">
-              <ShieldCheck size={17} className="text-emerald-300" /> Private tracking reference
+              <ShieldCheck
+                size={17}
+                className="text-emerald-300"
+              />
+              Private tracking reference
             </p>
+
             <p className="flex items-center gap-3">
-              <CheckCircle2 size={17} className="text-sky-300" /> Confirmation screen included
+              <CheckCircle2
+                size={17}
+                className="text-sky-300"
+              />
+              Payment selection included
             </p>
           </div>
         </aside>
