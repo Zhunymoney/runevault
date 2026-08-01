@@ -1,6 +1,21 @@
 import type { MarketplaceSettings, Order, OrderStatus, OrderType, Profile, SavedCharacter } from "@/lib/types";
 import { createClient } from "@/lib/supabase-browser";
 
+async function authenticatedApiHeaders() {
+  const { data } = await createClient().auth.getSession();
+  if (!data.session?.access_token) throw new Error("Sign in again before continuing.");
+  return { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` };
+}
+
+async function apiJson(response: Response) {
+  const text = await response.text();
+  let data: Record<string, unknown> = {};
+  try { data = text ? JSON.parse(text) as Record<string, unknown> : {}; }
+  catch { throw new Error(response.ok ? "The server returned an invalid response." : text.trim() || `Request failed (${response.status}).`); }
+  if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : `Request failed (${response.status}).`);
+  return data;
+}
+
 export async function getCurrentProfile(): Promise<Profile | null> {
   const supabase = createClient();
   const { data: authData, error: authError } = await supabase.auth.getUser();
@@ -155,43 +170,20 @@ export async function findOrder(reference: string): Promise<Order | null> {
 }
 
 export async function getAdminOrders(): Promise<Order[]> {
-  return getMyOrders();
+  const response = await fetch("/api/admin/orders", { headers: await authenticatedApiHeaders(), cache: "no-store" });
+  const data = await apiJson(response);
+  return (Array.isArray(data.orders) ? data.orders : []).map((order) => normalizeOrder(order as Record<string, unknown>));
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {
-  const supabase = createClient();
-  const { error } = await supabase.from("orders").update({ status }).eq("id", id);
-  if (error) throw error;
+  const response = await fetch("/api/admin/orders", { method: "PATCH", headers: await authenticatedApiHeaders(), body: JSON.stringify({ id, status }) });
+  await apiJson(response);
 }
 
 export async function updateSettings(input: Partial<MarketplaceSettings>) {
-  const supabase = createClient();
-  const baseValues = {
-    buy_rate: input.buy_rate,
-    sell_rate: input.sell_rate,
-    inventory_m: input.inventory_m,
-    minimum_order_m: input.minimum_order_m,
-    maximum_order_m: input.maximum_order_m,
-    maintenance_mode: input.maintenance_mode,
-    updated_at: new Date().toISOString(),
-  };
-  let result = await supabase
-    .from("settings")
-    .update({
-      ...baseValues,
-      buy_enabled: input.buy_enabled,
-      sell_enabled: input.sell_enabled,
-      estimated_delivery_minutes: input.estimated_delivery_minutes,
-      pause_message: input.pause_message,
-    })
-    .eq("id", 1)
-    .select("*")
-    .single();
-  if (result.error && /buy_enabled|sell_enabled|estimated_delivery_minutes|pause_message/i.test(result.error.message)) {
-    result = await supabase.from("settings").update(baseValues).eq("id", 1).select("*").single();
-  }
-  if (result.error) throw result.error;
-  return result.data as MarketplaceSettings;
+  const response = await fetch("/api/admin/settings", { method: "PATCH", headers: await authenticatedApiHeaders(), body: JSON.stringify(input) });
+  const data = await apiJson(response);
+  return data.settings as unknown as MarketplaceSettings;
 }
 
 function normalizeOrder(data: Record<string, unknown>): Order {

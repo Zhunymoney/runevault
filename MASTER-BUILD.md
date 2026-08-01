@@ -78,7 +78,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 4 — admin system
 
-- [ ] Server-protected roles and permissions.
+- [ ] Server-protected roles and permissions. (Authenticated admin order/settings APIs, explicit role schema, validation, RLS, and audit writes implemented; production migration and role tests remain.)
 - [ ] Complete operational queues, searches, actions, notes, refunds, inventory, customers, support, and chat.
 - [ ] Complete editable settings and audit trail.
 - [ ] Section 4 live tests and deployment.

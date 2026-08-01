@@ -17,6 +17,7 @@ type SupabaseOrder = {
 };
 
 type SupabaseUser = { id: string; email?: string };
+export type AdminIdentity = SupabaseUser & { role: "staff" | "admin"; adminRole?: string | null };
 
 function required(name: string) {
   const value = process.env[name];
@@ -122,6 +123,28 @@ export async function updateOrder(
     throw new Error("Order update was not permitted.");
   }
   return rows[0];
+}
+
+export function userHeaders(authorization: string) {
+  return { apikey: required("NEXT_PUBLIC_SUPABASE_ANON_KEY"), Authorization: authorization, "Content-Type": "application/json" };
+}
+
+export async function requireAdmin(request: Request): Promise<AdminIdentity> {
+  const authorization = request.headers.get("authorization") ?? "";
+  const token = authorization.match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!token) throw new Response("Authentication required.", { status: 401 });
+  const userResponse = await fetch(`${supabaseUrl()}/auth/v1/user`, { headers: userHeaders(authorization), cache: "no-store" });
+  if (!userResponse.ok) throw new Response("Invalid or expired session.", { status: 401 });
+  const user = (await userResponse.json()) as SupabaseUser;
+  const profileResponse = await fetch(`${supabaseUrl()}/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=role,admin_role`, { headers: userHeaders(authorization), cache: "no-store" });
+  let profiles = profileResponse.ok ? await profileResponse.json() as Array<{ role?: string; admin_role?: string | null }> : [];
+  if (!profileResponse.ok && profileResponse.status === 400) {
+    const legacy = await fetch(`${supabaseUrl()}/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=role`, { headers: userHeaders(authorization), cache: "no-store" });
+    profiles = legacy.ok ? await legacy.json() as Array<{ role?: string }> : [];
+  }
+  const profile = profiles[0];
+  if (!profile || !["staff", "admin"].includes(profile.role ?? "")) throw new Response("Admin access denied.", { status: 403 });
+  return { ...user, role: profile.role as "staff" | "admin", adminRole: profile.admin_role ?? null };
 }
 
 export async function getUserEmail(userId: string) {
