@@ -30,7 +30,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const order = await getOrderByReference(reference);
+  const order = await getOrderByReference(
+    reference,
+    request.headers.get("authorization"),
+  );
   if (!order) return NextResponse.json({ error: "Order not found." }, { status: 404 });
   try {
     await requireOrderOwner(request, order);

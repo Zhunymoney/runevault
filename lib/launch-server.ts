@@ -57,7 +57,10 @@ export function supabaseUrl() {
   return required("NEXT_PUBLIC_SUPABASE_URL").replace(/\/$/, "");
 }
 
-export async function getOrderByReference(reference: string) {
+export async function getOrderByReference(
+  reference: string,
+  authorization?: string | null,
+) {
   const url = new URL(`${supabaseUrl()}/rest/v1/orders`);
   url.searchParams.set("reference", `eq.${reference}`);
   url.searchParams.set(
@@ -67,7 +70,13 @@ export async function getOrderByReference(reference: string) {
   url.searchParams.set("limit", "1");
 
   const response = await fetch(url, {
-    headers: serviceHeaders(),
+    headers: authorization
+      ? {
+          apikey: required("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+          Authorization: authorization,
+          "Content-Type": "application/json",
+        }
+      : serviceHeaders(),
     cache: "no-store",
   });
 
