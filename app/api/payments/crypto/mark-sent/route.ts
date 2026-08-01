@@ -103,16 +103,20 @@ export async function POST(request: Request) {
 
   const risk = riskScore(order);
 
-  await updateOrder(order.id, {
-    status: "awaiting_payment",
-    payment_provider: "crypto_manual",
-    payment_status: "customer_marked_sent",
-    payment_id: txid,
-    crypto_asset: asset,
-    risk_score: risk.score,
-    risk_level: risk.level,
-    risk_reasons: risk.reasons,
-  });
+  await updateOrder(
+    order.id,
+    {
+      status: "awaiting_payment",
+      payment_provider: "crypto_manual",
+      payment_status: "customer_marked_sent",
+      payment_id: txid,
+      crypto_asset: asset,
+      risk_score: risk.score,
+      risk_level: risk.level,
+      risk_reasons: risk.reasons,
+    },
+    request.headers.get("authorization"),
+  );
 
   await sendDiscord("Crypto payment submitted for review", [
     {

@@ -91,6 +91,7 @@ export async function getOrderByReference(
 export async function updateOrder(
   id: string,
   values: Record<string, unknown>,
+  authorization?: string | null,
 ) {
   const url = new URL(`${supabaseUrl()}/rest/v1/orders`);
   url.searchParams.set("id", `eq.${id}`);
@@ -98,7 +99,13 @@ export async function updateOrder(
   const response = await fetch(url, {
     method: "PATCH",
     headers: {
-      ...serviceHeaders(),
+      ...(authorization
+        ? {
+            apikey: required("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+            Authorization: authorization,
+            "Content-Type": "application/json",
+          }
+        : serviceHeaders()),
       Prefer: "return=minimal",
     },
     body: JSON.stringify(values),
