@@ -108,7 +108,7 @@ export async function updateOrder(
             "Content-Type": "application/json",
           }
         : serviceHeaders()),
-      Prefer: "return=minimal",
+      Prefer: "return=representation",
     },
     body: JSON.stringify(values),
   });
@@ -116,6 +116,12 @@ export async function updateOrder(
   if (!response.ok) {
     throw new Error(`Order update failed (${response.status}).`);
   }
+
+  const rows = (await response.json()) as Array<Record<string, unknown>>;
+  if (rows.length !== 1) {
+    throw new Error("Order update was not permitted.");
+  }
+  return rows[0];
 }
 
 export async function getUserEmail(userId: string) {
