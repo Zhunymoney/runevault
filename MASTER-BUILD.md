@@ -1,0 +1,174 @@
+# RuneVault Master Build
+
+This document is the implementation checklist and evidence log for the complete RuneVault build. A checkbox is marked complete only after the corresponding implementation has been validated at the appropriate level. Features that require an external provider remain unchecked until the provider is configured and a real integration test succeeds.
+
+## Baseline and recovery
+
+- Recovery branch: `backup/pre-master-build-20260801`
+- Recovery commit: `f03fd26ca48b6206fbdb407e1be151291bafd865`
+- Baseline production deployment: `dpl_9fidgXw7TbpUetJnmUVBVGjPZ115`
+- Baseline production URL: `https://runevault-bo9452ytq-rune-vault.vercel.app`
+- Live alias: `https://runevault-beta.vercel.app`
+
+## Section 0 — audit, backup, and plan
+
+- [x] Inspect the tracked repository and route surface.
+- [x] Identify framework, packages, database access, authentication, admin, checkout, payments, middleware/configuration, and deployment architecture.
+- [x] Inspect checked-in Supabase tables, triggers, functions, and RLS policies.
+- [x] Record production deployment and environment-variable requirements.
+- [x] Create and push a recovery branch before major changes.
+- [x] Locate unfinished, placeholder, duplicated, insecure, or incomplete features.
+- [x] Create this section-by-section implementation checklist.
+
+### Architecture baseline
+
+- Next.js 16 App Router, React 19, TypeScript 5, Tailwind CSS 4.
+- Supabase browser client provides authentication and RLS-scoped customer data access.
+- Server payment endpoints use authenticated bearer sessions and server-only secrets.
+- Vercel hosts the production application and supplies environment variables.
+- Stripe uses server-side Checkout Session creation and a webhook route; provider credentials are not assumed configured.
+- Crypto checkout uses server-provided BTC/USDC configuration, client QR generation, and an authenticated manual-verification endpoint.
+- Admin, analytics, customer account, order tracking, receipts, health, legal, quote, checkout, payment, and support routes exist but are foundation-level implementations.
+- No middleware file currently centralizes route authentication or request controls.
+- No automated test runner, migration runner, email SDK, upload storage workflow, realtime chat, scheduled automation, distributed rate limiter, or monitoring SDK is currently installed.
+
+### Confirmed gaps and risks
+
+- Production schema drift: production orders use `crypto_asset` and `payment_id`; the original checked-in schema declares `payment_asset` and `transaction_id`. Migrations must support existing names and preserve rows.
+- Production `service_role` lacks direct orders-table grants; customer payment writes currently succeed through the verified owner session and RLS.
+- Existing in-memory rate limiting is not durable across serverless instances.
+- Admin access is checked in client code and protected by existing RLS, but dedicated server-side admin route/API authorization is incomplete.
+- Stripe readiness depends on external Stripe credentials, account approval, wallet-domain configuration, and webhook setup.
+- Email, Discord, CAPTCHA, file storage, realtime support, monitoring, scheduled jobs, and analytics providers require implementation and/or external credentials.
+- Terms and privacy pages explicitly contain owner-review placeholders; the remaining required legal pages do not exist.
+- Checkout has no cart, discounts, rate locks, proof uploads, guest flow, cancellation endpoint, or idempotency ledger.
+- Customer accounts lack password recovery/update, session management, saved characters, notification preferences, tickets, and detailed payment history.
+- Marketplace operations lack normalized inventory ledgers, reservations, listings, price history/schedules, status history, notes, assignments, and payout records.
+- Analytics are client-computed from loaded rows and lack efficient reporting queries, exports, and scheduled reports.
+- Support is informational only; there are no ticket, chat, attachment, assignment, realtime, or transcript tables/workflows.
+- No rewards, referrals, coupons, promotions, VIP tiers, content management, OSRS calculators, news, blog, or guide system exists.
+- Build scripts include lint and production build only; critical-flow automation and deployment verification are absent.
+
+## Section 1 — payments and checkout
+
+- [ ] Stripe test/live configuration, intents/checkout, wallets, webhook outcomes, refunds, and idempotency.
+- [ ] BTC exact amount, exchange-rate lock/countdown, copy controls, warnings, evidence, and verification.
+- [ ] USDC Base exact amount, copy controls, warning, evidence, and verification.
+- [x] BTC selection sends `paymentMethod: "btc"` and succeeds through the live customer flow.
+- [x] USDC selection sends `paymentMethod: "usdc"` and succeeds through the live customer flow.
+- [x] Non-JSON/empty API responses display cleanly.
+- [ ] One-page checkout, cart, validation, discounts, terms, inventory/price verification, cancellation/retry, and mobile tests.
+- [ ] Complete payment status model and secure proof upload.
+- [ ] Required Section 1 live tests and deployment.
+
+## Section 2 — customer accounts, dashboard, and email
+
+- [ ] Registration, verification, login/logout, password recovery/update, sessions, security alerts, and deletion request.
+- [ ] Profile, characters, contact and payment preferences, and notification preferences.
+- [ ] Dashboard, order/payment history, invoices, timelines, reorders, saved carts, and linked support.
+- [ ] Branded transactional email templates and provider integration.
+- [ ] Section 2 live tests and deployment.
+
+## Section 3 — buy and sell workflows
+
+- [ ] Complete OSRS buy workflow.
+- [ ] Complete OSRS sell and payout workflow.
+- [ ] Price history, schedules, promotions, tiers, pause controls, and server-side totals.
+- [ ] Section 3 live tests and deployment.
+
+## Section 4 — admin system
+
+- [ ] Server-protected roles and permissions.
+- [ ] Complete operational queues, searches, actions, notes, refunds, inventory, customers, support, and chat.
+- [ ] Complete editable settings and audit trail.
+- [ ] Section 4 live tests and deployment.
+
+## Section 5 — inventory, listings, and operations
+
+- [ ] Transactional inventory ledger, reservations, reconciliation, thresholds, and alerts.
+- [ ] Listings, categories, stock, bulk ordering, search, and announcements.
+- [ ] Assignments, queues, history, notes, and reconciliation.
+- [ ] Section 5 live tests and deployment.
+
+## Section 6 — analytics and reporting
+
+- [ ] Database-backed revenue, sales, profit, gold, orders, customers, payment, conversion, and retention metrics.
+- [ ] Date ranges, charts, activity, CSV, and downloadable reports without demonstration data.
+- [ ] Section 6 live tests and deployment.
+
+## Section 7 — automation and notifications
+
+- [ ] Deduplicated Discord notifications.
+- [ ] Customer/admin email notifications.
+- [ ] Scheduled reports, stale/expired orders, reconciliation, stock and failure alerts, and automation logs.
+- [ ] Section 7 live tests and deployment.
+
+## Section 8 — rewards and marketing
+
+- [ ] Loyalty, referrals, coupons, promotions, tiers, limits, abuse controls, and admin management.
+- [ ] Seasonal/flash scheduling and safe affiliate/gift-card foundations.
+- [ ] Section 8 live tests and deployment.
+
+## Section 9 — order tracking and status
+
+- [ ] Customer-isolated timelines, payment/verification/assignment/delivery/payout status, instructions, invoices, reorder, and linked support.
+- [ ] Section 9 live tests and deployment.
+
+## Section 10 — live chat, tickets, and help center
+
+- [ ] Realtime guest/customer chat, staff inbox, presence, assignments, history, files, moderation, notifications, and transcripts.
+- [ ] Ticket lifecycle, replies, files, assignments, notes, search, and email.
+- [ ] FAQ and complete payment, marketplace, delivery, refund, and account help center.
+- [ ] External chat provider configuration without hardcoding.
+- [ ] Section 10 live tests and deployment.
+
+## Section 11 — security, fraud, and audit logging
+
+- [ ] Complete RLS and server authorization review.
+- [ ] CAPTCHA/bot controls, durable rate limits, validation, CSRF posture, fraud queues, idempotency, upload controls, sessions, headers, CSP, and safe errors.
+- [ ] Backup/recovery and security operational documentation.
+- [ ] Section 11 live tests and deployment.
+
+## Section 12 — premium UI redesign
+
+- [ ] Premium homepage and complete customer/admin/payment/order surfaces.
+- [ ] Responsive, accessible, performant states, animations, navigation, 404, error, and loading experiences.
+- [ ] Section 12 live tests and deployment.
+
+## Section 13 — performance and code quality
+
+- [ ] Caching, query/index optimization, images, lazy loading, bundle/API optimization, SSR/code splitting, and duplicate/dead-code cleanup.
+- [ ] Central API/errors/env validation, migrations, automated critical-flow tests, and deployment verifier.
+- [ ] Zero TypeScript/build errors, broken links, dead controls, unsafe secrets, and unhandled failures.
+- [ ] Section 13 live tests and deployment.
+
+## Section 14 — OSRS features and content
+
+- [ ] RuneVault pricing/history and clearly separated external market references.
+- [ ] XP/skill calculators, quest helpers, news, blog, guides, search, and admin content management.
+- [ ] Section 14 live tests and deployment.
+
+## Section 15 — SEO, business, and legal structure
+
+- [ ] Complete metadata, canonicals, Open Graph, structured data, sitemap, robots, breadcrumbs, and analytics/search-console preparation.
+- [ ] Editable terms, privacy, refund, cancellation, delivery, cookie, acceptable-use, fraud, prohibited-use, contact, and disclosure pages marked for legal review.
+- [ ] Section 15 live tests and deployment.
+
+## Section 16 — infrastructure, deployment, monitoring, and recovery
+
+- [ ] Environment validation for production/preview/development.
+- [ ] Vercel/Supabase migrations, health, structured logs, monitoring foundation, rollback, backup, recovery, and setup documentation.
+- [ ] Provider setup documentation for Stripe, Discord, email, analytics, CAPTCHA, storage, and chat.
+- [ ] Section 16 live tests and deployment.
+
+## Section 17 — complete end-to-end testing
+
+- [ ] Execute and record every available desktop, mobile, customer, admin, payment, inventory, analytics, notification, support, security, build, and production test.
+- [ ] Clearly record tests blocked by unconfigured external providers without claiming success.
+
+## Section 18 — completion report
+
+- [ ] Commit and push all remaining work to `main`.
+- [ ] Deploy and verify the final production build.
+- [ ] Confirm the repository is clean and synchronized.
+- [ ] Publish the complete implementation, migration, RLS, environment, provider, test, deployment, and remaining-action report.
