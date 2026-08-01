@@ -20,7 +20,7 @@ This document is the implementation checklist and evidence log for the complete 
 - [x] Locate unfinished, placeholder, duplicated, insecure, or incomplete features.
 - [x] Create this section-by-section implementation checklist.
 
-### Architecture baseline
+### Architecture baseline at initial audit
 
 - Next.js 16 App Router, React 19, TypeScript 5, Tailwind CSS 4.
 - Supabase browser client provides authentication and RLS-scoped customer data access.
@@ -30,9 +30,9 @@ This document is the implementation checklist and evidence log for the complete 
 - Crypto checkout uses server-provided BTC/USDC configuration, client QR generation, and an authenticated manual-verification endpoint.
 - Admin, analytics, customer account, order tracking, receipts, health, legal, quote, checkout, payment, and support routes exist but are foundation-level implementations.
 - No middleware file currently centralizes route authentication or request controls.
-- No automated test runner, migration runner, email SDK, upload storage workflow, realtime chat, scheduled automation, distributed rate limiter, or monitoring SDK is currently installed.
+- At the initial audit there was no automated test runner, migration runner, email SDK, upload storage workflow, realtime chat, scheduled automation, distributed rate limiter, or monitoring SDK. The checklist below records the foundations added since then.
 
-### Confirmed gaps and risks
+### Initial confirmed gaps and continuing risks
 
 - Production schema drift: production orders use `crypto_asset` and `payment_id`; the original checked-in schema declares `payment_asset` and `transaction_id`. Migrations must support existing names and preserve rows.
 - Production `service_role` lacks direct orders-table grants; customer payment writes currently succeed through the verified owner session and RLS.
@@ -100,7 +100,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 - [ ] Deduplicated Discord notifications. (Authenticated persistent claim ledger and provider failure handling implemented for order notifications; remaining event wiring/live credentials remain.)
 - [ ] Customer/admin email notifications. (Branded order notification wiring and provider failure handling implemented; credentials and remaining lifecycle events remain.)
-- [ ] Scheduled reports, stale/expired orders, reconciliation, stock and failure alerts, and automation logs. (Execution ledger schema implemented; scheduled job endpoints remain.)
+- [ ] Scheduled reports, stale/expired orders, reconciliation, stock and failure alerts, and automation logs. (Secret-protected daily Vercel cron performs transactional reservation expiry, stale-order review, inventory threshold alerts, generic Discord operations notification, and persistent success/failure logging; a server-authorized internal dashboard displays job and notification history. Higher-frequency scheduling, live migration, and provider tests remain.)
 - [ ] Section 7 live tests and deployment.
 
 ## Section 8 — rewards and marketing
