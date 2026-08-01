@@ -85,9 +85,9 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 5 — inventory, listings, and operations
 
-- [ ] Transactional inventory ledger, reservations, reconciliation, thresholds, and alerts.
-- [ ] Listings, categories, stock, bulk ordering, search, and announcements.
-- [ ] Assignments, queues, history, notes, and reconciliation.
+- [ ] Transactional inventory ledger, reservations, reconciliation, thresholds, and alerts. (Ledger/reservation schema, lifecycle release/consume trigger, indexes, and RLS implemented; authoritative create RPC and live tests remain.)
+- [ ] Listings, categories, stock, bulk ordering, search, and announcements. (Listing schema, safe active/public visibility, admin RLS, and indexes implemented; UI remains.)
+- [ ] Assignments, queues, history, notes, and reconciliation. (Status history and internal/customer note schema with RLS implemented; operational UI remains.)
 - [ ] Section 5 live tests and deployment.
 
 ## Section 6 — analytics and reporting
