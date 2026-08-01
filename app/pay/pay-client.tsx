@@ -123,7 +123,11 @@ export function PayClient() {
     try {
       const response = await fetch("/api/payments/crypto/mark-sent", {
         method: "POST", headers: await authenticatedHeaders(),
-        body: JSON.stringify({ reference, asset: selected.id, txid }),
+        body: JSON.stringify({
+          reference,
+          paymentMethod: selected.id,
+          txid,
+        }),
         signal: AbortSignal.timeout(20_000),
       });
       const data = await readApiResponse(response);

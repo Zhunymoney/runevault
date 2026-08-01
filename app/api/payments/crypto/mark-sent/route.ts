@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 type CryptoSubmissionBody = {
   reference?: unknown;
-  asset?: unknown;
+  paymentMethod?: unknown;
   txid?: unknown;
 };
 
@@ -44,9 +44,9 @@ export async function POST(request: Request) {
       ? body.reference.trim().toUpperCase()
       : "";
 
-  const rawAsset =
-    typeof body?.asset === "string"
-      ? body.asset.trim().toLowerCase()
+  const rawPaymentMethod =
+    typeof body?.paymentMethod === "string"
+      ? body.paymentMethod.trim().toLowerCase()
       : "";
 
   const txid =
@@ -55,9 +55,9 @@ export async function POST(request: Request) {
       : "";
 
   const asset =
-    rawAsset === "btc"
+    rawPaymentMethod === "btc"
       ? "BTC"
-      : rawAsset === "usdc"
+      : rawPaymentMethod === "usdc"
         ? "USDC"
         : "";
 
@@ -82,7 +82,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const order = await getOrderByReference(reference);
+  const order = await getOrderByReference(
+    reference,
+    request.headers.get("authorization"),
+  );
 
   if (!order) {
     return NextResponse.json(
