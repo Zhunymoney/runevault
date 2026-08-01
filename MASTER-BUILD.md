@@ -72,7 +72,7 @@ This document is the implementation checklist and evidence log for the complete 
 ## Section 3 — buy and sell workflows
 
 - [ ] Complete OSRS buy workflow. (Contact, preferred world, availability, inventory, estimate, and checkout handling implemented; migration/live tests remain.)
-- [ ] Complete OSRS sell and payout workflow. (Payout selection/details and seller lifecycle schema implemented; operational/admin live tests remain.)
+- [ ] Complete OSRS sell and payout workflow. (Payout selection/details, customer-visible seller lifecycle, server-authorized admin transitions, backward-transition protection, fulfillment payout restrictions, automatic completion, and audit records are implemented; migration and authenticated operational tests remain.)
 - [ ] Price history, schedules, promotions, tiers, pause controls, and server-side totals. (Additive schema, history trigger, public reads, and admin pause controls implemented; scheduling/tier admin UI and live tests remain.)
 - [ ] Section 3 live tests and deployment.
 
@@ -85,7 +85,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 5 — inventory, listings, and operations
 
-- [ ] Transactional inventory ledger, reservations, reconciliation, thresholds, and alerts. (Advisory-locked balance/adjust/reserve/release/expire RPCs, idempotent source keys, negative-balance prevention, lifecycle trigger, transactional cron expiry, admin ledger/reservation controls, indexes, and RLS implemented; order-create wiring and live migration tests remain.)
+- [ ] Transactional inventory ledger, reservations, reconciliation, thresholds, and alerts. (Advisory-locked balance/adjust/reserve/release/expire RPCs, idempotent source keys, negative-balance prevention, buy-order reservation lifecycle, seller-gold purchase ledger updates, transactional cron expiry, admin ledger/reservation controls, indexes, and RLS implemented; live migration tests remain.)
 - [ ] Listings, categories, stock, bulk ordering, search, and announcements. (Listing schema, safe public/admin RLS, admin create/pause/activate controls, public searchable listing cards, stock/limits/category fields, scheduled operational announcements, admin publishing, navigation, and indexes implemented; multi-listing cart/bulk ordering and live migration tests remain.)
 - [ ] Assignments, queues, history, notes, and reconciliation. (Order/support assignments, status history, internal/customer notes, inventory reservations/ledger, staff queues, and audit writes implemented; live reconciliation tests remain.)
 - [ ] Section 5 live tests and deployment.
@@ -138,7 +138,7 @@ This document is the implementation checklist and evidence log for the complete 
 ## Section 13 — performance and code quality
 
 - [ ] Caching, query/index optimization, images, lazy loading, bundle/API optimization, SSR/code splitting, and duplicate/dead-code cleanup. (Indexed reporting/operational queries, server-rendered static surfaces, route-level bundles, and duplicate client JSON parser cleanup implemented; profiling and live cache validation remain.)
-- [ ] Central API/errors/env validation, migrations, automated critical-flow tests, and deployment verifier. (Reusable safe client API parser, environment validation including secret-leak checks, strict typecheck, seven executable payment/API/OSRS-formula critical-flow tests, GitHub CI, and executable page/header/schema/API-JSON deployment smoke test implemented; authenticated browser/database flow automation remains.)
+- [ ] Central API/errors/env validation, migrations, automated critical-flow tests, and deployment verifier. (Reusable safe client API parser, environment validation including secret-leak checks, strict typecheck, ten executable payment/API/OSRS/seller-lifecycle critical-flow tests, GitHub CI, and executable page/header/schema/API-JSON deployment smoke test implemented; authenticated browser/database flow automation remains.)
 - [ ] Zero TypeScript/build errors, broken links, dead controls, unsafe secrets, and unhandled failures. (Lint, TypeScript, and production build are enforced locally; deployment verifier covers primary links and invalid API JSON behavior; full live control audit remains.)
 - [ ] Section 13 live tests and deployment.
 
@@ -163,7 +163,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 17 — complete end-to-end testing
 
-- [ ] Execute and record every available desktop, mobile, customer, admin, payment, inventory, analytics, notification, support, security, build, and production test. (Five executable payment/API unit tests plus all available lint/type/build/deployment/public-route/header/schema/API-JSON checks are recorded in `TEST-REPORT.md`; authenticated database/provider/device/browser tests remain.)
+- [ ] Execute and record every available desktop, mobile, customer, admin, payment, inventory, analytics, notification, support, security, build, and production test. (Ten executable payment/API/OSRS/seller-lifecycle tests plus all available lint/type/build/deployment/public-route/header/schema/API-JSON checks are recorded in `TEST-REPORT.md`; authenticated database/provider/device/browser tests remain.)
 - [x] Clearly record tests blocked by unconfigured external providers without claiming success. (`TEST-REPORT.md` and `FINAL-REPORT.md` identify each external or migration blocker.)
 
 ## Section 18 — completion report

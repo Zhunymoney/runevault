@@ -3,6 +3,7 @@ import test from "node:test";
 import { buildCryptoSubmission } from "../lib/payment-submission.ts";
 import { parseApiResponse } from "../lib/client-api.ts";
 import { combatLevel, levelForXp, xpForLevel } from "../lib/osrs-calculators.ts";
+import { sellerTransitionError } from "../lib/order-lifecycle.ts";
 
 test("BTC selection produces the exact API payment method", () => {
   assert.deepEqual(buildCryptoSubmission("rv-test123", { id: "btc", quoteToken: "signed-btc" }, " tx-btc-123 "), { reference: "RV-TEST123", paymentMethod: "btc", quoteToken: "signed-btc", txid: "tx-btc-123" });
@@ -36,4 +37,18 @@ test("OSRS XP thresholds match canonical level values", () => {
 test("OSRS combat formula handles starter and maxed combat stats", () => {
   assert.equal(combatLevel({ attack:1,strength:1,defence:1,hitpoints:10,prayer:1,ranged:1,magic:1 }), 3);
   assert.equal(combatLevel({ attack:99,strength:99,defence:99,hitpoints:99,prayer:99,ranged:99,magic:99 }), 126);
+});
+
+test("seller payout lifecycle allows forward operational transitions",()=>{
+  assert.equal(sellerTransitionError("awaiting_meetup","gold_received","fulfillment"),null);
+  assert.equal(sellerTransitionError("verification","payout_pending","manager"),null);
+});
+
+test("seller payout lifecycle rejects backward and post-receipt rejection",()=>{
+  assert.match(sellerTransitionError("verification","gold_received","manager"),/backward/i);
+  assert.match(sellerTransitionError("gold_received","rejected","manager"),/cannot be rejected/i);
+});
+
+test("fulfillment cannot authorize seller payouts",()=>{
+  assert.match(sellerTransitionError("verification","payout_pending","fulfillment"),/cannot authorize/i);
 });

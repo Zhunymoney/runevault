@@ -2,7 +2,7 @@
 
 ## Passed
 
-- `npm run test:critical`: 7 passed, 0 failed; BTC and USDC payload mapping, unsupported-asset rejection, valid/structured/non-JSON/empty API response handling, canonical OSRS XP thresholds, and starter/maxed combat formulas are executable assertions.
+- `npm run test:critical`: 10 passed, 0 failed; BTC and USDC payload mapping, unsupported-asset rejection, valid/structured/non-JSON/empty API response handling, canonical OSRS XP thresholds, starter/maxed combat formulas, and seller-payout transition/role invariants are executable assertions.
 - Local OSRS tools verification: level-to-XP, XP-to-virtual-level (through 200M), and combat-level calculators pass canonical threshold/formula tests, lint, TypeScript, and build.
 - GitHub Actions runs critical tests, lint, TypeScript, and production build on `main` pushes and pull requests.
 
@@ -15,6 +15,7 @@
 - Local security verification: database-backed rate limiting compiles on crypto configuration/submission, Stripe creation, payment proof upload, order cancellation, and customer ticket mutation routes; the production migration still requires Supabase access before distributed enforcement can be live-verified.
 - Local session-security verification: authenticated session registration/listing and global revocation use keyed token/IP fingerprints, coarse browser labels, owner-scoped responses, durable mutation limits, and safe JSON errors; lint and TypeScript pass. Live multi-device revocation remains migration/test-account dependent.
 - Local fraud-operations verification: medium/high server-calculated order risk transactionally creates one review per order; the permission-protected queue supports prioritization, assignment, cleared/blocked outcomes, notes, durable limits, and audit writes. Live queue tests remain migration/test-identity dependent.
+- Local seller-payout verification: server-authorized seller lifecycle updates reject buy orders and backward transitions, prevent fulfillment staff from authorizing payouts, synchronize completed payouts to completed orders, and write audit records; customer tracking already displays the resulting status. Live authenticated transitions remain migration/test-identity dependent.
 - Local admin verification: the authenticated audit API and searchable audit viewer compile successfully; deployment verification asserts anonymous requests receive a JSON authorization error.
 - Local customer-management verification: server-authorized search, deletion-request resolution, owner-only role changes, self-demotion protection, and audit writes pass lint/type/build; deployment verification asserts anonymous access is rejected as JSON.
 - Local admin-permission verification: all admin APIs require explicit server-side permissions; owner wildcard access, manage-to-read implications, legacy-staff denial, fulfillment transition restrictions, and durable mutation throttles pass lint, TypeScript, and the production build. Authenticated production role-matrix testing remains blocked until the admin migration is applied and test identities exist.

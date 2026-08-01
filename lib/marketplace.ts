@@ -150,6 +150,12 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
   await parseApiResponse(response);
 }
 
+export async function updateSellerStatus(id: string, sellerStatus: NonNullable<Order["seller_status"]>) {
+  const response = await fetch("/api/admin/orders", { method: "PATCH", headers: await authenticatedApiHeaders(), body: JSON.stringify({ id, sellerStatus }) });
+  const data = await parseApiResponse(response);
+  return normalizeOrder(data.order as Record<string, unknown>);
+}
+
 export async function updateSettings(input: Partial<MarketplaceSettings>) {
   const response = await fetch("/api/admin/settings", { method: "PATCH", headers: await authenticatedApiHeaders(), body: JSON.stringify(input) });
   const data = await parseApiResponse(response);

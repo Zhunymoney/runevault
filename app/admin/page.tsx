@@ -23,6 +23,7 @@ import {
   getCurrentProfile,
   getSettings,
   updateOrderStatus,
+  updateSellerStatus,
   updateSettings,
 } from "@/lib/marketplace";
 import type {
@@ -102,6 +103,16 @@ export default function AdminPage() {
       setMessage("Order status updated.");
     } catch (reason) {
       setMessage(reason instanceof Error ? reason.message : "Update failed.");
+    }
+  }
+
+  async function changeSellerStatus(id: string, sellerStatus: NonNullable<Order["seller_status"]>) {
+    try {
+      const updated = await updateSellerStatus(id, sellerStatus);
+      setOrders((current) => current.map((order) => order.id === id ? updated : order));
+      setMessage("Seller payout status updated and audited.");
+    } catch (reason) {
+      setMessage(reason instanceof Error ? reason.message : "Seller update failed.");
     }
   }
 
@@ -513,6 +524,18 @@ export default function AdminPage() {
                         ))}
                       </select>
                     </div>
+                    {order.order_type === "sell" && (
+                      <label className="mt-2 block text-xs text-white/35">
+                        Seller payout
+                        <select
+                          value={order.seller_status ?? "awaiting_meetup"}
+                          onChange={(event) => void changeSellerStatus(order.id, event.target.value as NonNullable<Order["seller_status"]>)}
+                          className="mt-1 block w-full rounded-lg border border-white/10 bg-[#11151c] px-3 py-2 text-white"
+                        >
+                          {["awaiting_meetup","gold_received","verification","payout_pending","payout_completed","rejected"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
+                        </select>
+                      </label>
+                    )}
                   </td>
                   <td>{order.delivery_name || "—"}</td>
                   <td>{new Date(order.created_at).toLocaleString()}</td>

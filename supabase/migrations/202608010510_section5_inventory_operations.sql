@@ -69,3 +69,19 @@ begin
     elsif new.status='completed' and new.order_type='buy' then update public.inventory_reservations set status='consumed',updated_at=now() where order_id=new.id and status='active'; end if;
   end if; return new;
 end $$;
+
+create or replace function public.track_seller_inventory() returns trigger language plpgsql security definer set search_path='' as $$
+declare next_balance bigint;
+begin
+  if new.order_type='sell' and new.seller_status='gold_received' and old.seller_status is distinct from new.seller_status then
+    perform pg_advisory_xact_lock(hashtext('runevault-inventory'));
+    insert into public.inventory_transactions(amount_m,transaction_type,order_id,reason,source_key)
+    values(new.amount_m::bigint,'purchase',new.id,'Gold received from customer sell order','seller-purchase:'||new.id::text)
+    on conflict(source_key) where source_key is not null do nothing;
+    next_balance:=public.current_inventory_m();
+    update public.settings set inventory_m=next_balance,updated_at=now() where id=1;
+  end if;
+  return new;
+end $$;
+drop trigger if exists orders_track_seller_inventory on public.orders;
+create trigger orders_track_seller_inventory after update of seller_status on public.orders for each row execute function public.track_seller_inventory();
