@@ -116,10 +116,10 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 10 — live chat, tickets, and help center
 
-- [ ] Realtime guest/customer chat, staff inbox, presence, assignments, history, files, moderation, notifications, and transcripts. (Conversation/message/presence/assignment/rating/moderation schema, idempotent Realtime publication, RLS, storage metadata, and indexes implemented; chat APIs/UI remain.)
-- [ ] Ticket lifecycle, replies, files, assignments, notes, search, and email. (Owner-authenticated ticket list/create API, validated order linking, customer ticket UI, message history, clean JSON errors, schema, and RLS implemented; customer replies, staff queue, files, search, and email remain.)
+- [ ] Realtime guest/customer chat, staff inbox, presence, assignments, history, files, moderation, notifications, and transcripts. (Floating mobile/desktop widget, signed-in and token-isolated guest chat, order linking, polling history/transcript, staff inbox, search, assignment, replies/internal notes, blocking, ratings API, secure attachments API, availability messaging, schema/Realtime/RLS implemented; attachment UI, true typing/presence, customer reply notification, and live migration tests remain.)
+- [ ] Ticket lifecycle, replies, files, assignments, notes, search, and email. (Owner-authenticated create/list/reply, order linking, customer history UI, staff queue/search/assignment/status/reply/internal notes, secure private attachment API, clean JSON errors, schema, and RLS implemented; attachment UI, reply email wiring, and live migration tests remain.)
 - [ ] FAQ and complete payment, marketplace, delivery, refund, and account help center. (Payment, incorrect-network, delivery, refund, order tracking, and account guidance implemented; dedicated policy articles remain.)
-- [ ] External chat provider configuration without hardcoding.
+- [x] External chat provider configuration without hardcoding. (Optional provider name and validated HTTPS URL are environment-driven; native Supabase chat remains the default.)
 - [ ] Section 10 live tests and deployment.
 
 ## Section 11 — security, fraud, and audit logging

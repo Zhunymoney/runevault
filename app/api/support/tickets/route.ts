@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     if (!response.ok) return NextResponse.json({ error: response.status === 404 ? "Support tickets are not configured yet." : "Tickets could not be loaded." }, { status: response.status === 404 ? 503 : response.status });
     return NextResponse.json({ tickets: data });
   } catch (reason) {
-    if (reason instanceof Response) return reason;
+    if (reason instanceof Response) return NextResponse.json({ error: await reason.text() || "Authentication required." }, { status: reason.status });
     return NextResponse.json({ error: reason instanceof Error ? reason.message : "Tickets could not be loaded." }, { status: 500 });
   }
 }
@@ -58,7 +58,26 @@ export async function POST(request: Request) {
     if (!messageResponse.ok) return NextResponse.json({ error: "The ticket was opened, but the message could not be saved." }, { status: 500 });
     return NextResponse.json({ ticket }, { status: 201 });
   } catch (reason) {
-    if (reason instanceof Response) return reason;
+    if (reason instanceof Response) return NextResponse.json({ error: await reason.text() || "Authentication required." }, { status: reason.status });
     return NextResponse.json({ error: reason instanceof Error ? reason.message : "Ticket creation failed." }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  const limit = rateLimit(`support-reply:${requestIp(request)}`, 20, 10 * 60_000);
+  if (!limit.allowed) return NextResponse.json({ error: "Too many replies. Try again later." }, { status: 429 });
+  try {
+    const { authorization, user } = await authenticated(request);
+    const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+    const ticketId = typeof body?.ticketId === "string" ? body.ticketId : "";
+    const message = typeof body?.message === "string" ? body.message.trim() : "";
+    if (!/^[0-9a-f-]{36}$/i.test(ticketId) || message.length < 1 || message.length > 10000) return NextResponse.json({ error: "A valid ticket and reply are required." }, { status: 400 });
+    const response = await fetch(`${supabaseUrl()}/rest/v1/ticket_messages`, { method: "POST", headers: { ...userHeaders(authorization), Prefer: "return=representation" }, body: JSON.stringify({ ticket_id: ticketId, author_id: user.id, author_type: "customer", body: message, internal: false }) });
+    const rows = await json(response) as Array<Record<string, unknown>> | null;
+    if (!response.ok || !rows?.[0]) return NextResponse.json({ error: response.status === 404 ? "Support tickets are not configured yet." : "Reply was not permitted." }, { status: response.status === 404 ? 503 : response.status });
+    return NextResponse.json({ message: rows[0] });
+  } catch (reason) {
+    if (reason instanceof Response) return NextResponse.json({ error: await reason.text() || "Authentication required." }, { status: reason.status });
+    return NextResponse.json({ error: reason instanceof Error ? reason.message : "Reply failed." }, { status: 500 });
   }
 }

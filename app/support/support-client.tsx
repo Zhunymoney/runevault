@@ -37,6 +37,13 @@ export function SupportClient() {
     finally { setSending(false); }
   }
 
+  async function reply(ticketId: string, event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setSending(true); setNotice(""); const form = event.currentTarget;
+    try { await request("/api/support/tickets", { method: "PATCH", body: JSON.stringify({ ticketId, message: new FormData(form).get("message") }) }); form.reset(); setNotice("Reply saved."); await load(); }
+    catch (reason) { setNotice(reason instanceof Error ? reason.message : "Reply failed."); }
+    finally { setSending(false); }
+  }
+
   return <section className="mt-12 grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
     <form onSubmit={submit} className="rounded-3xl border border-white/10 bg-white/[.025] p-6 sm:p-8">
       <p className="text-sm font-black uppercase tracking-[.16em] text-amber-400">Open a support ticket</p>
@@ -51,7 +58,7 @@ export function SupportClient() {
     <div className="rounded-3xl border border-white/10 bg-white/[.025] p-6 sm:p-8">
       <p className="text-sm font-black uppercase tracking-[.16em] text-amber-400">Your tickets</p>
       {notice && <p role="status" className="mt-5 rounded-xl border border-white/10 p-4 text-sm text-white/60">{notice}</p>}
-      <div className="mt-5 space-y-3">{loading ? <p className="text-white/40">Loading tickets...</p> : tickets.length ? tickets.map(ticket => <details key={ticket.id} className="faq-card"><summary><span>{ticket.ticket_number} · {ticket.subject}</span><b className="text-xs uppercase text-amber-300">{ticket.status}</b></summary><div className="space-y-3 px-5 pb-5">{ticket.ticket_messages?.map(message => <div key={message.id} className="rounded-xl border border-white/10 p-3"><b className="text-xs uppercase text-white/35">{message.author_type}</b><p className="mt-1 whitespace-pre-wrap text-sm text-white/65">{message.body}</p></div>)}</div></details>) : <p className="rounded-xl border border-dashed border-white/10 p-6 text-sm text-white/40">No support tickets yet.</p>}</div>
+      <div className="mt-5 space-y-3">{loading ? <p className="text-white/40">Loading tickets...</p> : tickets.length ? tickets.map(ticket => <details key={ticket.id} className="faq-card"><summary><span>{ticket.ticket_number} · {ticket.subject}</span><b className="text-xs uppercase text-amber-300">{ticket.status}</b></summary><div className="space-y-3 px-5 pb-5">{ticket.ticket_messages?.map(message => <div key={message.id} className="rounded-xl border border-white/10 p-3"><b className="text-xs uppercase text-white/35">{message.author_type}</b><p className="mt-1 whitespace-pre-wrap text-sm text-white/65">{message.body}</p></div>)}{!['resolved','closed'].includes(ticket.status)&&<form onSubmit={event=>void reply(ticket.id,event)} className="flex gap-2"><input required name="message" maxLength={10000} placeholder="Reply to support" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/15 p-3 text-sm"/><button disabled={sending} className="rounded-xl bg-amber-400 px-4 font-black text-black disabled:opacity-50">Reply</button></form>}</div></details>) : <p className="rounded-xl border border-dashed border-white/10 p-6 text-sm text-white/40">No support tickets yet.</p>}</div>
     </div>
   </section>;
 }

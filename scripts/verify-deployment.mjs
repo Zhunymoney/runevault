@@ -9,5 +9,13 @@ for (const path of ["/", "/quote", "/support", "/health", "/pay"]) {
 const api = await fetch(`${base}/api/payments/crypto/config`, { method: "POST", headers: { Accept: "application/json", "Content-Type": "application/json" }, body: JSON.stringify({ reference: "RV-INVALID" }) });
 let apiJson = false; try { await api.json(); apiJson = true; } catch {}
 checks.push({ name: "crypto API JSON errors", ok: apiJson && !api.ok, detail: `${api.status}` });
+for (const [name,path,init] of [
+  ["chat validation JSON","/api/support/chat",{ method:"POST", headers:{"Content-Type":"application/json"}, body:"{}" }],
+  ["ticket auth JSON","/api/support/tickets",{ headers:{Accept:"application/json"} }],
+  ["admin support auth JSON","/api/admin/support",{ headers:{Accept:"application/json"} }],
+]) {
+  const response = await fetch(`${base}${path}`, init); let valid=false; try { const data=await response.json(); valid=Boolean(data&&typeof data.error==="string"); } catch {}
+  checks.push({name,ok:valid&&!response.ok,detail:`${response.status}`});
+}
 for (const check of checks) console.log(`${check.ok ? "PASS" : "FAIL"} ${check.name}: ${check.detail}`);
 if (checks.some(check => !check.ok)) process.exit(1);
