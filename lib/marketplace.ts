@@ -124,5 +124,7 @@ function normalizeOrder(data: Record<string, unknown>): Order {
     amount_m: Number(data.amount_m),
     price_per_m: Number(data.price_per_m),
     total_price: Number(data.total_price),
+    risk_score: Number(data.risk_score ?? 0),
+    risk_reasons: Array.isArray(data.risk_reasons) ? data.risk_reasons as string[] : [],
   };
 }

@@ -11,6 +11,8 @@ type SupabaseOrder = {
   status: string;
 };
 
+type SupabaseUser = { id: string; email?: string };
+
 function required(name: string) {
   const value = process.env[name];
   if (!value) throw new Error(`${name} is not configured.`);
@@ -29,8 +31,24 @@ export function serviceHeaders() {
   const serviceKey = required("SUPABASE_SERVICE_ROLE_KEY");
   return {
     apikey: serviceKey,
-"Content-Type": "application/json",
+    Authorization: `Bearer ${serviceKey}`,
+    "Content-Type": "application/json",
   };
+}
+
+export async function requireOrderOwner(request: Request, order: SupabaseOrder) {
+  const authorization = request.headers.get("authorization") ?? "";
+  const token = authorization.match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!token) throw new Response("Authentication required.", { status: 401 });
+
+  const response = await fetch(`${supabaseUrl()}/auth/v1/user`, {
+    headers: { apikey: required("NEXT_PUBLIC_SUPABASE_ANON_KEY"), Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Response("Invalid or expired session.", { status: 401 });
+  const user = (await response.json()) as SupabaseUser;
+  if (user.id !== order.user_id) throw new Response("Order access denied.", { status: 403 });
+  return user;
 }
 
 export function supabaseUrl() {
@@ -52,12 +70,8 @@ export async function getOrderByReference(reference: string) {
   });
 
   if (!response.ok) {
-  console.log("STATUS:", response.status);
-  console.log("HEADERS:", Object.fromEntries(response.headers.entries()));
-  console.log("BODY:", await response.text());
-
-  throw new Error(`Order lookup failed (${response.status})`);
-}
+    throw new Error(`Order lookup failed (${response.status}).`);
+  }
 
   const rows = (await response.json()) as SupabaseOrder[];
   return rows[0] ?? null;

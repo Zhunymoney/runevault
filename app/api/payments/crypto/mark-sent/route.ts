@@ -3,6 +3,7 @@ import {
   getOrderByReference,
   rateLimit,
   requestIp,
+  requireOrderOwner,
   riskScore,
   sendDiscord,
   updateOrder,
@@ -90,14 +91,21 @@ export async function POST(request: Request) {
     );
   }
 
+  try {
+    await requireOrderOwner(request, order);
+  } catch (reason) {
+    if (reason instanceof Response) return reason;
+    throw reason;
+  }
+
   const risk = riskScore(order);
 
   await updateOrder(order.id, {
     status: "awaiting_payment",
     payment_provider: "crypto_manual",
     payment_status: "customer_marked_sent",
-    payment_id: txid,
-    crypto_asset: asset,
+    transaction_id: txid,
+    payment_asset: asset,
     risk_score: risk.score,
     risk_level: risk.level,
     risk_reasons: risk.reasons,
@@ -136,7 +144,7 @@ export async function POST(request: Request) {
       reference: order.reference,
       payment_provider: "crypto_manual",
       payment_status: "customer_marked_sent",
-      crypto_asset: asset,
+      payment_asset: asset,
       message: `${asset} payment submitted for manual verification.`,
     },
     {

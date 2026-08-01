@@ -98,22 +98,24 @@ export function OrdersClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialReference]);
 
+  const orderId = order?.id;
+
   useEffect(() => {
-    if (!order || !isSupabaseConfigured()) {
+    if (!orderId || !isSupabaseConfigured()) {
       setLiveConnected(false);
       return;
     }
 
     const supabase = createClient();
     const channel = supabase
-      .channel(`runevault-order-${order.id}`)
+      .channel(`runevault-order-${orderId}`)
       .on(
         "postgres_changes",
         {
           event: "UPDATE",
           schema: "public",
           table: "orders",
-          filter: `id=eq.${order.id}`,
+          filter: `id=eq.${orderId}`,
         },
         (payload) => {
           const updatedOrder = payload.new as Order;
@@ -130,7 +132,7 @@ export function OrdersClient() {
       void supabase.removeChannel(channel);
       setLiveConnected(false);
     };
-  }, [order?.id]);
+  }, [orderId]);
 
   const activeIndex = order
     ? order.status === "cancelled"

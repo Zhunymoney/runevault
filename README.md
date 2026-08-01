@@ -9,13 +9,14 @@ A database-backed Next.js test-mode marketplace foundation.
 - Customer account dashboard and order tracking
 - Admin pricing, inventory, maintenance mode, and status controls
 - Row Level Security policies
-- Test checkout placeholder; no live payments
+- Authenticated Stripe Checkout and manual BTC/USDC submission flows
+- Payment provider, asset, status, transaction ID, risk, and paid-at tracking
 
 ## Install on Windows
 1. Extract the ZIP and open the `runevault-all-in-one` folder in VS Code.
 2. Open Terminal.
 3. Run `npm.cmd install`.
-4. Copy `.env.example` to `.env.local` and add your Supabase Project URL and Publishable key on the same lines.
+4. Copy `.env.example` to `.env.local` and configure the required public and server-only values.
 5. In Supabase SQL Editor, run all of `supabase/schema.sql`.
 6. Restart with `npm.cmd run dev` and open `http://localhost:3000`.
 7. Create/sign in to your account.
@@ -28,6 +29,15 @@ If the project already has older `profiles`, `settings`, or `orders` tables, use
 - Never put a service-role or secret key in `.env.local` with a `NEXT_PUBLIC_` name.
 - The publishable/anon key is intended for browser use when RLS is configured.
 - `/admin` checks the profile role in the UI and all sensitive database writes are also protected by RLS.
+- Payment routes verify the caller's Supabase access token and order ownership before returning addresses or mutating an order.
+- Order pricing and protected fields are recalculated by a database trigger; clients cannot choose their own price or payment state.
+
+## Payments
+
+- Configure `CRYPTO_BTC_ADDRESS`, `CRYPTO_USDC_ADDRESS`, and `CRYPTO_USDC_NETWORK` to enable crypto choices and QR codes.
+- Configure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`; point Stripe's webhook at `/api/payments/stripe/webhook`.
+- Apply the complete `supabase/schema.sql` before deploying this version. It includes an additive upgrade path for existing `orders` tables.
+- Keep `SUPABASE_SERVICE_ROLE_KEY`, Stripe secrets, notification credentials, and webhook URLs server-only.
 
 ## Production warning
-This package stays in test mode. It does not collect real payments or automate game transactions. Before production, complete legal and processor review, server-side rate limiting, webhook verification, fraud controls, monitoring, backups, and a security audit.
+Payment code is implemented, but real-money launch still requires approved provider accounts, reviewed legal policies, durable distributed rate limiting, monitoring, backups, and operational testing. See `PRODUCTION-CHECKLIST.txt`.
