@@ -39,19 +39,11 @@ export async function getCurrentProfile(): Promise<Profile | null> {
 }
 
 export async function getSettings(): Promise<MarketplaceSettings> {
-  const supabase = createClient();
-  const [{ data, error }, schedules, tiers] = await Promise.all([
-    supabase.from("settings").select("*").eq("id", 1).single(),
-    supabase
-      .from("scheduled_prices")
-      .select("id,buy_rate,sell_rate,starts_at,ends_at,active")
-      .eq("active", true),
-    supabase
-      .from("bulk_price_tiers")
-      .select("id,order_type,minimum_amount_m,rate_adjustment,active")
-      .eq("active", true),
-  ]);
-  if (error) throw error;
+  const payload = await parseApiResponse(
+    await fetch("/api/pricing/config", { cache: "no-store" }),
+  );
+  const data = payload.settings as Record<string, unknown> | undefined;
+  if (!data) throw new Error("Marketplace pricing is unavailable.");
   return {
     ...data,
     buy_rate: Number(data.buy_rate),
@@ -62,8 +54,12 @@ export async function getSettings(): Promise<MarketplaceSettings> {
     buy_enabled: data.buy_enabled !== false,
     sell_enabled: data.sell_enabled !== false,
     estimated_delivery_minutes: Number(data.estimated_delivery_minutes ?? 15),
-    scheduled_prices: schedules.error ? [] : (schedules.data ?? []),
-    bulk_price_tiers: tiers.error ? [] : (tiers.data ?? []),
+    scheduled_prices: Array.isArray(data.scheduled_prices)
+      ? data.scheduled_prices
+      : [],
+    bulk_price_tiers: Array.isArray(data.bulk_price_tiers)
+      ? data.bulk_price_tiers
+      : [],
   } as MarketplaceSettings;
 }
 

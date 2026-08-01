@@ -21,6 +21,13 @@
 - TypeScript, ESLint, the 71-route production build, and all 14 critical tests pass locally; live responsive verification is recorded separately after deployment.
 - Live production browser verification: a signed-in sell item persisted from `/quote` to `/cart`, editing 250M to 300M updated the checkout URL and checkout fields, and a 390×844 viewport rendered the cart at 375px document width with no horizontal overflow.
 
+## Authoritative pricing and cancellation regression
+
+- A live authenticated 10M buy test created `RV-673A7160` and exposed a real mismatch: the fallback checkout preview showed $1.80 while the server correctly stored $2.50.
+- Replaced direct browser Supabase settings reads with a safe server JSON endpoint backed by the same production settings and optional schedule/tier tables used by order creation.
+- The same test exposed production owner-cancellation RLS denial. Added a narrowly scoped security-definer `cancel_own_order` migration and API fallback without granting customers arbitrary order updates.
+- The test order remains open because the production migration is not applied; it is clearly marked in its notes as an automated production verification order. Post-fix cancellation requires Supabase migration access.
+
 ## Passed
 
 - `npm run test:critical`: 14 passed, 0 failed; BTC and USDC payload mapping, unsupported-asset rejection, valid/structured/non-JSON/empty API response handling, canonical OSRS XP thresholds, starter/maxed combat formulas, seller-payout transition/role invariants, privacy-safe browser labels, deterministic pricing resolution, and corrupted-cart recovery are executable assertions.
