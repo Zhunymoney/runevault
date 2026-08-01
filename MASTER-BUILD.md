@@ -80,7 +80,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 - [ ] Server-protected roles and permissions. (Authenticated admin order/settings APIs, explicit role schema, validation, RLS, and audit writes implemented; production migration and role tests remain.)
 - [ ] Complete operational queues, searches, actions, notes, refunds, inventory, customers, support, and chat. (Order, support/chat, and inventory/listing queues now have server-authorized search/actions, staff notes, assignment/status controls, and audits; customer manager and Stripe refund UI remain.)
-- [ ] Complete editable settings and audit trail.
+- [ ] Complete editable settings and audit trail. (Editable marketplace settings, server-authorized audit writes, and a read-only searchable admin audit viewer are implemented; fine-grained permission enforcement, production migration, and live admin tests remain.)
 - [ ] Section 4 live tests and deployment.
 
 ## Section 5 — inventory, listings, and operations

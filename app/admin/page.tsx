@@ -261,6 +261,7 @@ export default function AdminPage() {
           <Link href="/admin/inventory" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/10 px-5 font-black">Inventory</Link>
           <Link href="/admin/marketing" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/10 px-5 font-black">Marketing</Link>
           <Link href="/admin/content" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/10 px-5 font-black">Content</Link>
+          <Link href="/admin/audit" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/10 px-5 font-black">Audit trail</Link>
           <button
             onClick={exportCsv}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[.03] px-5 font-black"

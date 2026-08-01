@@ -17,6 +17,7 @@ for (const [name,path,init] of [
   ["admin marketing auth JSON","/api/admin/marketing",{ headers:{Accept:"application/json"} }],
   ["order create auth JSON","/api/orders/create",{ method:"POST",headers:{"Content-Type":"application/json"},body:"{}" }],
   ["admin content auth JSON","/api/admin/content",{ headers:{Accept:"application/json"} }],
+  ["admin audit auth JSON","/api/admin/audit",{ headers:{Accept:"application/json"} }],
 ]) {
   const response = await fetch(`${base}${path}`, init); let valid=false; try { const data=await response.json(); valid=Boolean(data&&typeof data.error==="string"); } catch {}
   checks.push({name,ok:valid&&!response.ok,detail:`${response.status}`});
