@@ -2,7 +2,8 @@
 
 ## Passed
 
-- `npm run test:critical`: 5 passed, 0 failed; BTC and USDC payload mapping, unsupported-asset rejection, and valid/structured/non-JSON/empty API response handling are executable assertions.
+- `npm run test:critical`: 7 passed, 0 failed; BTC and USDC payload mapping, unsupported-asset rejection, valid/structured/non-JSON/empty API response handling, canonical OSRS XP thresholds, and starter/maxed combat formulas are executable assertions.
+- Local OSRS tools verification: level-to-XP, XP-to-virtual-level (through 200M), and combat-level calculators pass canonical threshold/formula tests, lint, TypeScript, and build.
 - GitHub Actions runs critical tests, lint, TypeScript, and production build on `main` pushes and pull requests.
 
 - `npm run lint`: passed with zero ESLint errors.

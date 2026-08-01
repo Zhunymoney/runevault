@@ -138,14 +138,14 @@ This document is the implementation checklist and evidence log for the complete 
 ## Section 13 — performance and code quality
 
 - [ ] Caching, query/index optimization, images, lazy loading, bundle/API optimization, SSR/code splitting, and duplicate/dead-code cleanup. (Indexed reporting/operational queries, server-rendered static surfaces, route-level bundles, and duplicate client JSON parser cleanup implemented; profiling and live cache validation remain.)
-- [ ] Central API/errors/env validation, migrations, automated critical-flow tests, and deployment verifier. (Reusable safe client API parser, environment validation including secret-leak checks, strict typecheck, five executable payment/API critical-flow tests, GitHub CI, and executable page/header/schema/API-JSON deployment smoke test implemented; authenticated browser/database flow automation remains.)
+- [ ] Central API/errors/env validation, migrations, automated critical-flow tests, and deployment verifier. (Reusable safe client API parser, environment validation including secret-leak checks, strict typecheck, seven executable payment/API/OSRS-formula critical-flow tests, GitHub CI, and executable page/header/schema/API-JSON deployment smoke test implemented; authenticated browser/database flow automation remains.)
 - [ ] Zero TypeScript/build errors, broken links, dead controls, unsafe secrets, and unhandled failures. (Lint, TypeScript, and production build are enforced locally; deployment verifier covers primary links and invalid API JSON behavior; full live control audit remains.)
 - [ ] Section 13 live tests and deployment.
 
 ## Section 14 — OSRS features and content
 
 - [ ] RuneVault pricing/history and clearly separated external market references. (RuneVault quote rates/history foundations are explicitly distinguished from external references; unavailable external provider data is never invented.)
-- [ ] XP/skill calculators, quest helpers, news, blog, guides, search, and admin content management. (Accurate OSRS level-XP calculator, database-backed news/blog/guides/quest helpers, indexed full-text search, safe article rendering, draft/review/publish editor, public RLS, and empty states implemented; additional skill calculators and live migration tests remain.)
+- [ ] XP/skill calculators, quest helpers, news, blog, guides, search, and admin content management. (Tested OSRS level-to-XP, XP-to-virtual-level, and combat-level calculators; database-backed news/blog/guides/quest helpers; indexed full-text search; safe article rendering; draft/review/publish editor; public RLS; and empty states implemented; live content migration tests remain.)
 - [ ] Section 14 live tests and deployment.
 
 ## Section 15 — SEO, business, and legal structure
