@@ -12,7 +12,7 @@
 - Added permission-protected, audited admin controls for rate schedules and buy/sell bulk tiers, plus price-history visibility.
 - Quote, checkout, and order creation use the same deterministic resolver: newest active applicable schedule, then highest qualifying type-specific tier.
 - Resolver tests cover precedence, expiry, thresholds, and fallback; the critical suite now passes 13/13 with TypeScript and ESLint clean.
-- Production migration and authenticated admin/order tests remain pending Supabase access and test identities.
+- Production migration history is aligned through `202608011500`; authenticated order creation, signed BTC quote issuance, manual-review submission persistence, and test-data cleanup passed against production.
 
 ## Persistent shopping cart
 

@@ -1,4 +1,4 @@
--- RuneVault all-in-one schema. Run once in a NEW Supabase project SQL Editor.
+-- RuneVault initial schema baseline. Applied before all additive migrations.
 create extension if not exists pgcrypto;
 
 create table if not exists public.profiles (
@@ -36,9 +36,9 @@ create table if not exists public.orders (
   notes text,
   assigned_to uuid references public.profiles(id) on delete set null,
   payment_provider text check (payment_provider in ('stripe','crypto_manual')),
-  payment_asset text check (payment_asset in ('BTC','USDC')),
+  crypto_asset text check (crypto_asset in ('BTC','USDC')),
   payment_status text,
-  transaction_id text,
+  payment_id text,
   paid_at timestamptz,
   risk_score integer not null default 0 check (risk_score between 0 and 100),
   risk_level text check (risk_level in ('low','medium','high')),
@@ -49,15 +49,15 @@ create table if not exists public.orders (
 
 -- Safe upgrade path for existing RuneVault databases.
 alter table public.orders add column if not exists payment_provider text;
-alter table public.orders add column if not exists payment_asset text;
+alter table public.orders add column if not exists crypto_asset text;
 alter table public.orders add column if not exists payment_status text;
-alter table public.orders add column if not exists transaction_id text;
+alter table public.orders add column if not exists payment_id text;
 alter table public.orders add column if not exists paid_at timestamptz;
 alter table public.orders add column if not exists risk_score integer not null default 0;
 alter table public.orders add column if not exists risk_level text;
 alter table public.orders add column if not exists risk_reasons text[] not null default '{}';
-create unique index if not exists orders_transaction_id_unique
-  on public.orders(transaction_id) where transaction_id is not null;
+create unique index if not exists orders_payment_id_unique
+  on public.orders(payment_id) where payment_id is not null;
 
 create table if not exists public.audit_logs (
   id bigint generated always as identity primary key,
@@ -98,8 +98,8 @@ begin
   new.price_per_m := case when new.order_type = 'buy' then s.buy_rate else s.sell_rate end;
   new.total_price := round(new.amount_m * new.price_per_m, 2);
   new.status := 'pending';
-  new.payment_provider := null; new.payment_asset := null; new.payment_status := null;
-  new.transaction_id := null; new.paid_at := null; new.assigned_to := null;
+  new.payment_provider := null; new.crypto_asset := null; new.payment_status := null;
+  new.payment_id := null; new.paid_at := null; new.assigned_to := null;
   new.risk_score := 0; new.risk_level := null; new.risk_reasons := '{}';
   return new;
 end;

@@ -26,6 +26,6 @@ Required Vercel variables are documented in `DEPLOYMENT.md`. Crypto addresses/ne
 
 ## Honest completion limits
 
-The code, build, deployment, and public smoke tests pass, but the master request is not fully live-complete. Supabase CLI is unauthenticated and no database password/access token was available, so new migrations cannot be applied or verified. Production service-role access to existing orders is denied by current grants. Consequently, real BTC and USDC persisted submissions, new-table workflows, staff/customer RLS matrices, realtime chat, and provider-backed card/email/Discord/CAPTCHA tests are externally blocked. `TEST-REPORT.md` records each result without claiming success.
+The code, build, deployment, public smoke tests, and production Supabase migration alignment pass. All 20 migration versions are recorded and a final linked dry run reports no pending migrations. An authenticated production BTC flow issued a signed quote, persisted a synthetic transaction in the manual-review queue, verified the stored provider/status/transaction fields, and removed all temporary test data. Provider-backed card/email/Discord/CAPTCHA checks still depend on the corresponding owner-controlled provider accounts and configuration. `TEST-REPORT.md` records the verified scope without claiming untested provider behavior.
 
 Legal pages are drafts requiring owner/counsel review. Hourly automation is not available on the current Vercel Hobby plan; deployment uses a supported daily schedule.

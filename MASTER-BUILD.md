@@ -157,7 +157,7 @@ This document is the implementation checklist and evidence log for the complete 
 ## Section 16 — infrastructure, deployment, monitoring, and recovery
 
 - [ ] Environment validation for production/preview/development. (Executable validator and three-target Vercel inventory completed; public Supabase configuration and canonical `NEXT_PUBLIC_SITE_URL` now cover Production, Preview, and Development; optional providers remain unconfigured.)
-- [ ] Vercel/Supabase migrations, health, structured logs, monitoring foundation, rollback, backup, recovery, and setup documentation. (Linked Vercel project, health page, automation failure ledger, migration history, safe rollback, backup/recovery, and reproducible deployment instructions documented; live Supabase migration remains externally blocked.)
+- [x] Vercel/Supabase migrations, health, structured logs, monitoring foundation, rollback, backup, recovery, and setup documentation. (Linked Vercel project, health page, automation failure ledger, aligned 20-version production migration history, safe rollback, backup/recovery, and reproducible deployment instructions verified.)
 - [ ] Provider setup documentation for Stripe, Discord, email, analytics, CAPTCHA, storage, and chat. (Required variables and activation/testing steps documented without values; external accounts/credentials remain owner-controlled.)
 - [ ] Section 16 live tests and deployment. (Vercel environment coverage corrected, production deployment Ready, and public health/header/API smoke checks passed; Supabase migration/provider tests remain blocked.)
 

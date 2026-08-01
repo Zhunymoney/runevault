@@ -17,13 +17,13 @@ A database-backed Next.js test-mode marketplace foundation.
 2. Open Terminal.
 3. Run `npm.cmd install`.
 4. Copy `.env.example` to `.env.local` and configure the required public and server-only values.
-5. In Supabase SQL Editor, run all of `supabase/schema.sql`.
+5. Link the project with the Supabase CLI and run `supabase db push` to apply the ordered files in `supabase/migrations`.
 6. Restart with `npm.cmd run dev` and open `http://localhost:3000`.
 7. Create/sign in to your account.
 8. To make yourself admin, edit and run `supabase/make-first-admin.sql` using your login email.
 
 ## Existing Supabase project
-If the project already has older `profiles`, `settings`, or `orders` tables, use a new Supabase project for the cleanest setup. Do not run destructive migrations without a backup.
+Inspect `supabase migration list --linked` and take a backup before applying changes. If an existing project was initialized manually, verify its objects before using `supabase migration repair`; never mark a migration applied solely to bypass an error. Do not run destructive migrations without a backup.
 
 ## Security
 - Never put a service-role or secret key in `.env.local` with a `NEXT_PUBLIC_` name.

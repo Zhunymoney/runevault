@@ -27,9 +27,9 @@ Optional complete provider groups: Stripe (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_
 
 ## Supabase migrations
 
-Migrations in `supabase/migrations` are additive and ordered. Before production: create/verify a backup, link the correct project with `supabase link --project-ref ...`, inspect `supabase db diff`, apply with `supabase db push`, and record the CLI output. Never run against production using an unverified project reference. Test RLS with separate customer, staff, and anonymous sessions after applying.
+Migrations in `supabase/migrations` are the canonical schema, beginning with `202608010000_initial_schema.sql`, and are additive and ordered. Before production: create/verify a backup, link the correct project with `supabase link --project-ref ...`, inspect `supabase db diff`, apply with `supabase db push`, and record the CLI output. Never run against production using an unverified project reference. Test RLS with separate customer, staff, and anonymous sessions after applying.
 
-The current workstation has no Supabase CLI access token or database password, so the new migrations have not been applied live. Production features backed by new tables must report a configuration error until this external access is supplied; they must not fake success.
+Production migration history is aligned with the canonical chain through `202608011500_sync_production_schema.sql`. Before future changes, confirm `supabase migration list --linked` is aligned and require a clean `supabase db push --linked --dry-run` after applying.
 
 ## Provider setup
 
