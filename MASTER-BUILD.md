@@ -124,9 +124,9 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 11 — security, fraud, and audit logging
 
-- [ ] Complete RLS and server authorization review.
-- [ ] CAPTCHA/bot controls, durable rate limits, validation, CSRF posture, fraud queues, idempotency, upload controls, sessions, headers, CSP, and safe errors.
-- [ ] Backup/recovery and security operational documentation.
+- [ ] Complete RLS and server authorization review. (Additive RLS, owner/admin API checks, server-only service credentials, audit records, security-event records, session records, and fraud-review schema implemented; live policy tests remain.)
+- [ ] CAPTCHA/bot controls, durable rate limits, validation, CSRF posture, fraud queues, idempotency, upload controls, sessions, headers, CSP, and safe errors. (Durable atomic rate-limit RPC, fraud queue, existing payment idempotency/quote validation/upload allowlist, HSTS, production CSP without unsafe-eval, and safe API errors implemented; CAPTCHA provider wiring and live tests remain.)
+- [ ] Backup/recovery and security operational documentation. (Backup, isolated restore, incident recovery, credential rotation, and abuse-control runbook added; owner must confirm Supabase backup retention.)
 - [ ] Section 11 live tests and deployment.
 
 ## Section 12 — premium UI redesign

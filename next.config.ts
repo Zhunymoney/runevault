@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 
+const scriptPolicy = process.env.NODE_ENV === "production"
+  ? "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com"
+  : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com";
+
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
@@ -7,6 +11,7 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Cross-Origin-Resource-Policy", value: "same-site" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
   {
     key: "Content-Security-Policy",
     value: [
@@ -18,7 +23,7 @@ const securityHeaders = [
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
       "style-src 'self' 'unsafe-inline'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com",
+      scriptPolicy,
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com",
       "upgrade-insecure-requests",
     ].join("; "),
