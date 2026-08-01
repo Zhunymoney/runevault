@@ -1,4 +1,7 @@
 -- Section 11: durable defensive controls, session visibility, fraud review, and security events.
+alter table public.orders add column if not exists risk_score integer not null default 0;
+alter table public.orders add column if not exists risk_level text;
+alter table public.orders add column if not exists risk_reasons text[] not null default '{}';
 create table if not exists public.request_rate_limits (
   key_hash text primary key, request_count integer not null default 0 check (request_count >= 0),
   window_started_at timestamptz not null default now(), blocked_until timestamptz, updated_at timestamptz not null default now()
@@ -33,6 +36,20 @@ create index if not exists security_events_user_idx on public.security_events(us
 create index if not exists security_events_review_idx on public.security_events(severity, reviewed_at, created_at desc);
 create index if not exists user_sessions_owner_idx on public.user_sessions(user_id, last_seen_at desc);
 create index if not exists fraud_reviews_queue_idx on public.fraud_reviews(status, risk_score desc, created_at);
+create unique index if not exists fraud_reviews_order_idx on public.fraud_reviews(order_id);
+
+create or replace function public.queue_order_fraud_review()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.risk_level in ('medium','high') then
+    insert into public.fraud_reviews(order_id,risk_score,reasons)
+    values(new.id,new.risk_score,coalesce(new.risk_reasons,'{}'::text[]))
+    on conflict(order_id) do update set risk_score=excluded.risk_score,reasons=excluded.reasons,updated_at=now();
+  end if;
+  return new;
+end $$;
+drop trigger if exists orders_queue_fraud_review on public.orders;
+create trigger orders_queue_fraud_review after insert or update of risk_score,risk_level,risk_reasons on public.orders for each row execute function public.queue_order_fraud_review();
 
 create or replace function public.claim_rate_limit(p_key_hash text, p_limit integer, p_window_seconds integer)
 returns table(allowed boolean, remaining integer, retry_after integer)

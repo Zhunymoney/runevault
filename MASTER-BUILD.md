@@ -79,7 +79,7 @@ This document is the implementation checklist and evidence log for the complete 
 ## Section 4 — admin system
 
 - [ ] Server-protected roles and permissions. (Every admin API now enforces a server-side permission, owner wildcard access, permission implications for read/manage roles, legacy-admin compatibility without legacy-staff escalation, durable mutation limits, and fulfillment-only delivery transitions; production migration and authenticated role-matrix tests remain.)
-- [ ] Complete operational queues, searches, actions, notes, refunds, inventory, customers, support, and chat. (Order, support/chat, inventory/listing, and customer queues now have server-authorized search/actions, staff notes, assignment/status controls, deletion-request handling, owner-only role management, and audits; Stripe refund UI remains.)
+- [ ] Complete operational queues, searches, actions, notes, refunds, inventory, customers, support, and chat. (Order, support/chat, inventory/listing, customer, and fraud-review queues now have server-authorized search/actions, staff notes, assignment/status controls, deletion-request handling, owner-only role management, and audits; Stripe refund UI remains.)
 - [ ] Complete editable settings and audit trail. (Editable marketplace settings, server-authorized audit writes, a read-only searchable admin audit viewer, and fine-grained settings/audit/automation/content/marketing/inventory/support permissions are implemented; production migration and live admin tests remain.)
 - [ ] Section 4 live tests and deployment.
 
@@ -124,7 +124,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 11 — security, fraud, and audit logging
 
-- [ ] Complete RLS and server authorization review. (Additive RLS, owner/admin API checks, server-only service credentials, audit records, security-event records, session records, and fraud-review schema implemented; live policy tests remain.)
+- [ ] Complete RLS and server authorization review. (Additive RLS, owner/admin API checks, server-only service credentials, audit/security/session records, transactional risk-triggered fraud queue, fine-grained review permission, and audited review outcomes are implemented; live policy and authenticated queue tests remain.)
 - [ ] CAPTCHA/bot controls, durable rate limits, validation, CSRF posture, fraud queues, idempotency, upload controls, sessions, headers, CSP, and safe errors. (Durable atomic rate limiting covers high-risk payment/order/support/admin/session mutations; fraud queue, payment idempotency/quote validation, upload allowlist, keyed session/IP fingerprints, global session revocation, HSTS, production CSP without unsafe-eval, and safe API errors are implemented; CAPTCHA provider wiring, migration, and live authenticated tests remain.)
 - [ ] Backup/recovery and security operational documentation. (Backup, isolated restore, incident recovery, credential rotation, and abuse-control runbook added; owner must confirm Supabase backup retention.)
 - [ ] Section 11 live tests and deployment.

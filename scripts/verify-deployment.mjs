@@ -21,6 +21,7 @@ for (const [name,path,init] of [
   ["admin customer auth JSON","/api/admin/customers",{ headers:{Accept:"application/json"} }],
   ["admin announcement auth JSON","/api/admin/announcements",{ headers:{Accept:"application/json"} }],
   ["admin automation auth JSON","/api/admin/automation",{ headers:{Accept:"application/json"} }],
+  ["admin fraud auth JSON","/api/admin/fraud",{ headers:{Accept:"application/json"} }],
   ["referral auth JSON","/api/rewards/referrals",{ headers:{Accept:"application/json"} }],
   ["account security auth JSON","/api/account/security",{ headers:{Accept:"application/json"} }],
 ]) {

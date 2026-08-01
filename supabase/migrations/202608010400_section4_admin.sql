@@ -10,6 +10,7 @@ insert into public.admin_permissions(admin_role, permission) values
 ('support','orders.read'),('support','customers.read'),('support','support.manage'),
 ('fulfillment','orders.read'),('fulfillment','orders.fulfill'),('analytics','analytics.read'),
 ('manager','inventory.manage'),('manager','marketing.manage'),('manager','content.manage'),('manager','audit.read'),('manager','automation.read'),
+('manager','fraud.manage'),
 ('fulfillment','inventory.manage') on conflict do nothing;
 
 alter table public.admin_permissions enable row level security;
