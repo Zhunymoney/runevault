@@ -14,9 +14,15 @@
 - Resolver tests cover precedence, expiry, thresholds, and fallback; the critical suite now passes 13/13 with TypeScript and ESLint clean.
 - Production migration and authenticated admin/order tests remain pending Supabase access and test identities.
 
+## Persistent shopping cart
+
+- Added a real local multi-item OSRS buy/sell cart with quantity edits, removal, clear, combined estimates, and navigation into independent secure order/payment references.
+- Cart estimates use the same scheduled/tier resolver as quote, checkout, and order creation; corrupted persisted entries are rejected and storage is capped at 25 items.
+- TypeScript, ESLint, the 71-route production build, and all 14 critical tests pass locally; live responsive verification is recorded separately after deployment.
+
 ## Passed
 
-- `npm run test:critical`: 13 passed, 0 failed; BTC and USDC payload mapping, unsupported-asset rejection, valid/structured/non-JSON/empty API response handling, canonical OSRS XP thresholds, starter/maxed combat formulas, seller-payout transition/role invariants, privacy-safe browser labels, and deterministic pricing resolution are executable assertions.
+- `npm run test:critical`: 14 passed, 0 failed; BTC and USDC payload mapping, unsupported-asset rejection, valid/structured/non-JSON/empty API response handling, canonical OSRS XP thresholds, starter/maxed combat formulas, seller-payout transition/role invariants, privacy-safe browser labels, deterministic pricing resolution, and corrupted-cart recovery are executable assertions.
 - Local OSRS tools verification: level-to-XP, XP-to-virtual-level (through 200M), and combat-level calculators pass canonical threshold/formula tests, lint, TypeScript, and build.
 - GitHub Actions runs critical tests, lint, TypeScript, and production build on `main` pushes and pull requests.
 

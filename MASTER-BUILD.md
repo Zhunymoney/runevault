@@ -57,7 +57,7 @@ This document is the implementation checklist and evidence log for the complete 
 - [x] BTC selection sends `paymentMethod: "btc"` and succeeds through the live customer flow.
 - [x] USDC selection sends `paymentMethod: "usdc"` and succeeds through the live customer flow.
 - [x] Non-JSON/empty API responses display cleanly.
-- [ ] One-page checkout, cart, validation, discounts, terms, inventory/price verification, cancellation/retry, and mobile tests. (One-page responsive checkout, server pricing/settings/limits, stable request idempotency, coupon input/atomic rules, terms evidence, inventory check/reservation attempt, cancellation/retry implemented; multi-item cart and live mobile/auth tests remain.)
+- [ ] One-page checkout, cart, validation, discounts, terms, inventory/price verification, cancellation/retry, and mobile tests. (One-page responsive checkout, persistent validated multi-item buy/sell cart with editable quantities/removal/clear and per-item secure checkout, server-consistent scheduled/tier estimates, server pricing/settings/limits, stable request idempotency, coupon input/atomic rules, terms evidence, inventory check/reservation attempt, and cancellation/retry implemented; live mobile/auth tests remain.)
 - [ ] Complete payment status model and secure proof upload. (Implementation and additive migration created; production migration and live proof test remain.)
 - [ ] Required Section 1 live tests and deployment.
 

@@ -6,6 +6,7 @@ import { ArrowRight, CheckCircle2, Coins, ShieldCheck } from "lucide-react";
 import { getSettings } from "@/lib/marketplace";
 import type { MarketplaceSettings, OrderType } from "@/lib/types";
 import { resolveEffectivePrice } from "@/lib/pricing";
+import { addCartItem } from "@/lib/cart";
 
 const fallback: MarketplaceSettings = {
   id: 1,
@@ -28,6 +29,11 @@ export function QuoteCard() {
   const router = useRouter();
 
   useEffect(() => {
+    const requestedType = new URLSearchParams(window.location.search).get(
+      "type",
+    );
+    if (requestedType === "buy" || requestedType === "sell")
+      setType(requestedType);
     void getSettings()
       .then(setSettings)
       .catch(() =>
@@ -80,6 +86,22 @@ export function QuoteCard() {
 
     if (deliveryName.trim()) params.set("name", deliveryName.trim());
     router.push(`/checkout?${params.toString()}`);
+  }
+
+  function addToCart() {
+    if (
+      amount < settings.minimum_order_m ||
+      amount > settings.maximum_order_m
+    ) {
+      setMessage(
+        `Orders must be between ${settings.minimum_order_m}M and ${settings.maximum_order_m}M.`,
+      );
+      return;
+    }
+    addCartItem({ orderType: type, amountM: amount, deliveryName });
+    setMessage(
+      "Added to your cart. You can keep shopping or review the cart now.",
+    );
   }
 
   return (
@@ -179,6 +201,13 @@ export function QuoteCard() {
               ? "Review Buy Order"
               : "Review Sell Order"}
           {!busy && <ArrowRight size={18} />}
+        </button>
+        <button
+          type="button"
+          onClick={addToCart}
+          className="mt-3 min-h-12 w-full rounded-xl border border-white/10 bg-white/[.035] px-5 font-black text-white hover:border-amber-300/25"
+        >
+          Add to cart
         </button>
 
         <div className="mt-5 grid grid-cols-2 gap-3 text-xs font-semibold text-white/35">

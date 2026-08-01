@@ -1,7 +1,7 @@
 const base = (process.argv[2] || process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
 if (!/^https:\/\//.test(base)) { console.error("Usage: npm run verify:deployment -- https://your-domain.example"); process.exit(1); }
 const checks = [];
-for (const path of ["/", "/quote", "/marketplace", "/osrs", "/support", "/health", "/pay"]) {
+for (const path of ["/", "/quote", "/cart", "/marketplace", "/osrs", "/support", "/health", "/pay"]) {
   const response = await fetch(`${base}${path}`, { redirect: "follow" });
   checks.push({ name: path, ok: response.ok, detail: `${response.status}` });
   if (path === "/") { for (const header of ["content-security-policy", "strict-transport-security", "x-content-type-options"]) checks.push({ name: header, ok: Boolean(response.headers.get(header)), detail: response.headers.get(header) ? "present" : "missing" }); const html=await response.text(); checks.push({name:"structured data",ok:html.includes('application/ld+json')&&html.includes('FAQPage')&&html.includes('Organization'),detail:"homepage schemas"}); }

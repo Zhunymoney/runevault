@@ -10,6 +10,7 @@ import {
 import { sellerTransitionError } from "../lib/order-lifecycle.ts";
 import { browserFamily } from "../lib/security-fingerprint.ts";
 import { resolveEffectivePrice } from "../lib/pricing.ts";
+import { normalizeCart } from "../lib/cart.ts";
 
 test("BTC selection produces the exact API payment method", () => {
   assert.deepEqual(
@@ -232,4 +233,31 @@ test("pricing ignores expired schedules and non-qualifying tiers", () => {
     tierId: null,
     adjustment: 0,
   });
+});
+
+test("cart keeps valid items and rejects corrupted persisted data", () => {
+  const items = normalizeCart([
+    {
+      id: "123e4567-e89b-42d3-a456-426614174000",
+      orderType: "buy",
+      amountM: 250.9,
+      deliveryName: " Valid Name ",
+      createdAt: "2026-08-01T00:00:00Z",
+    },
+    { id: "bad", orderType: "buy", amountM: -1 },
+    {
+      id: "123e4567-e89b-42d3-a456-426614174001",
+      orderType: "rs3",
+      amountM: 100,
+    },
+  ]);
+  assert.deepEqual(items, [
+    {
+      id: "123e4567-e89b-42d3-a456-426614174000",
+      orderType: "buy",
+      amountM: 250,
+      deliveryName: "Valid Name",
+      createdAt: "2026-08-01T00:00:00Z",
+    },
+  ]);
 });
