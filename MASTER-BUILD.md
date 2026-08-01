@@ -92,8 +92,8 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 6 — analytics and reporting
 
-- [ ] Database-backed revenue, sales, profit, gold, orders, customers, payment, conversion, and retention metrics.
-- [ ] Date ranges, charts, activity, CSV, and downloadable reports without demonstration data.
+- [ ] Database-backed revenue, sales, estimated margin, gold, orders, customers, payment, conversion, and retention metrics. (Real-order calculation module and indexed schema implemented; production accuracy checks remain.)
+- [ ] Date ranges, charts, activity, CSV, and downloadable reports without demonstration data. (Daily/weekly/monthly/yearly/custom filtering, real bar chart, empty states, payment breakdown, and CSV implemented; live admin verification remains.)
 - [ ] Section 6 live tests and deployment.
 
 ## Section 7 — automation and notifications
