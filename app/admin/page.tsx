@@ -258,6 +258,7 @@ export default function AdminPage() {
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link href="/admin/support" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/10 px-5 font-black">Support inbox</Link>
+          <Link href="/admin/inventory" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/10 px-5 font-black">Inventory</Link>
           <button
             onClick={exportCsv}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[.03] px-5 font-black"
