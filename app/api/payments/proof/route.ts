@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { getOrderByReference, rateLimit, requestIp, requireOrderOwner, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
+import { durableRateLimit, getOrderByReference, requestIp, requireOrderOwner, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
 
 export const runtime = "nodejs";
 const allowedTypes = new Map([["image/jpeg", "jpg"], ["image/png", "png"], ["image/webp", "webp"], ["application/pdf", "pdf"]]);
 
 export async function POST(request: Request) {
-  const limit = rateLimit(`payment-proof:${requestIp(request)}`, 4, 10 * 60_000);
+  const limit = await durableRateLimit(`payment-proof:${requestIp(request)}`, 4, 10 * 60_000);
   if (!limit.allowed) return NextResponse.json({ error: "Too many proof uploads. Try again later." }, { status: 429 });
   try {
     const form = await request.formData();

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getOrderByReference,
-  rateLimit,
+  durableRateLimit,
   requestIp,
   requireOrderOwner,
   riskScore,
@@ -12,7 +12,7 @@ import {
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const limit = rateLimit(`stripe-create:${requestIp(request)}`, 5);
+  const limit = await durableRateLimit(`stripe-create:${requestIp(request)}`, 5);
   if (!limit.allowed) {
     return NextResponse.json(
       { error: "Too many payment attempts. Try again shortly." },

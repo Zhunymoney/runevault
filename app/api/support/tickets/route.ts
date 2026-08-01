@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { rateLimit, requestIp, supabaseUrl, userHeaders } from "@/lib/launch-server";
+import { durableRateLimit, requestIp, supabaseUrl, userHeaders } from "@/lib/launch-server";
 
 type User = { id: string };
 
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const limit = rateLimit(`support-ticket:${requestIp(request)}`, 5, 10 * 60_000);
+  const limit = await durableRateLimit(`support-ticket:${requestIp(request)}`, 5, 10 * 60_000);
   if (!limit.allowed) return NextResponse.json({ error: "Too many support requests. Try again later." }, { status: 429 });
   try {
     const { authorization, user } = await authenticated(request);
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const limit = rateLimit(`support-reply:${requestIp(request)}`, 20, 10 * 60_000);
+  const limit = await durableRateLimit(`support-reply:${requestIp(request)}`, 20, 10 * 60_000);
   if (!limit.allowed) return NextResponse.json({ error: "Too many replies. Try again later." }, { status: 429 });
   try {
     const { authorization, user } = await authenticated(request);

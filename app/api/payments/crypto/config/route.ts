@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { rateLimit, requestIp, requireOrderOwner, safeGetOrderByReference, supabaseUrl, userHeaders } from "@/lib/launch-server";
+import { durableRateLimit, requestIp, requireOrderOwner, safeGetOrderByReference, supabaseUrl, userHeaders } from "@/lib/launch-server";
 import { createCryptoQuote } from "@/lib/crypto-quote";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const limit = rateLimit(`crypto-config:${requestIp(request)}`, 10);
+  const limit = await durableRateLimit(`crypto-config:${requestIp(request)}`, 10);
 
   if (!limit.allowed) {
     return NextResponse.json(

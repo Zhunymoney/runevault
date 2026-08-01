@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getOrderByReference,
-  rateLimit,
+  durableRateLimit,
   requestIp,
   requireOrderOwner,
   riskScore,
@@ -21,7 +21,7 @@ type CryptoSubmissionBody = {
 };
 
 export async function POST(request: Request) {
-  const limit = rateLimit(
+  const limit = await durableRateLimit(
     `crypto-sent:${requestIp(request)}`,
     4,
     5 * 60_000,

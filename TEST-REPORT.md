@@ -8,6 +8,7 @@
 - Vercel production build: passed on Node/Next.js 16.2.12; deployment reached Ready.
 - Live alias smoke test: `/`, `/quote`, `/support`, `/health`, and `/pay` returned 200.
 - Live security headers: Content Security Policy, HSTS, and `X-Content-Type-Options` present.
+- Local security verification: database-backed rate limiting compiles on crypto configuration/submission, Stripe creation, payment proof upload, order cancellation, and customer ticket mutation routes; the production migration still requires Supabase access before distributed enforcement can be live-verified.
 - Live crypto API error contract: correct POST request with invalid context returns parseable JSON instead of an empty response.
 - API protections: unauthenticated admin/support/payment routes inspected; customer/admin bearer and RLS checks are implemented server-side.
 - Static responsive review: customer, payment, support, OSRS, policy, error, loading, and empty states compile at mobile/tablet/desktop breakpoints.

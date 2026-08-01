@@ -36,7 +36,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 - Production schema drift: production orders use `crypto_asset` and `payment_id`; the original checked-in schema declares `payment_asset` and `transaction_id`. Migrations must support existing names and preserve rows.
 - Production `service_role` lacks direct orders-table grants; customer payment writes currently succeed through the verified owner session and RLS.
-- Existing in-memory rate limiting is not durable across serverless instances.
+- The original in-memory rate limiter was not durable across serverless instances; a database-backed atomic limiter with a safe local fallback is now wired to the highest-risk payment, cancellation, proof-upload, and support-ticket mutations.
 - Admin access is checked in client code and protected by existing RLS, but dedicated server-side admin route/API authorization is incomplete.
 - Stripe readiness depends on external Stripe credentials, account approval, wallet-domain configuration, and webhook setup.
 - Email, Discord, CAPTCHA, file storage, realtime support, monitoring, scheduled jobs, and analytics providers require implementation and/or external credentials.
@@ -125,7 +125,7 @@ This document is the implementation checklist and evidence log for the complete 
 ## Section 11 — security, fraud, and audit logging
 
 - [ ] Complete RLS and server authorization review. (Additive RLS, owner/admin API checks, server-only service credentials, audit records, security-event records, session records, and fraud-review schema implemented; live policy tests remain.)
-- [ ] CAPTCHA/bot controls, durable rate limits, validation, CSRF posture, fraud queues, idempotency, upload controls, sessions, headers, CSP, and safe errors. (Durable atomic rate-limit RPC, fraud queue, existing payment idempotency/quote validation/upload allowlist, HSTS, production CSP without unsafe-eval, and safe API errors implemented; CAPTCHA provider wiring and live tests remain.)
+- [ ] CAPTCHA/bot controls, durable rate limits, validation, CSRF posture, fraud queues, idempotency, upload controls, sessions, headers, CSP, and safe errors. (Durable atomic rate-limit RPC is wired to crypto configuration/submission, Stripe creation, payment proof upload, order cancellation, and customer ticket create/reply with a safe local fallback; fraud queue, payment idempotency/quote validation, upload allowlist, HSTS, production CSP without unsafe-eval, and safe API errors are implemented; remaining endpoint coverage, CAPTCHA provider wiring, migration, and live tests remain.)
 - [ ] Backup/recovery and security operational documentation. (Backup, isolated restore, incident recovery, credential rotation, and abuse-control runbook added; owner must confirm Supabase backup retention.)
 - [ ] Section 11 live tests and deployment.
 

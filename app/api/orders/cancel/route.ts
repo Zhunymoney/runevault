@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getOrderByReference, rateLimit, requestIp, requireOrderOwner, updateOrder } from "@/lib/launch-server";
+import { durableRateLimit, getOrderByReference, requestIp, requireOrderOwner, updateOrder } from "@/lib/launch-server";
 
 export async function POST(request: Request) {
-  const limit = rateLimit(`order-cancel:${requestIp(request)}`, 5, 10 * 60_000);
+  const limit = await durableRateLimit(`order-cancel:${requestIp(request)}`, 5, 10 * 60_000);
   if (!limit.allowed) return NextResponse.json({ error: "Too many cancellation attempts." }, { status: 429 });
   try {
     const body = (await request.json().catch(() => null)) as { reference?: unknown } | null;

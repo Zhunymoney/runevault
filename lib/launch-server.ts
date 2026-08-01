@@ -292,6 +292,42 @@ export async function sendDiscord(
   if (!response.ok) console.error(`Discord notification failed (${response.status}).`);
 }
 
+export async function durableRateLimit(key: string, limit = 8, windowMs = 60_000) {
+  const local = rateLimit(key, limit, windowMs);
+  if (!local.allowed) return local;
+
+  try {
+    const keyHash = createHmac("sha256", required("PAYMENT_QUOTE_SECRET"))
+      .update(`rate:${key}`)
+      .digest("hex");
+    const response = await fetch(`${supabaseUrl()}/rest/v1/rpc/claim_rate_limit`, {
+      method: "POST",
+      headers: serviceHeaders(),
+      body: JSON.stringify({
+        p_key_hash: keyHash,
+        p_limit: limit,
+        p_window_seconds: Math.max(1, Math.ceil(windowMs / 1000)),
+      }),
+      cache: "no-store",
+    });
+    if (!response.ok) return local;
+
+    const payload = (await response.json()) as
+      | Array<{ allowed: boolean; remaining: number; retry_after: number }>
+      | { allowed: boolean; remaining: number; retry_after: number };
+    const row = Array.isArray(payload) ? payload[0] : payload;
+    return row
+      ? {
+          allowed: Boolean(row.allowed),
+          remaining: Number(row.remaining ?? 0),
+          retryAfter: Number(row.retry_after ?? 0),
+        }
+      : local;
+  } catch {
+    return local;
+  }
+}
+
 export async function sendEmail(args: {
   to: string;
   subject: string;
