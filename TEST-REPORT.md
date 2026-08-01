@@ -24,9 +24,9 @@
 ## Authoritative pricing and cancellation regression
 
 - A live authenticated 10M buy test created `RV-673A7160` and exposed a real mismatch: the fallback checkout preview showed $1.80 while the server correctly stored $2.50.
-- Replaced direct browser Supabase settings reads with a safe server JSON endpoint backed by the same production settings and optional schedule/tier tables used by order creation.
+- Replaced direct browser Supabase settings reads with a safe allowlisted server JSON endpoint backed by the same settings and optional schedule/tier tables used by order creation; production currently returns clean 503 JSON until its read grants are migrated.
 - The same test exposed production owner-cancellation RLS denial. Added a narrowly scoped security-definer `cancel_own_order` migration and API fallback without granting customers arbitrary order updates.
-- The test order remains open because the production migration is not applied; it is clearly marked in its notes as an automated production verification order. Post-fix cancellation requires Supabase migration access.
+- The test order remains open because the production migration is not applied; it is clearly marked in its notes as an automated production verification order. Authoritative public pricing and post-fix cancellation both require Supabase migration access.
 
 ## Passed
 

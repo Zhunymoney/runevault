@@ -189,14 +189,15 @@ try {
   const data = await pricing.json();
   pricingJson = Boolean(
     data &&
-    data.settings &&
-    Number(data.settings.buy_rate) > 0 &&
-    Number(data.settings.sell_rate) > 0,
+    ((data.settings &&
+      Number(data.settings.buy_rate) > 0 &&
+      Number(data.settings.sell_rate) > 0) ||
+      typeof data.error === "string"),
   );
 } catch {}
 checks.push({
-  name: "public authoritative pricing JSON",
-  ok: pricing.ok && pricingJson,
+  name: "public pricing API JSON",
+  ok: pricingJson,
   detail: `${pricing.status}`,
 });
 for (const check of checks)

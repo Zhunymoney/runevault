@@ -1,4 +1,7 @@
 -- Owner-authorized cancellation without granting customers arbitrary order updates.
+grant select on public.settings to anon, authenticated, service_role;
+grant select on public.scheduled_prices, public.bulk_price_tiers to anon, authenticated, service_role;
+
 create or replace function public.cancel_own_order(p_reference text)
 returns table(reference text, status text, payment_status text)
 language plpgsql
