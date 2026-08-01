@@ -93,6 +93,11 @@ export async function POST(request: Request) {
     );
   }
 
+  const authorization = request.headers.get("authorization") ?? "";
+  if (!/^Bearer\s+\S+$/i.test(authorization)) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+
   if (methods.length === 0) {
     console.error(
       "Crypto configuration missing: CRYPTO_BTC_ADDRESS and CRYPTO_USDC_ADDRESS are not available.",
