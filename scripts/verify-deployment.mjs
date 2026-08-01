@@ -20,6 +20,7 @@ for (const path of [
   "/contact",
   "/disclosures",
   "/prohibited-use",
+  "/payment-policy",
   "/health",
   "/pay",
 ]) {

@@ -39,6 +39,7 @@ export function SiteFooter() {
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
             <Link href="/refund-policy">Refund policy</Link>
+            <Link href="/payment-policy">Payment policy</Link>
             <Link href="/delivery-policy">Delivery policy</Link>
             <Link href="/acceptable-use">Acceptable use</Link>
             <Link href="/prohibited-use">Prohibited use</Link>
