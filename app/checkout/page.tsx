@@ -103,11 +103,9 @@ export default function CheckoutPage() {
         notes: notes.trim(),
       });
 
-      router.push(
-        `/payment-selection?reference=${encodeURIComponent(
-          order.reference,
-        )}`,
-      );
+router.push(
+  `/pay?reference=${encodeURIComponent(order.reference)}`,
+);
     } catch (reason) {
       setMessage(
         reason instanceof Error
