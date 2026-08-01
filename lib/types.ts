@@ -40,6 +40,10 @@ export interface MarketplaceSettings {
   minimum_order_m: number;
   maximum_order_m: number;
   maintenance_mode: boolean;
+  buy_enabled?: boolean;
+  sell_enabled?: boolean;
+  estimated_delivery_minutes?: number;
+  pause_message?: string | null;
   updated_at: string;
 }
 
@@ -61,10 +65,18 @@ export interface Order {
   payment_asset: "BTC" | "USDC" | null;
   payment_status: string | null;
   transaction_id: string | null;
+  payment_id?: string | null;
+  crypto_asset?: "BTC" | "USDC" | null;
   paid_at: string | null;
   risk_score: number;
   risk_level: "low" | "medium" | "high" | null;
   risk_reasons: string[];
+  preferred_world?: number | null;
+  contact_details?: string | null;
+  payout_method?: string | null;
+  payout_details?: string | null;
+  seller_status?: "awaiting_meetup" | "gold_received" | "verification" | "payout_pending" | "payout_completed" | "rejected" | null;
+  seller_risk_notes?: string | null;
   created_at: string;
   updated_at: string;
 }

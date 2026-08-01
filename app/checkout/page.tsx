@@ -24,6 +24,10 @@ const fallback: MarketplaceSettings = {
   minimum_order_m: 10,
   maximum_order_m: 5000,
   maintenance_mode: false,
+  buy_enabled: true,
+  sell_enabled: true,
+  estimated_delivery_minutes: 15,
+  pause_message: null,
   updated_at: "",
 };
 
@@ -33,6 +37,10 @@ export default function CheckoutPage() {
   const [amount, setAmount] = useState(100);
   const [deliveryName, setDeliveryName] = useState("");
   const [notes, setNotes] = useState("");
+  const [preferredWorld, setPreferredWorld] = useState("");
+  const [contactDetails, setContactDetails] = useState("");
+  const [payoutMethod, setPayoutMethod] = useState("");
+  const [payoutDetails, setPayoutDetails] = useState("");
   const [settings, setSettings] = useState(fallback);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -83,6 +91,21 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!contactDetails.trim()) {
+      setMessage("Enter a contact email or Discord username for order coordination.");
+      return;
+    }
+
+    if (type === "sell" && (!payoutMethod || !payoutDetails.trim())) {
+      setMessage("Choose a payout method and enter the payout destination.");
+      return;
+    }
+
+    if ((type === "buy" && settings.buy_enabled === false) || (type === "sell" && settings.sell_enabled === false)) {
+      setMessage(settings.pause_message || `${type === "buy" ? "Buying" : "Selling"} is temporarily paused.`);
+      return;
+    }
+
     if (
       amount < settings.minimum_order_m ||
       amount > settings.maximum_order_m
@@ -101,6 +124,10 @@ export default function CheckoutPage() {
         amount_m: amount,
         delivery_name: deliveryName.trim(),
         notes: notes.trim(),
+        preferred_world: Number(preferredWorld) || undefined,
+        contact_details: contactDetails.trim(),
+        payout_method: payoutMethod || undefined,
+        payout_details: payoutDetails.trim() || undefined,
       });
 
 router.push(
@@ -232,6 +259,18 @@ router.push(
             </div>
           </label>
 
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <label className="block text-sm font-bold text-white/50">Preferred world <span className="font-normal text-white/25">(optional)</span><input type="number" min="301" max="999" value={preferredWorld} onChange={(event) => setPreferredWorld(event.target.value)} placeholder="World 330" className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-black/15 px-4 outline-none" /></label>
+            <label className="block text-sm font-bold text-white/50">Contact details<input required value={contactDetails} onChange={(event) => setContactDetails(event.target.value)} placeholder="Email or Discord username" className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-black/15 px-4 outline-none" /></label>
+          </div>
+
+          {type === "sell" && (
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm font-bold text-white/50">Payout method<select value={payoutMethod} onChange={(event) => setPayoutMethod(event.target.value)} className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-[#0b0e14] px-4 outline-none"><option value="">Choose payout</option><option value="btc">BTC</option><option value="usdc_base">USDC on Base</option><option value="paypal">PayPal</option></select></label>
+              <label className="block text-sm font-bold text-white/50">Payout destination<input value={payoutDetails} onChange={(event) => setPayoutDetails(event.target.value)} placeholder="Wallet or account email" className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-black/15 px-4 outline-none" /></label>
+            </div>
+          )}
+
           <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-2xl border border-white/10 bg-black/10 p-4 text-sm leading-6 text-white/50">
             <input
               type="checkbox"
@@ -280,6 +319,10 @@ router.push(
               <span className="text-white/40">Gold amount</span>
               <b>{amount}M</b>
             </div>
+            <div className="flex justify-between gap-5">
+              <span className="text-white/40">Estimated next step</span>
+              <b>Within {settings.estimated_delivery_minutes ?? 15} minutes</b>
+            </div>
 
             <div className="flex justify-between gap-5">
               <span className="text-white/40">Current rate</span>
@@ -300,7 +343,7 @@ router.push(
           <button
             type="button"
             onClick={() => void placeOrder()}
-            disabled={busy || settings.maintenance_mode}
+            disabled={busy || settings.maintenance_mode || (type === "buy" ? settings.buy_enabled === false : settings.sell_enabled === false)}
             className={`quote-submit ${
               type === "sell" ? "sell-submit" : ""
             }`}

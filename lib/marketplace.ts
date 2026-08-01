@@ -27,6 +27,9 @@ export async function getSettings(): Promise<MarketplaceSettings> {
     inventory_m: Number(data.inventory_m),
     minimum_order_m: Number(data.minimum_order_m),
     maximum_order_m: Number(data.maximum_order_m),
+    buy_enabled: data.buy_enabled !== false,
+    sell_enabled: data.sell_enabled !== false,
+    estimated_delivery_minutes: Number(data.estimated_delivery_minutes ?? 15),
   } as MarketplaceSettings;
 }
 
@@ -82,6 +85,10 @@ export async function createOrder(input: {
   amount_m: number;
   delivery_name?: string;
   notes?: string;
+  preferred_world?: number;
+  contact_details?: string;
+  payout_method?: string;
+  payout_details?: string;
 }) {
   const supabase = createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -91,6 +98,8 @@ export async function createOrder(input: {
   const rate = input.order_type === "buy" ? settings.buy_rate : settings.sell_rate;
 
   if (settings.maintenance_mode) throw new Error("Ordering is temporarily paused.");
+  if (input.order_type === "buy" && settings.buy_enabled === false) throw new Error(settings.pause_message || "Buying is temporarily paused.");
+  if (input.order_type === "sell" && settings.sell_enabled === false) throw new Error(settings.pause_message || "Selling is temporarily paused.");
   if (input.amount_m < settings.minimum_order_m || input.amount_m > settings.maximum_order_m) {
     throw new Error(`Orders must be between ${settings.minimum_order_m}M and ${settings.maximum_order_m}M.`);
   }
@@ -98,9 +107,7 @@ export async function createOrder(input: {
     throw new Error("That amount is currently above available test inventory.");
   }
 
-  const { data, error } = await supabase
-    .from("orders")
-    .insert({
+  const baseOrder = {
       user_id: userData.user.id,
       order_type: input.order_type,
       amount_m: input.amount_m,
@@ -109,12 +116,24 @@ export async function createOrder(input: {
       delivery_name: input.delivery_name?.trim() || null,
       notes: input.notes?.trim() || null,
       status: "pending",
-    })
+  };
+  const workflowOrder = {
+    ...baseOrder,
+    preferred_world: input.preferred_world || null,
+    contact_details: input.contact_details?.trim() || null,
+    payout_method: input.order_type === "sell" ? input.payout_method?.trim() || null : null,
+    payout_details: input.order_type === "sell" ? input.payout_details?.trim() || null : null,
+    seller_status: input.order_type === "sell" ? "awaiting_meetup" : null,
+  };
+  let result = await supabase.from("orders").insert(workflowOrder)
     .select("*")
     .single();
-
-  if (error) throw error;
-  return data as Order;
+  if (result.error && /preferred_world|contact_details|payout_method|seller_status/i.test(result.error.message)) {
+    const legacyNotes = [input.notes?.trim(), input.preferred_world ? `Preferred world: ${input.preferred_world}` : "", input.contact_details ? `Contact: ${input.contact_details.trim()}` : "", input.payout_method ? `Payout method: ${input.payout_method}` : ""].filter(Boolean).join("\n");
+    result = await supabase.from("orders").insert({ ...baseOrder, notes: legacyNotes || null }).select("*").single();
+  }
+  if (result.error) throw result.error;
+  return result.data as Order;
 }
 
 export async function getMyOrders(): Promise<Order[]> {
@@ -147,27 +166,39 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
 
 export async function updateSettings(input: Partial<MarketplaceSettings>) {
   const supabase = createClient();
-  const { data, error } = await supabase
+  const baseValues = {
+    buy_rate: input.buy_rate,
+    sell_rate: input.sell_rate,
+    inventory_m: input.inventory_m,
+    minimum_order_m: input.minimum_order_m,
+    maximum_order_m: input.maximum_order_m,
+    maintenance_mode: input.maintenance_mode,
+    updated_at: new Date().toISOString(),
+  };
+  let result = await supabase
     .from("settings")
     .update({
-      buy_rate: input.buy_rate,
-      sell_rate: input.sell_rate,
-      inventory_m: input.inventory_m,
-      minimum_order_m: input.minimum_order_m,
-      maximum_order_m: input.maximum_order_m,
-      maintenance_mode: input.maintenance_mode,
-      updated_at: new Date().toISOString(),
+      ...baseValues,
+      buy_enabled: input.buy_enabled,
+      sell_enabled: input.sell_enabled,
+      estimated_delivery_minutes: input.estimated_delivery_minutes,
+      pause_message: input.pause_message,
     })
     .eq("id", 1)
     .select("*")
     .single();
-  if (error) throw error;
-  return data as MarketplaceSettings;
+  if (result.error && /buy_enabled|sell_enabled|estimated_delivery_minutes|pause_message/i.test(result.error.message)) {
+    result = await supabase.from("settings").update(baseValues).eq("id", 1).select("*").single();
+  }
+  if (result.error) throw result.error;
+  return result.data as MarketplaceSettings;
 }
 
 function normalizeOrder(data: Record<string, unknown>): Order {
   return {
     ...(data as unknown as Order),
+    payment_asset: (data.payment_asset ?? data.crypto_asset ?? null) as Order["payment_asset"],
+    transaction_id: (data.transaction_id ?? data.payment_id ?? null) as string | null,
     amount_m: Number(data.amount_m),
     price_per_m: Number(data.price_per_m),
     total_price: Number(data.total_price),

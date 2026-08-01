@@ -353,17 +353,11 @@ export default function AdminPage() {
           </div>
 
           <div className="mt-6 flex flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-black/10 p-5 sm:flex-row sm:items-center">
-            <label className="flex items-center gap-3 font-bold text-white/65">
-              <input
-                type="checkbox"
-                checked={settings.maintenance_mode}
-                onChange={(event) =>
-                  setSettings({ ...settings, maintenance_mode: event.target.checked })
-                }
-                className="h-5 w-5 accent-amber-400"
-              />
-              Pause all new order creation
-            </label>
+            <div className="grid gap-3 text-sm font-bold text-white/65 sm:grid-cols-3">
+              <label className="flex items-center gap-3"><input type="checkbox" checked={settings.buy_enabled !== false} onChange={(event) => setSettings({ ...settings, buy_enabled: event.target.checked })} className="h-5 w-5 accent-amber-400" />Accept buy orders</label>
+              <label className="flex items-center gap-3"><input type="checkbox" checked={settings.sell_enabled !== false} onChange={(event) => setSettings({ ...settings, sell_enabled: event.target.checked })} className="h-5 w-5 accent-amber-400" />Accept sell orders</label>
+              <label className="flex items-center gap-3"><input type="checkbox" checked={settings.maintenance_mode} onChange={(event) => setSettings({ ...settings, maintenance_mode: event.target.checked })} className="h-5 w-5 accent-amber-400" />Pause all orders</label>
+            </div>
 
             <button
               onClick={() => void saveSettings()}
@@ -372,6 +366,10 @@ export default function AdminPage() {
             >
               <Save size={18} /> {saving ? "Saving…" : "Save settings"}
             </button>
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-[180px_1fr]">
+            <label className="text-sm font-semibold text-white/45">Delivery estimate (minutes)<input type="number" min="1" max="1440" value={settings.estimated_delivery_minutes ?? 15} onChange={(event) => setSettings({ ...settings, estimated_delivery_minutes: Number(event.target.value) })} className="mt-2 w-full rounded-xl border border-white/10 bg-black/15 px-4 py-3 text-white" /></label>
+            <label className="text-sm font-semibold text-white/45">Pause message<input value={settings.pause_message ?? ""} onChange={(event) => setSettings({ ...settings, pause_message: event.target.value })} placeholder="Shown when buying or selling is paused" className="mt-2 w-full rounded-xl border border-white/10 bg-black/15 px-4 py-3 text-white" /></label>
           </div>
         </section>
       )}
