@@ -131,8 +131,8 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 12 — premium UI redesign
 
-- [ ] Premium homepage and complete customer/admin/payment/order surfaces.
-- [ ] Responsive, accessible, performant states, animations, navigation, 404, error, and loading experiences.
+- [ ] Premium homepage and complete customer/admin/payment/order surfaces. (Existing branded responsive homepage, quote, checkout, payment, tracking, account, admin, analytics, and support surfaces preserved and extended; full visual QA remains.)
+- [ ] Responsive, accessible, performant states, animations, navigation, 404, error, and loading experiences. (Branded 404, safe error recovery, accessible global skeleton loading, responsive layouts, labels, status/error/empty states, and restrained transitions implemented; cross-device live QA remains.)
 - [ ] Section 12 live tests and deployment.
 
 ## Section 13 — performance and code quality

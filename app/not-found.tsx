@@ -1,27 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, SearchX } from "lucide-react";
+import { Compass, Home, Search } from "lucide-react";
 
 export default function NotFound() {
-  return (
-    <main className="mx-auto flex min-h-[700px] max-w-3xl items-center px-6 py-20">
-      <section className="w-full rounded-3xl border border-white/10 bg-white/[.025] p-8 text-center sm:p-12">
-        <SearchX className="mx-auto text-amber-300" size={42} />
-        <p className="mt-6 text-sm font-black uppercase tracking-[.18em] text-amber-400">
-          404
-        </p>
-        <h1 className="mt-3 text-4xl font-black">That RuneVault page does not exist.</h1>
-        <p className="mt-4 leading-7 text-white/45">
-          Return home or use the order-tracking page to continue.
-        </p>
-        <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link href="/" className="primary-button">
-            <ArrowLeft size={18} /> Return home
-          </Link>
-          <Link href="/orders" className="header-button">
-            Track an order
-          </Link>
-        </div>
-      </section>
-    </main>
-  );
+  return <main className="mx-auto flex min-h-[720px] max-w-4xl items-center px-6 py-20"><section className="w-full rounded-[2rem] border border-white/10 bg-white/[.025] p-8 text-center sm:p-14"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-300/10 text-amber-300"><Compass size={31} /></div><p className="mt-7 text-sm font-black uppercase tracking-[.22em] text-amber-400">404 · Vault path not found</p><h1 className="mt-4 text-4xl font-black tracking-[-.04em] sm:text-6xl">This route is not in the vault.</h1><p className="mx-auto mt-5 max-w-xl leading-7 text-white/45">The page may have moved, or the address may be incomplete. Your account and orders are unchanged.</p><div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 font-black text-black"><Home size={18} />Return home</Link><Link href="/orders" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 px-5 font-black text-white"><Search size={18} />Track an order</Link></div></section></main>;
 }
