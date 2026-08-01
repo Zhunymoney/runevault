@@ -157,7 +157,6 @@ export async function POST(request: Request) {
       risk_level: risk.level,
       risk_reasons: risk.reasons,
     },
-    request.headers.get("authorization"),
   );
 
   await sendDiscord("Crypto payment submitted for review", [
