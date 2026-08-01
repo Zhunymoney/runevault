@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { ArrowRight, Headphones, ReceiptText, Search, ShieldCheck } from "lucide-react";
+import { SupportClient } from "./support-client";
 
 const faqs = [
   ["Why does my order say pending?", "Pending means the order exists but staff has not moved it to the next stage."],
   ["Where is my receipt?", "Open the receipt page using your RuneVault order reference."],
   ["Can I change my OSRS name?", "Contact RuneVault staff before the order reaches the delivering stage."],
-  ["Are live payments enabled?", "Not yet. The current version creates preview orders and tracking references only."],
+  ["How do crypto payments work?", "Choose BTC or USDC on Base, send the exact quoted amount to the displayed wallet, then submit your transaction ID for manual verification."],
+  ["What if I sent the wrong amount or network?", "Do not send another payment. Open a payment ticket with your order reference and transaction ID so staff can review it."],
+  ["When is gold delivered?", "Delivery begins after payment verification and assignment. Keep your OSRS name and preferred world current on the order."],
+  ["Can I request a refund?", "Open a refund ticket. Eligibility depends on payment status, delivery progress, and the published refund policy."],
 ];
 
 export default function SupportPage() {
@@ -19,6 +23,8 @@ export default function SupportPage() {
         <h1 className="mt-4 text-4xl font-black tracking-[-.04em] sm:text-5xl">Help with your OSRS gold order.</h1>
         <p className="mt-5 leading-7 text-white/45">Track orders, review your account, and understand the RuneVault workflow.</p>
       </section>
+
+      <SupportClient />
 
       <section className="mt-12 grid gap-5 md:grid-cols-3">
         <article className="rounded-3xl border border-white/10 bg-white/[.025] p-7">

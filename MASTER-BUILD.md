@@ -116,9 +116,9 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 10 — live chat, tickets, and help center
 
-- [ ] Realtime guest/customer chat, staff inbox, presence, assignments, history, files, moderation, notifications, and transcripts.
-- [ ] Ticket lifecycle, replies, files, assignments, notes, search, and email.
-- [ ] FAQ and complete payment, marketplace, delivery, refund, and account help center.
+- [ ] Realtime guest/customer chat, staff inbox, presence, assignments, history, files, moderation, notifications, and transcripts. (Conversation/message/presence/assignment/rating/moderation schema, idempotent Realtime publication, RLS, storage metadata, and indexes implemented; chat APIs/UI remain.)
+- [ ] Ticket lifecycle, replies, files, assignments, notes, search, and email. (Owner-authenticated ticket list/create API, validated order linking, customer ticket UI, message history, clean JSON errors, schema, and RLS implemented; customer replies, staff queue, files, search, and email remain.)
+- [ ] FAQ and complete payment, marketplace, delivery, refund, and account help center. (Payment, incorrect-network, delivery, refund, order tracking, and account guidance implemented; dedicated policy articles remain.)
 - [ ] External chat provider configuration without hardcoding.
 - [ ] Section 10 live tests and deployment.
 
