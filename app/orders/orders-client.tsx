@@ -15,9 +15,9 @@ import {
   ShieldCheck,
   TimerReset,
 } from "lucide-react";
-import { findOrder } from "@/lib/marketplace";
+import { findOrder, getOrderTimeline } from "@/lib/marketplace";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase-browser";
-import type { Order } from "@/lib/types";
+import type { Order, OrderStatusHistory } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
 
 const progress = [
@@ -69,6 +69,7 @@ export function OrdersClient() {
   const [busy, setBusy] = useState(false);
   const [liveConnected, setLiveConnected] = useState(false);
   const [lastLiveUpdate, setLastLiveUpdate] = useState<string | null>(null);
+  const [timeline, setTimeline] = useState<OrderStatusHistory[]>([]);
 
   async function searchOrder(value = reference) {
     const cleaned = value.trim().toUpperCase();
@@ -84,6 +85,7 @@ export function OrdersClient() {
     try {
       const result = await findOrder(cleaned);
       setOrder(result);
+      setTimeline(result ? await getOrderTimeline(result) : []);
       if (!result) setMessage("No accessible order matched that reference.");
     } catch (reason) {
       setOrder(null);
@@ -119,7 +121,9 @@ export function OrdersClient() {
         },
         (payload) => {
           const updatedOrder = payload.new as Order;
-          setOrder(updatedOrder);
+          const normalizedOrder = { ...updatedOrder, payment_asset: updatedOrder.payment_asset ?? updatedOrder.crypto_asset ?? null, transaction_id: updatedOrder.transaction_id ?? updatedOrder.payment_id ?? null };
+          setOrder(normalizedOrder);
+          void getOrderTimeline(normalizedOrder).then(setTimeline);
           setLastLiveUpdate(new Date().toLocaleTimeString());
           setMessage("Order updated live.");
         },
@@ -354,6 +358,16 @@ export function OrdersClient() {
                 <p className="mt-2 font-bold">{new Date(order.updated_at).toLocaleString()}</p>
               </div>
             </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              <article className="rounded-2xl border border-white/10 bg-black/10 p-5"><p className="text-xs font-bold uppercase tracking-[.14em] text-white/30">Payment</p><p className="mt-2 font-black capitalize">{order.payment_provider === "stripe" ? "Card" : order.payment_asset ? order.payment_asset : "Not selected"}</p><p className="mt-2 text-sm text-white/40">{order.payment_status?.replaceAll("_", " ") ?? "Awaiting selection"}</p></article>
+              <article className="rounded-2xl border border-white/10 bg-black/10 p-5"><p className="text-xs font-bold uppercase tracking-[.14em] text-white/30">Verification</p><p className="mt-2 font-black">{["paid","assigned","delivering","completed"].includes(order.status) ? "Verified" : order.payment_status === "customer_marked_sent" ? "Pending verification" : "Not submitted"}</p><p className="mt-2 text-sm text-white/40">Transaction details are visible only to you and authorized staff.</p></article>
+              <article className="rounded-2xl border border-white/10 bg-black/10 p-5"><p className="text-xs font-bold uppercase tracking-[.14em] text-white/30">{order.order_type === "sell" ? "Seller payout" : "Assignment / delivery"}</p><p className="mt-2 font-black capitalize">{order.order_type === "sell" ? order.seller_status?.replaceAll("_", " ") ?? "Awaiting meetup" : order.status === "assigned" ? "Assigned" : order.status === "delivering" ? "Delivery active" : order.status === "completed" ? "Completed" : "Not assigned"}</p></article>
+            </div>
+
+            <section className="mt-8 rounded-2xl border border-white/10 bg-black/10 p-5"><h3 className="text-xl font-black">Order timeline</h3><div className="mt-5 space-y-4">{timeline.map((event) => <div key={event.id} className="grid gap-2 border-l-2 border-amber-300/40 pl-4 sm:grid-cols-[180px_1fr]"><time className="text-xs font-bold text-white/35">{new Date(event.created_at).toLocaleString()}</time><div><b className="capitalize">{event.status.replaceAll("_", " ")}</b>{event.customer_message ? <p className="mt-1 text-sm text-white/40">{event.customer_message}</p> : null}</div></div>)}</div></section>
+
+            <div className="mt-7 flex flex-wrap gap-3"><Link href={`/checkout?type=${order.order_type}&amount=${order.amount_m}&name=${encodeURIComponent(order.delivery_name ?? "")}`} className="primary-button">Reorder</Link><Link href={`/support?reference=${order.reference}`} className="header-button">Contact support about this order</Link>{order.order_type === "buy" && ["pending","awaiting_payment"].includes(order.status) ? <Link href={`/pay?reference=${order.reference}`} className="header-button">Retry payment</Link> : null}</div>
           </div>
         </section>
       )}

@@ -87,7 +87,9 @@ export function ReceiptClient() {
             ["Order type", order.order_type === "buy" ? "Buy OSRS gold" : "Sell OSRS gold"],
             ["Gold amount", `${order.amount_m}M`],
             ["Rate", `$${order.price_per_m.toFixed(3)} / M`],
-            [order.order_type === "buy" ? "Estimated total" : "Estimated payout", `$${order.total_price.toFixed(2)}`],
+            [order.order_type === "buy" ? "Total" : "Payout", `$${order.total_price.toFixed(2)}`],
+            ["Payment method", order.payment_provider === "stripe" ? "Card" : order.payment_asset ?? "Not selected"],
+            ["Payment status", order.payment_status?.replaceAll("_", " ") ?? "Unpaid"],
             ["OSRS character", order.delivery_name || "Not supplied"],
             ["Created", new Date(order.created_at).toLocaleString()],
           ].map(([label, value]) => (

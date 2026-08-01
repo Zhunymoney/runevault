@@ -111,7 +111,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 9 — order tracking and status
 
-- [ ] Customer-isolated timelines, payment/verification/assignment/delivery/payout status, instructions, invoices, reorder, and linked support.
+- [ ] Customer-isolated timelines, payment/verification/assignment/delivery/payout status, instructions, invoices, reorder, and linked support. (Timeline data/fallback, full status panels, printable receipt, reorder, retry-payment, and linked-support actions implemented; migration/live tests remain.)
 - [ ] Section 9 live tests and deployment.
 
 ## Section 10 — live chat, tickets, and help center

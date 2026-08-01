@@ -32,6 +32,15 @@ export interface SavedCharacter {
   updated_at: string;
 }
 
+export interface OrderStatusHistory {
+  id: string;
+  order_id: string;
+  previous_status: string | null;
+  status: string;
+  customer_message: string | null;
+  created_at: string;
+}
+
 export interface MarketplaceSettings {
   id: number;
   buy_rate: number;

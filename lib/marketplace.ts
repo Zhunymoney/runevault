@@ -1,4 +1,4 @@
-import type { MarketplaceSettings, Order, OrderStatus, OrderType, Profile, SavedCharacter } from "@/lib/types";
+import type { MarketplaceSettings, Order, OrderStatus, OrderStatusHistory, OrderType, Profile, SavedCharacter } from "@/lib/types";
 import { createClient } from "@/lib/supabase-browser";
 
 async function authenticatedApiHeaders() {
@@ -173,6 +173,15 @@ export async function getAdminOrders(): Promise<Order[]> {
   const response = await fetch("/api/admin/orders", { headers: await authenticatedApiHeaders(), cache: "no-store" });
   const data = await apiJson(response);
   return (Array.isArray(data.orders) ? data.orders : []).map((order) => normalizeOrder(order as Record<string, unknown>));
+}
+
+export async function getOrderTimeline(order: Order): Promise<OrderStatusHistory[]> {
+  const { data, error } = await createClient().from("order_status_history").select("id,order_id,previous_status,status,customer_message,created_at").eq("order_id", order.id).order("created_at");
+  if (!error && data?.length) return data as OrderStatusHistory[];
+  return [
+    { id: `${order.id}-created`, order_id: order.id, previous_status: null, status: "pending", customer_message: "Order created.", created_at: order.created_at },
+    ...(order.status !== "pending" ? [{ id: `${order.id}-current`, order_id: order.id, previous_status: "pending", status: order.status, customer_message: null, created_at: order.updated_at }] : []),
+  ];
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {
