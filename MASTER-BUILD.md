@@ -105,8 +105,8 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 8 — rewards and marketing
 
-- [ ] Loyalty, referrals, coupons, promotions, tiers, limits, abuse controls, and admin management.
-- [ ] Seasonal/flash scheduling and safe affiliate/gift-card foundations.
+- [ ] Loyalty, referrals, coupons, promotions, tiers, limits, abuse controls, and admin management. (Normalized ledger/schema, limits, date windows, RLS, and indexes implemented; transaction RPC/admin UI/live tests remain.)
+- [ ] Seasonal/flash scheduling and safe affiliate/gift-card foundations. (Scheduled promotions and affiliate attribution implemented; gift cards remain intentionally deferred pending a regulated stored-value design.)
 - [ ] Section 8 live tests and deployment.
 
 ## Section 9 — order tracking and status
