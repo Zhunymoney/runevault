@@ -63,7 +63,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 2 — customer accounts, dashboard, and email
 
-- [ ] Registration, verification, login/logout, password recovery/update, sessions, security alerts, and deletion request. (Recovery/update and deletion-request flows, verified-success login history, privacy-preserving active-session tracking, unfamiliar-device security events, customer security history, and global device sign-out are implemented; alert email delivery, migration, and authenticated multi-device tests remain.)
+- [ ] Registration, verification, login/logout, password recovery/update, sessions, security alerts, and deletion request. (Recovery/update and deletion-request flows, verified-success/password-change history, privacy-preserving active-session tracking, unfamiliar-device and password-change security events, customer security history, and global device sign-out are implemented; alert email delivery, migration, and authenticated multi-device tests remain.)
 - [ ] Profile, characters, contact and payment preferences, and notification preferences. (UI, data access, migration, and RLS implemented; live migration test remains.)
 - [ ] Dashboard, order/payment history, invoices, timelines, reorders, saved carts, and linked support. (Customer dashboard, histories, printable invoices/receipts, timelines, reorder/support actions, and owner-isolated saved checkout drafts with resume/delete controls are implemented; multi-item carts and live migration tests remain.)
 - [ ] Branded transactional email templates and provider integration. (All requested branded responsive HTML/plain-text template variants implemented; Resend credentials and event wiring tests remain.)

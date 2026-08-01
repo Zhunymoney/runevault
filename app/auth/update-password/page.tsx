@@ -14,7 +14,9 @@ export default function UpdatePasswordPage() {
     if (password.length < 12) return setMessage("Use at least 12 characters.");
     if (password !== confirm) return setMessage("Passwords do not match.");
     setBusy(true);
-    const { error } = await createClient().auth.updateUser({ password });
+    const supabase=createClient();
+    const { error } = await supabase.auth.updateUser({ password });
+    if(!error){const{data}=await supabase.auth.getSession();if(data.session?.access_token)await fetch("/api/account/password-event",{method:"POST",headers:{Authorization:`Bearer ${data.session.access_token}`}}).catch(()=>null);}
     setBusy(false);
     setMessage(error ? error.message : "Password updated. You can return to your account.");
   }

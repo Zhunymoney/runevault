@@ -25,6 +25,7 @@ for (const [name,path,init] of [
   ["referral auth JSON","/api/rewards/referrals",{ headers:{Accept:"application/json"} }],
   ["account security auth JSON","/api/account/security",{ headers:{Accept:"application/json"} }],
   ["login event auth JSON","/api/account/login-event",{ method:"POST",headers:{Accept:"application/json"} }],
+  ["password event auth JSON","/api/account/password-event",{ method:"POST",headers:{Accept:"application/json"} }],
 ]) {
   const response = await fetch(`${base}${path}`, init); let valid=false; try { const data=await response.json(); valid=Boolean(data&&typeof data.error==="string"); } catch {}
   checks.push({name,ok:valid&&!response.ok,detail:`${response.status}`});
