@@ -85,7 +85,7 @@ export async function POST(request: Request) {
 
     const params = new URLSearchParams();
     params.set("mode", "payment");
-    params.set("success_url", `${siteUrl()}/orders?reference=${order.reference}`);
+    params.set("success_url", `${siteUrl()}/orders/${encodeURIComponent(order.reference)}`);
     params.set(
       "cancel_url",
       `${siteUrl()}/pay?reference=${order.reference}&cancelled=1`,

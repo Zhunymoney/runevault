@@ -60,9 +60,9 @@ const statusCopy: Record<string, { title: string; text: string }> = {
   },
 };
 
-export function OrdersClient() {
+export function OrdersClient({initialReference:referenceFromPath}:{initialReference?:string}={}) {
   const params = useSearchParams();
-  const initialReference = params.get("reference") ?? "";
+  const initialReference = referenceFromPath ?? params.get("reference") ?? "";
   const [reference, setReference] = useState(initialReference);
   const [order, setOrder] = useState<Order | null>(null);
   const [message, setMessage] = useState("");

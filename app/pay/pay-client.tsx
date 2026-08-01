@@ -382,7 +382,7 @@ export function PayClient() {
       </section>
 
       <Link
-        href={`/orders?reference=${order.reference}`}
+        href={`/orders/${encodeURIComponent(order.reference)}`}
         className="mt-7 inline-flex text-sm font-black text-amber-300"
       >
         Return to order tracking

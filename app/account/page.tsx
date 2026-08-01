@@ -485,7 +485,7 @@ export default function AccountPage() {
                     ${order.total_price.toFixed(2)}
                   </p>
                 </div>
-                <StatusPill status={order.status} />
+                <div className="flex items-center gap-2"><StatusPill status={order.status} /><Link href={`/orders/${encodeURIComponent(order.reference)}`} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-black">View</Link></div>
               </article>
             ))}
 

@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     ]);
     const email = await getUserEmail(order.user_id);
     if (email) {
-      const template = emailTemplate("order_confirmation", { reference: order.reference, actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/orders?reference=${order.reference}`, detail: `${order.order_type} ${order.amount_m}M OSRS gold.` });
+      const template = emailTemplate("order_confirmation", { reference: order.reference, actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/orders/${encodeURIComponent(order.reference)}`, detail: `${order.order_type} ${order.amount_m}M OSRS gold.` });
       await sendEmail({ to: email, ...template });
     }
     return NextResponse.json({ ok: true });

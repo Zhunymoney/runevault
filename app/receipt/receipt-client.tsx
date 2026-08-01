@@ -55,7 +55,7 @@ export function ReceiptClient() {
   return (
     <main className="mx-auto min-h-[760px] max-w-4xl px-6 py-14 sm:py-20">
       <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-center print:hidden">
-        <Link href={`/orders?reference=${order.reference}`} className="inline-flex items-center gap-2 text-sm font-bold text-white/45 hover:text-amber-300">
+        <Link href={`/orders/${encodeURIComponent(order.reference)}`} className="inline-flex items-center gap-2 text-sm font-bold text-white/45 hover:text-amber-300">
           <ArrowLeft size={17} /> Back to tracking
         </Link>
         <button onClick={() => window.print()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 font-black text-black">

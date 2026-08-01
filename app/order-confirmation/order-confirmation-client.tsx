@@ -154,7 +154,7 @@ export function OrderConfirmationClient() {
             </Link>
           )}
           <Link
-            href={`/orders?reference=${order.reference}`}
+            href={`/orders/${encodeURIComponent(order.reference)}`}
             className="header-button justify-center"
           >
             <ShieldCheck size={18} /> Track
