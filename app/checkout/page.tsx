@@ -13,8 +13,14 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { createOrder, getSavedCheckoutDrafts, getSettings, saveCheckoutDraft } from "@/lib/marketplace";
+import {
+  createOrder,
+  getSavedCheckoutDrafts,
+  getSettings,
+  saveCheckoutDraft,
+} from "@/lib/marketplace";
 import type { MarketplaceSettings, OrderType } from "@/lib/types";
+import { resolveEffectivePrice } from "@/lib/pricing";
 
 const fallback: MarketplaceSettings = {
   id: 1,
@@ -65,7 +71,9 @@ export default function CheckoutPage() {
     if (requestedName) {
       setDeliveryName(requestedName);
     }
-    const storedRequest = window.sessionStorage.getItem("runevault-checkout-request");
+    const storedRequest = window.sessionStorage.getItem(
+      "runevault-checkout-request",
+    );
     const nextRequest = storedRequest || crypto.randomUUID();
     window.sessionStorage.setItem("runevault-checkout-request", nextRequest);
     setRequestId(nextRequest);
@@ -73,16 +81,39 @@ export default function CheckoutPage() {
     void getSettings()
       .then(setSettings)
       .catch(() =>
-        setMessage(
-          "Could not load live settings. Preview values are shown.",
-        ),
+        setMessage("Could not load live settings. Preview values are shown."),
       );
-    const draftId=params.get("draft");
-    if(draftId)void getSavedCheckoutDrafts().then(items=>{const draft=items.find(item=>item.id===draftId);if(!draft)return setMessage("Saved checkout draft was not found.");setType(draft.order_type);setAmount(draft.amount_m);setDeliveryName(draft.delivery_name??"");setPreferredWorld(draft.preferred_world?String(draft.preferred_world):"");setContactDetails(draft.contact_details??"");setNotes(draft.notes??"");setPayoutMethod(draft.payout_method??"");setPayoutDetails(draft.payout_details??"");setCouponCode(draft.coupon_code??"");setMessage(`Loaded saved draft: ${draft.name}`);}).catch(()=>setMessage("Saved checkout drafts require the account migration."));
+    const draftId = params.get("draft");
+    if (draftId)
+      void getSavedCheckoutDrafts()
+        .then((items) => {
+          const draft = items.find((item) => item.id === draftId);
+          if (!draft) return setMessage("Saved checkout draft was not found.");
+          setType(draft.order_type);
+          setAmount(draft.amount_m);
+          setDeliveryName(draft.delivery_name ?? "");
+          setPreferredWorld(
+            draft.preferred_world ? String(draft.preferred_world) : "",
+          );
+          setContactDetails(draft.contact_details ?? "");
+          setNotes(draft.notes ?? "");
+          setPayoutMethod(draft.payout_method ?? "");
+          setPayoutDetails(draft.payout_details ?? "");
+          setCouponCode(draft.coupon_code ?? "");
+          setMessage(`Loaded saved draft: ${draft.name}`);
+        })
+        .catch(() =>
+          setMessage("Saved checkout drafts require the account migration."),
+        );
   }, []);
 
-  const rate =
-    type === "buy" ? settings.buy_rate : settings.sell_rate;
+  const rate = resolveEffectivePrice({
+    orderType: type,
+    amountM: amount,
+    baseRate: type === "buy" ? settings.buy_rate : settings.sell_rate,
+    schedules: settings.scheduled_prices,
+    tiers: settings.bulk_price_tiers,
+  }).rate;
 
   const total = useMemo(() => amount * rate, [amount, rate]);
 
@@ -100,7 +131,9 @@ export default function CheckoutPage() {
     }
 
     if (!contactDetails.trim()) {
-      setMessage("Enter a contact email or Discord username for order coordination.");
+      setMessage(
+        "Enter a contact email or Discord username for order coordination.",
+      );
       return;
     }
 
@@ -109,8 +142,14 @@ export default function CheckoutPage() {
       return;
     }
 
-    if ((type === "buy" && settings.buy_enabled === false) || (type === "sell" && settings.sell_enabled === false)) {
-      setMessage(settings.pause_message || `${type === "buy" ? "Buying" : "Selling"} is temporarily paused.`);
+    if (
+      (type === "buy" && settings.buy_enabled === false) ||
+      (type === "sell" && settings.sell_enabled === false)
+    ) {
+      setMessage(
+        settings.pause_message ||
+          `${type === "buy" ? "Buying" : "Selling"} is temporarily paused.`,
+      );
       return;
     }
 
@@ -140,11 +179,9 @@ export default function CheckoutPage() {
         request_id: requestId || crypto.randomUUID(),
       });
 
-window.sessionStorage.removeItem("runevault-checkout-request");
+      window.sessionStorage.removeItem("runevault-checkout-request");
 
-router.push(
-  `/pay?reference=${encodeURIComponent(order.reference)}`,
-);
+      router.push(`/pay?reference=${encodeURIComponent(order.reference)}`);
     } catch (reason) {
       setMessage(
         reason instanceof Error
@@ -156,7 +193,37 @@ router.push(
     }
   }
 
-  async function saveDraft(){const name=window.prompt("Name this saved checkout draft:",`${type==="buy"?"Buy":"Sell"} ${amount}M`);if(!name?.trim())return;setBusy(true);try{await saveCheckoutDraft({name:name.trim(),order_type:type,amount_m:Math.trunc(amount),delivery_name:deliveryName.trim()||null,preferred_world:Number(preferredWorld)||null,contact_details:contactDetails.trim()||null,notes:notes.trim()||null,payout_method:type==="sell"?payoutMethod||null:null,payout_details:type==="sell"?payoutDetails.trim()||null:null,coupon_code:couponCode.trim()||null});setMessage("Checkout draft saved to your account.");}catch(reason){setMessage(reason instanceof Error?reason.message:"Checkout draft could not be saved.");}finally{setBusy(false);}}
+  async function saveDraft() {
+    const name = window.prompt(
+      "Name this saved checkout draft:",
+      `${type === "buy" ? "Buy" : "Sell"} ${amount}M`,
+    );
+    if (!name?.trim()) return;
+    setBusy(true);
+    try {
+      await saveCheckoutDraft({
+        name: name.trim(),
+        order_type: type,
+        amount_m: Math.trunc(amount),
+        delivery_name: deliveryName.trim() || null,
+        preferred_world: Number(preferredWorld) || null,
+        contact_details: contactDetails.trim() || null,
+        notes: notes.trim() || null,
+        payout_method: type === "sell" ? payoutMethod || null : null,
+        payout_details: type === "sell" ? payoutDetails.trim() || null : null,
+        coupon_code: couponCode.trim() || null,
+      });
+      setMessage("Checkout draft saved to your account.");
+    } catch (reason) {
+      setMessage(
+        reason instanceof Error
+          ? reason.message
+          : "Checkout draft could not be saved.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <main className="mx-auto min-h-[800px] max-w-6xl px-6 py-14 sm:py-20">
@@ -178,8 +245,8 @@ router.push(
         </h1>
 
         <p className="mt-4 max-w-2xl leading-7 text-white/45">
-          Review the amount and rate, confirm your character name,
-          and create a private tracking reference.
+          Review the amount and rate, confirm your character name, and create a
+          private tracking reference.
         </p>
       </section>
 
@@ -189,9 +256,7 @@ router.push(
             <button
               type="button"
               onClick={() => setType("buy")}
-              className={`quote-tab ${
-                type === "buy" ? "active-buy" : ""
-              }`}
+              className={`quote-tab ${type === "buy" ? "active-buy" : ""}`}
             >
               Buy OSRS Gold
             </button>
@@ -199,9 +264,7 @@ router.push(
             <button
               type="button"
               onClick={() => setType("sell")}
-              className={`quote-tab ${
-                type === "sell" ? "active-sell" : ""
-              }`}
+              className={`quote-tab ${type === "sell" ? "active-sell" : ""}`}
             >
               Sell OSRS Gold
             </button>
@@ -209,7 +272,6 @@ router.push(
 
           <label className="mt-7 block text-sm font-bold text-white/50">
             Gold amount
-
             <div className="mt-2 flex rounded-2xl border border-white/10 bg-black/15 px-5">
               <input
                 type="number"
@@ -220,9 +282,7 @@ router.push(
                   const nextAmount = Number(event.target.value);
 
                   setAmount(
-                    Number.isFinite(nextAmount)
-                      ? Math.max(1, nextAmount)
-                      : 1,
+                    Number.isFinite(nextAmount) ? Math.max(1, nextAmount) : 1,
                   );
                 }}
                 className="w-full bg-transparent py-5 text-3xl font-black outline-none"
@@ -236,15 +296,12 @@ router.push(
 
           <label className="mt-5 block text-sm font-bold text-white/50">
             OSRS character name
-
             <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/15 px-4">
               <UserRound size={19} className="text-white/30" />
 
               <input
                 value={deliveryName}
-                onChange={(event) =>
-                  setDeliveryName(event.target.value)
-                }
+                onChange={(event) => setDeliveryName(event.target.value)}
                 placeholder="Enter your in-game name"
                 className="min-h-14 w-full bg-transparent outline-none placeholder:text-white/25"
               />
@@ -253,15 +310,9 @@ router.push(
 
           <label className="mt-5 block text-sm font-bold text-white/50">
             Order notes{" "}
-            <span className="font-normal text-white/25">
-              (optional)
-            </span>
-
+            <span className="font-normal text-white/25">(optional)</span>
             <div className="mt-2 flex items-start gap-3 rounded-2xl border border-white/10 bg-black/15 px-4 py-4">
-              <FileText
-                size={19}
-                className="mt-1 text-white/30"
-              />
+              <FileText size={19} className="mt-1 text-white/30" />
 
               <textarea
                 value={notes}
@@ -274,14 +325,55 @@ router.push(
           </label>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-bold text-white/50">Preferred world <span className="font-normal text-white/25">(optional)</span><input type="number" min="301" max="999" value={preferredWorld} onChange={(event) => setPreferredWorld(event.target.value)} placeholder="World 330" className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-black/15 px-4 outline-none" /></label>
-            <label className="block text-sm font-bold text-white/50">Contact details<input required value={contactDetails} onChange={(event) => setContactDetails(event.target.value)} placeholder="Email or Discord username" className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-black/15 px-4 outline-none" /></label>
+            <label className="block text-sm font-bold text-white/50">
+              Preferred world{" "}
+              <span className="font-normal text-white/25">(optional)</span>
+              <input
+                type="number"
+                min="301"
+                max="999"
+                value={preferredWorld}
+                onChange={(event) => setPreferredWorld(event.target.value)}
+                placeholder="World 330"
+                className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-black/15 px-4 outline-none"
+              />
+            </label>
+            <label className="block text-sm font-bold text-white/50">
+              Contact details
+              <input
+                required
+                value={contactDetails}
+                onChange={(event) => setContactDetails(event.target.value)}
+                placeholder="Email or Discord username"
+                className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-black/15 px-4 outline-none"
+              />
+            </label>
           </div>
 
           {type === "sell" && (
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm font-bold text-white/50">Payout method<select value={payoutMethod} onChange={(event) => setPayoutMethod(event.target.value)} className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-[#0b0e14] px-4 outline-none"><option value="">Choose payout</option><option value="btc">BTC</option><option value="usdc_base">USDC on Base</option><option value="paypal">PayPal</option></select></label>
-              <label className="block text-sm font-bold text-white/50">Payout destination<input value={payoutDetails} onChange={(event) => setPayoutDetails(event.target.value)} placeholder="Wallet or account email" className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-black/15 px-4 outline-none" /></label>
+              <label className="block text-sm font-bold text-white/50">
+                Payout method
+                <select
+                  value={payoutMethod}
+                  onChange={(event) => setPayoutMethod(event.target.value)}
+                  className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-[#0b0e14] px-4 outline-none"
+                >
+                  <option value="">Choose payout</option>
+                  <option value="btc">BTC</option>
+                  <option value="usdc_base">USDC on Base</option>
+                  <option value="paypal">PayPal</option>
+                </select>
+              </label>
+              <label className="block text-sm font-bold text-white/50">
+                Payout destination
+                <input
+                  value={payoutDetails}
+                  onChange={(event) => setPayoutDetails(event.target.value)}
+                  placeholder="Wallet or account email"
+                  className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-black/15 px-4 outline-none"
+                />
+              </label>
             </div>
           )}
 
@@ -289,16 +381,30 @@ router.push(
             <input
               type="checkbox"
               checked={termsAccepted}
-              onChange={(event) =>
-                setTermsAccepted(event.target.checked)
-              }
+              onChange={(event) => setTermsAccepted(event.target.checked)}
               className="mt-1 h-5 w-5 shrink-0 accent-amber-400"
             />
-
-            I accept the RuneVault terms, cancellation, delivery, and refund policies and confirm these order details are accurate.
+            I accept the RuneVault terms, cancellation, delivery, and refund
+            policies and confirm these order details are accurate.
           </label>
 
-          <label className="mt-5 block text-sm font-bold text-white/50">Coupon code <span className="font-normal text-white/25">(optional)</span><input value={couponCode} onChange={(event)=>setCouponCode(event.target.value.toUpperCase())} maxLength={40} placeholder="Enter code" className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-black/15 px-4 uppercase outline-none"/><span className="mt-2 block text-xs font-normal text-white/30">Eligibility and the final discounted total are verified securely when the order is created.</span></label>
+          <label className="mt-5 block text-sm font-bold text-white/50">
+            Coupon code{" "}
+            <span className="font-normal text-white/25">(optional)</span>
+            <input
+              value={couponCode}
+              onChange={(event) =>
+                setCouponCode(event.target.value.toUpperCase())
+              }
+              maxLength={40}
+              placeholder="Enter code"
+              className="mt-2 min-h-14 w-full rounded-2xl border border-white/10 bg-black/15 px-4 uppercase outline-none"
+            />
+            <span className="mt-2 block text-xs font-normal text-white/30">
+              Eligibility and the final discounted total are verified securely
+              when the order is created.
+            </span>
+          </label>
 
           {message && (
             <p className="mt-5 rounded-xl border border-amber-300/15 bg-amber-300/[.055] p-4 text-sm text-white/65">
@@ -321,11 +427,7 @@ router.push(
 
             <Coins
               size={32}
-              className={
-                type === "buy"
-                  ? "text-amber-300"
-                  : "text-emerald-300"
-              }
+              className={type === "buy" ? "text-amber-300" : "text-emerald-300"}
             />
           </div>
 
@@ -346,9 +448,7 @@ router.push(
 
             <div className="flex justify-between gap-5">
               <span className="text-white/40">
-                {type === "buy"
-                  ? "Estimated total"
-                  : "Estimated payout"}
+                {type === "buy" ? "Estimated total" : "Estimated payout"}
               </span>
 
               <b className="text-2xl">${total.toFixed(2)}</b>
@@ -358,39 +458,41 @@ router.push(
           <button
             type="button"
             onClick={() => void placeOrder()}
-            disabled={busy || settings.maintenance_mode || (type === "buy" ? settings.buy_enabled === false : settings.sell_enabled === false)}
-            className={`quote-submit ${
-              type === "sell" ? "sell-submit" : ""
-            }`}
+            disabled={
+              busy ||
+              settings.maintenance_mode ||
+              (type === "buy"
+                ? settings.buy_enabled === false
+                : settings.sell_enabled === false)
+            }
+            className={`quote-submit ${type === "sell" ? "sell-submit" : ""}`}
           >
             {busy ? "Creating order…" : "Continue to Payment"}
 
             {!busy && <ArrowRight size={18} />}
           </button>
-          <button type="button" disabled={busy} onClick={()=>void saveDraft()} className="mt-3 min-h-12 w-full rounded-xl border border-white/10 font-black text-white/65 disabled:opacity-50">Save checkout draft</button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void saveDraft()}
+            className="mt-3 min-h-12 w-full rounded-xl border border-white/10 font-black text-white/65 disabled:opacity-50"
+          >
+            Save checkout draft
+          </button>
 
           <div className="mt-6 space-y-3 text-sm text-white/40">
             <p className="flex items-center gap-3">
-              <LockKeyhole
-                size={17}
-                className="text-amber-300"
-              />
+              <LockKeyhole size={17} className="text-amber-300" />
               Signed-in account required
             </p>
 
             <p className="flex items-center gap-3">
-              <ShieldCheck
-                size={17}
-                className="text-emerald-300"
-              />
+              <ShieldCheck size={17} className="text-emerald-300" />
               Private tracking reference
             </p>
 
             <p className="flex items-center gap-3">
-              <CheckCircle2
-                size={17}
-                className="text-sky-300"
-              />
+              <CheckCircle2 size={17} className="text-sky-300" />
               Payment selection included
             </p>
           </div>

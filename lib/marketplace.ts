@@ -1,11 +1,26 @@
-import type { LoyaltyAccount, LoyaltyTransaction, MarketplaceSettings, Order, OrderStatus, OrderStatusHistory, OrderType, Profile, SavedCharacter, SavedCheckoutDraft } from "@/lib/types";
+import type {
+  LoyaltyAccount,
+  LoyaltyTransaction,
+  MarketplaceSettings,
+  Order,
+  OrderStatus,
+  OrderStatusHistory,
+  OrderType,
+  Profile,
+  SavedCharacter,
+  SavedCheckoutDraft,
+} from "@/lib/types";
 import { createClient } from "@/lib/supabase-browser";
 import { parseApiResponse } from "@/lib/client-api";
 
 async function authenticatedApiHeaders() {
   const { data } = await createClient().auth.getSession();
-  if (!data.session?.access_token) throw new Error("Sign in again before continuing.");
-  return { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` };
+  if (!data.session?.access_token)
+    throw new Error("Sign in again before continuing.");
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${data.session.access_token}`,
+  };
 }
 
 export async function getCurrentProfile(): Promise<Profile | null> {
@@ -25,7 +40,17 @@ export async function getCurrentProfile(): Promise<Profile | null> {
 
 export async function getSettings(): Promise<MarketplaceSettings> {
   const supabase = createClient();
-  const { data, error } = await supabase.from("settings").select("*").eq("id", 1).single();
+  const [{ data, error }, schedules, tiers] = await Promise.all([
+    supabase.from("settings").select("*").eq("id", 1).single(),
+    supabase
+      .from("scheduled_prices")
+      .select("id,buy_rate,sell_rate,starts_at,ends_at,active")
+      .eq("active", true),
+    supabase
+      .from("bulk_price_tiers")
+      .select("id,order_type,minimum_amount_m,rate_adjustment,active")
+      .eq("active", true),
+  ]);
   if (error) throw error;
   return {
     ...data,
@@ -37,27 +62,47 @@ export async function getSettings(): Promise<MarketplaceSettings> {
     buy_enabled: data.buy_enabled !== false,
     sell_enabled: data.sell_enabled !== false,
     estimated_delivery_minutes: Number(data.estimated_delivery_minutes ?? 15),
+    scheduled_prices: schedules.error ? [] : (schedules.data ?? []),
+    bulk_price_tiers: tiers.error ? [] : (tiers.data ?? []),
   } as MarketplaceSettings;
 }
 
-export async function updateMyProfile(input: Pick<Profile, "full_name" | "runescape_name" | "contact_email" | "preferred_payment_method" | "notification_preferences">) {
+export async function updateMyProfile(
+  input: Pick<
+    Profile,
+    | "full_name"
+    | "runescape_name"
+    | "contact_email"
+    | "preferred_payment_method"
+    | "notification_preferences"
+  >,
+) {
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) throw new Error("Sign in before updating your profile.");
-  const { data, error } = await supabase.from("profiles").update({
-    full_name: input.full_name?.trim() || null,
-    runescape_name: input.runescape_name?.trim() || null,
-    contact_email: input.contact_email?.trim() || null,
-    preferred_payment_method: input.preferred_payment_method || null,
-    notification_preferences: input.notification_preferences,
-    updated_at: new Date().toISOString(),
-  }).eq("id", userData.user.id).select("*").single();
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({
+      full_name: input.full_name?.trim() || null,
+      runescape_name: input.runescape_name?.trim() || null,
+      contact_email: input.contact_email?.trim() || null,
+      preferred_payment_method: input.preferred_payment_method || null,
+      notification_preferences: input.notification_preferences,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userData.user.id)
+    .select("*")
+    .single();
   if (error) throw error;
   return data as Profile;
 }
 
 export async function getSavedCharacters(): Promise<SavedCharacter[]> {
-  const { data, error } = await createClient().from("saved_characters").select("*").order("is_default", { ascending: false }).order("created_at");
+  const { data, error } = await createClient()
+    .from("saved_characters")
+    .select("*")
+    .order("is_default", { ascending: false })
+    .order("created_at");
   if (error) throw error;
   return (data ?? []) as SavedCharacter[];
 }
@@ -67,35 +112,114 @@ export async function addSavedCharacter(name: string, preferredWorld?: number) {
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) throw new Error("Sign in before saving a character.");
   const cleanName = name.trim();
-  if (!/^[A-Za-z0-9 _-]{1,12}$/.test(cleanName)) throw new Error("Enter a valid OSRS character name (1–12 characters).");
-  const world = preferredWorld && preferredWorld >= 301 && preferredWorld <= 999 ? preferredWorld : null;
-  const { data, error } = await supabase.from("saved_characters").insert({ user_id: userData.user.id, name: cleanName, preferred_world: world }).select("*").single();
+  if (!/^[A-Za-z0-9 _-]{1,12}$/.test(cleanName))
+    throw new Error("Enter a valid OSRS character name (1–12 characters).");
+  const world =
+    preferredWorld && preferredWorld >= 301 && preferredWorld <= 999
+      ? preferredWorld
+      : null;
+  const { data, error } = await supabase
+    .from("saved_characters")
+    .insert({
+      user_id: userData.user.id,
+      name: cleanName,
+      preferred_world: world,
+    })
+    .select("*")
+    .single();
   if (error) throw error;
   return data as SavedCharacter;
 }
 
 export async function deleteSavedCharacter(id: string) {
-  const { error } = await createClient().from("saved_characters").delete().eq("id", id);
+  const { error } = await createClient()
+    .from("saved_characters")
+    .delete()
+    .eq("id", id);
   if (error) throw error;
 }
 
-export async function getSavedCheckoutDrafts():Promise<SavedCheckoutDraft[]>{const{data,error}=await createClient().from("saved_checkout_drafts").select("*").order("updated_at",{ascending:false});if(error)throw error;return(data??[]).map(item=>({...item,amount_m:Number(item.amount_m)})) as SavedCheckoutDraft[];}
-export async function saveCheckoutDraft(input:Omit<SavedCheckoutDraft,"id"|"user_id"|"created_at"|"updated_at">){const supabase=createClient(),{data:userData}=await supabase.auth.getUser();if(!userData.user)throw new Error("Sign in before saving a checkout draft.");const values={...input,user_id:userData.user.id,name:input.name.trim().slice(0,80),updated_at:new Date().toISOString()};if(!values.name)throw new Error("Name the saved checkout draft.");const{data,error}=await supabase.from("saved_checkout_drafts").insert(values).select("*").single();if(error)throw error;return{...data,amount_m:Number(data.amount_m)} as SavedCheckoutDraft;}
-export async function deleteSavedCheckoutDraft(id:string){const{error}=await createClient().from("saved_checkout_drafts").delete().eq("id",id);if(error)throw error;}
+export async function getSavedCheckoutDrafts(): Promise<SavedCheckoutDraft[]> {
+  const { data, error } = await createClient()
+    .from("saved_checkout_drafts")
+    .select("*")
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((item) => ({
+    ...item,
+    amount_m: Number(item.amount_m),
+  })) as SavedCheckoutDraft[];
+}
+export async function saveCheckoutDraft(
+  input: Omit<
+    SavedCheckoutDraft,
+    "id" | "user_id" | "created_at" | "updated_at"
+  >,
+) {
+  const supabase = createClient(),
+    { data: userData } = await supabase.auth.getUser();
+  if (!userData.user)
+    throw new Error("Sign in before saving a checkout draft.");
+  const values = {
+    ...input,
+    user_id: userData.user.id,
+    name: input.name.trim().slice(0, 80),
+    updated_at: new Date().toISOString(),
+  };
+  if (!values.name) throw new Error("Name the saved checkout draft.");
+  const { data, error } = await supabase
+    .from("saved_checkout_drafts")
+    .insert(values)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return { ...data, amount_m: Number(data.amount_m) } as SavedCheckoutDraft;
+}
+export async function deleteSavedCheckoutDraft(id: string) {
+  const { error } = await createClient()
+    .from("saved_checkout_drafts")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
 
 export async function requestAccountDeletion() {
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
-  if (!userData.user) throw new Error("Sign in before requesting account deletion.");
-  const { error } = await supabase.from("account_deletion_requests").insert({ user_id: userData.user.id });
+  if (!userData.user)
+    throw new Error("Sign in before requesting account deletion.");
+  const { error } = await supabase
+    .from("account_deletion_requests")
+    .insert({ user_id: userData.user.id });
   if (error) throw error;
 }
 
-export async function getMyRewards(): Promise<{ account: LoyaltyAccount|null; history: LoyaltyTransaction[] }> {
-  const supabase=createClient(); const {data:userData}=await supabase.auth.getUser(); if(!userData.user) throw new Error("Sign in to view rewards.");
-  const[account,history]=await Promise.all([supabase.from("loyalty_accounts").select("*").eq("user_id",userData.user.id).maybeSingle(),supabase.from("loyalty_transactions").select("*").eq("user_id",userData.user.id).order("created_at",{ascending:false}).limit(50)]);
-  if(account.error||history.error) throw new Error("Rewards migration is required before rewards can load.");
-  return{account:account.data as LoyaltyAccount|null,history:(history.data??[]) as LoyaltyTransaction[]};
+export async function getMyRewards(): Promise<{
+  account: LoyaltyAccount | null;
+  history: LoyaltyTransaction[];
+}> {
+  const supabase = createClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) throw new Error("Sign in to view rewards.");
+  const [account, history] = await Promise.all([
+    supabase
+      .from("loyalty_accounts")
+      .select("*")
+      .eq("user_id", userData.user.id)
+      .maybeSingle(),
+    supabase
+      .from("loyalty_transactions")
+      .select("*")
+      .eq("user_id", userData.user.id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+  ]);
+  if (account.error || history.error)
+    throw new Error("Rewards migration is required before rewards can load.");
+  return {
+    account: account.data as LoyaltyAccount | null,
+    history: (history.data ?? []) as LoyaltyTransaction[],
+  };
 }
 
 export async function createOrder(input: {
@@ -110,15 +234,23 @@ export async function createOrder(input: {
   coupon_code?: string;
   request_id: string;
 }) {
-  const response = await fetch("/api/orders/create", { method: "POST", headers: await authenticatedApiHeaders(), body: JSON.stringify(input) });
+  const response = await fetch("/api/orders/create", {
+    method: "POST",
+    headers: await authenticatedApiHeaders(),
+    body: JSON.stringify(input),
+  });
   const data = await parseApiResponse(response);
-  if (!data.order || typeof data.order !== "object") throw new Error("Order service returned no order.");
+  if (!data.order || typeof data.order !== "object")
+    throw new Error("Order service returned no order.");
   return normalizeOrder(data.order as Record<string, unknown>);
 }
 
 export async function getMyOrders(): Promise<Order[]> {
   const supabase = createClient();
-  const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []).map(normalizeOrder);
 }
@@ -135,33 +267,77 @@ export async function findOrder(reference: string): Promise<Order | null> {
 }
 
 export async function getAdminOrders(): Promise<Order[]> {
-  const response = await fetch("/api/admin/orders", { headers: await authenticatedApiHeaders(), cache: "no-store" });
+  const response = await fetch("/api/admin/orders", {
+    headers: await authenticatedApiHeaders(),
+    cache: "no-store",
+  });
   const data = await parseApiResponse(response);
-  return (Array.isArray(data.orders) ? data.orders : []).map((order) => normalizeOrder(order as Record<string, unknown>));
+  return (Array.isArray(data.orders) ? data.orders : []).map((order) =>
+    normalizeOrder(order as Record<string, unknown>),
+  );
 }
 
-export async function getOrderTimeline(order: Order): Promise<OrderStatusHistory[]> {
-  const { data, error } = await createClient().from("order_status_history").select("id,order_id,previous_status,status,customer_message,created_at").eq("order_id", order.id).order("created_at");
+export async function getOrderTimeline(
+  order: Order,
+): Promise<OrderStatusHistory[]> {
+  const { data, error } = await createClient()
+    .from("order_status_history")
+    .select("id,order_id,previous_status,status,customer_message,created_at")
+    .eq("order_id", order.id)
+    .order("created_at");
   if (!error && data?.length) return data as OrderStatusHistory[];
   return [
-    { id: `${order.id}-created`, order_id: order.id, previous_status: null, status: "pending", customer_message: "Order created.", created_at: order.created_at },
-    ...(order.status !== "pending" ? [{ id: `${order.id}-current`, order_id: order.id, previous_status: "pending", status: order.status, customer_message: null, created_at: order.updated_at }] : []),
+    {
+      id: `${order.id}-created`,
+      order_id: order.id,
+      previous_status: null,
+      status: "pending",
+      customer_message: "Order created.",
+      created_at: order.created_at,
+    },
+    ...(order.status !== "pending"
+      ? [
+          {
+            id: `${order.id}-current`,
+            order_id: order.id,
+            previous_status: "pending",
+            status: order.status,
+            customer_message: null,
+            created_at: order.updated_at,
+          },
+        ]
+      : []),
   ];
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {
-  const response = await fetch("/api/admin/orders", { method: "PATCH", headers: await authenticatedApiHeaders(), body: JSON.stringify({ id, status }) });
+  const response = await fetch("/api/admin/orders", {
+    method: "PATCH",
+    headers: await authenticatedApiHeaders(),
+    body: JSON.stringify({ id, status }),
+  });
   await parseApiResponse(response);
 }
 
-export async function updateSellerStatus(id: string, sellerStatus: NonNullable<Order["seller_status"]>) {
-  const response = await fetch("/api/admin/orders", { method: "PATCH", headers: await authenticatedApiHeaders(), body: JSON.stringify({ id, sellerStatus }) });
+export async function updateSellerStatus(
+  id: string,
+  sellerStatus: NonNullable<Order["seller_status"]>,
+) {
+  const response = await fetch("/api/admin/orders", {
+    method: "PATCH",
+    headers: await authenticatedApiHeaders(),
+    body: JSON.stringify({ id, sellerStatus }),
+  });
   const data = await parseApiResponse(response);
   return normalizeOrder(data.order as Record<string, unknown>);
 }
 
 export async function updateSettings(input: Partial<MarketplaceSettings>) {
-  const response = await fetch("/api/admin/settings", { method: "PATCH", headers: await authenticatedApiHeaders(), body: JSON.stringify(input) });
+  const response = await fetch("/api/admin/settings", {
+    method: "PATCH",
+    headers: await authenticatedApiHeaders(),
+    body: JSON.stringify(input),
+  });
   const data = await parseApiResponse(response);
   return data.settings as unknown as MarketplaceSettings;
 }
@@ -169,12 +345,17 @@ export async function updateSettings(input: Partial<MarketplaceSettings>) {
 function normalizeOrder(data: Record<string, unknown>): Order {
   return {
     ...(data as unknown as Order),
-    payment_asset: (data.payment_asset ?? data.crypto_asset ?? null) as Order["payment_asset"],
-    transaction_id: (data.transaction_id ?? data.payment_id ?? null) as string | null,
+    payment_asset: (data.payment_asset ??
+      data.crypto_asset ??
+      null) as Order["payment_asset"],
+    transaction_id: (data.transaction_id ?? data.payment_id ?? null) as
+      string | null,
     amount_m: Number(data.amount_m),
     price_per_m: Number(data.price_per_m),
     total_price: Number(data.total_price),
     risk_score: Number(data.risk_score ?? 0),
-    risk_reasons: Array.isArray(data.risk_reasons) ? data.risk_reasons as string[] : [],
+    risk_reasons: Array.isArray(data.risk_reasons)
+      ? (data.risk_reasons as string[])
+      : [],
   };
 }

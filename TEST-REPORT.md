@@ -7,9 +7,16 @@
 - Local validation: TypeScript passed with incremental output disabled (OneDrive locked the generated cache), ESLint passed, and all 11 critical tests passed.
 - Live authenticated verification remains pending the production support migration and usable test identities.
 
+## Scheduled and bulk pricing
+
+- Added permission-protected, audited admin controls for rate schedules and buy/sell bulk tiers, plus price-history visibility.
+- Quote, checkout, and order creation use the same deterministic resolver: newest active applicable schedule, then highest qualifying type-specific tier.
+- Resolver tests cover precedence, expiry, thresholds, and fallback; the critical suite now passes 13/13 with TypeScript and ESLint clean.
+- Production migration and authenticated admin/order tests remain pending Supabase access and test identities.
+
 ## Passed
 
-- `npm run test:critical`: 11 passed, 0 failed; BTC and USDC payload mapping, unsupported-asset rejection, valid/structured/non-JSON/empty API response handling, canonical OSRS XP thresholds, starter/maxed combat formulas, seller-payout transition/role invariants, and privacy-safe browser labels are executable assertions.
+- `npm run test:critical`: 13 passed, 0 failed; BTC and USDC payload mapping, unsupported-asset rejection, valid/structured/non-JSON/empty API response handling, canonical OSRS XP thresholds, starter/maxed combat formulas, seller-payout transition/role invariants, privacy-safe browser labels, and deterministic pricing resolution are executable assertions.
 - Local OSRS tools verification: level-to-XP, XP-to-virtual-level (through 200M), and combat-level calculators pass canonical threshold/formula tests, lint, TypeScript, and build.
 - GitHub Actions runs critical tests, lint, TypeScript, and production build on `main` pushes and pull requests.
 

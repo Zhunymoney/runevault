@@ -1,6 +1,21 @@
 export type UserRole = "customer" | "staff" | "admin";
 export type OrderType = "buy" | "sell";
-export type SavedCheckoutDraft={id:string;user_id:string;name:string;order_type:OrderType;amount_m:number;delivery_name:string|null;preferred_world:number|null;contact_details:string|null;notes:string|null;payout_method:string|null;payout_details:string|null;coupon_code:string|null;created_at:string;updated_at:string};
+export type SavedCheckoutDraft = {
+  id: string;
+  user_id: string;
+  name: string;
+  order_type: OrderType;
+  amount_m: number;
+  delivery_name: string | null;
+  preferred_world: number | null;
+  contact_details: string | null;
+  notes: string | null;
+  payout_method: string | null;
+  payout_details: string | null;
+  coupon_code: string | null;
+  created_at: string;
+  updated_at: string;
+};
 export type OrderStatus =
   | "pending"
   | "awaiting_payment"
@@ -17,7 +32,11 @@ export interface Profile {
   runescape_name?: string | null;
   contact_email?: string | null;
   preferred_payment_method?: "card" | "btc" | "usdc" | null;
-  notification_preferences?: { email?: boolean; order_updates?: boolean; security?: boolean };
+  notification_preferences?: {
+    email?: boolean;
+    order_updates?: boolean;
+    security?: boolean;
+  };
   deletion_requested_at?: string | null;
   created_at: string;
   updated_at: string;
@@ -33,8 +52,20 @@ export interface SavedCharacter {
   updated_at: string;
 }
 
-export interface LoyaltyAccount { user_id: string; points_balance: number; lifetime_points: number; vip_tier: "standard"|"silver"|"gold"|"vault"; updated_at: string }
-export interface LoyaltyTransaction { id: string; order_id: string|null; points: number; reason: string; created_at: string }
+export interface LoyaltyAccount {
+  user_id: string;
+  points_balance: number;
+  lifetime_points: number;
+  vip_tier: "standard" | "silver" | "gold" | "vault";
+  updated_at: string;
+}
+export interface LoyaltyTransaction {
+  id: string;
+  order_id: string | null;
+  points: number;
+  reason: string;
+  created_at: string;
+}
 
 export interface OrderStatusHistory {
   id: string;
@@ -57,6 +88,21 @@ export interface MarketplaceSettings {
   sell_enabled?: boolean;
   estimated_delivery_minutes?: number;
   pause_message?: string | null;
+  scheduled_prices?: Array<{
+    id: string;
+    buy_rate: number | string | null;
+    sell_rate: number | string | null;
+    starts_at: string;
+    ends_at: string | null;
+    active: boolean;
+  }>;
+  bulk_price_tiers?: Array<{
+    id: string;
+    order_type: OrderType;
+    minimum_amount_m: number | string;
+    rate_adjustment: number | string;
+    active: boolean;
+  }>;
   updated_at: string;
 }
 
@@ -88,7 +134,14 @@ export interface Order {
   contact_details?: string | null;
   payout_method?: string | null;
   payout_details?: string | null;
-  seller_status?: "awaiting_meetup" | "gold_received" | "verification" | "payout_pending" | "payout_completed" | "rejected" | null;
+  seller_status?:
+    | "awaiting_meetup"
+    | "gold_received"
+    | "verification"
+    | "payout_pending"
+    | "payout_completed"
+    | "rejected"
+    | null;
   seller_risk_notes?: string | null;
   created_at: string;
   updated_at: string;

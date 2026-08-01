@@ -73,7 +73,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 - [ ] Complete OSRS buy workflow. (Contact, preferred world, availability, inventory, estimate, and checkout handling implemented; migration/live tests remain.)
 - [ ] Complete OSRS sell and payout workflow. (Payout selection/details, customer-visible seller lifecycle, server-authorized admin transitions, backward-transition protection, fulfillment payout restrictions, automatic completion, and audit records are implemented; migration and authenticated operational tests remain.)
-- [ ] Price history, schedules, promotions, tiers, pause controls, and server-side totals. (Additive schema, history trigger, public reads, and admin pause controls implemented; scheduling/tier admin UI and live tests remain.)
+- [ ] Price history, schedules, promotions, tiers, pause controls, and server-side totals. (Additive schema, history trigger, public reads, permission-protected scheduling/tier admin controls with audit writes, deterministic newest-schedule/highest-tier resolution, matching quote/checkout previews, migration-safe fallback, and server-authoritative order totals implemented; production migration and authenticated live tests remain.)
 - [ ] Section 3 live tests and deployment.
 
 ## Section 4 — admin system

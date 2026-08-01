@@ -14,6 +14,7 @@ for (const [name,path,init] of [
   ["ticket auth JSON","/api/support/tickets",{ headers:{Accept:"application/json"} }],
   ["admin support auth JSON","/api/admin/support",{ headers:{Accept:"application/json"} }],
   ["admin inventory auth JSON","/api/admin/inventory",{ headers:{Accept:"application/json"} }],
+  ["admin pricing auth JSON","/api/admin/pricing",{ headers:{Accept:"application/json"} }],
   ["admin marketing auth JSON","/api/admin/marketing",{ headers:{Accept:"application/json"} }],
   ["order create auth JSON","/api/orders/create",{ method:"POST",headers:{"Content-Type":"application/json"},body:"{}" }],
   ["admin content auth JSON","/api/admin/content",{ headers:{Accept:"application/json"} }],

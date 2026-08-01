@@ -270,6 +270,7 @@ export default function AdminPage() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link href="/admin/support" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/10 px-5 font-black">Support inbox</Link>
           <Link href="/admin/inventory" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/10 px-5 font-black">Inventory</Link>
+          <Link href="/admin/pricing" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/10 px-5 font-black">Pricing</Link>
           <Link href="/admin/marketing" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/10 px-5 font-black">Marketing</Link>
           <Link href="/admin/content" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/10 px-5 font-black">Content</Link>
           <Link href="/admin/audit" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/10 px-5 font-black">Audit trail</Link>

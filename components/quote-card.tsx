@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2, Coins, ShieldCheck } from "lucide-react";
 import { getSettings } from "@/lib/marketplace";
 import type { MarketplaceSettings, OrderType } from "@/lib/types";
+import { resolveEffectivePrice } from "@/lib/pricing";
 
 const fallback: MarketplaceSettings = {
   id: 1,
@@ -29,10 +30,20 @@ export function QuoteCard() {
   useEffect(() => {
     void getSettings()
       .then(setSettings)
-      .catch(() => setMessage("Database pricing is unavailable, so preview rates are shown."));
+      .catch(() =>
+        setMessage(
+          "Database pricing is unavailable, so preview rates are shown.",
+        ),
+      );
   }, []);
 
-  const rate = type === "buy" ? settings.buy_rate : settings.sell_rate;
+  const rate = resolveEffectivePrice({
+    orderType: type,
+    amountM: amount,
+    baseRate: type === "buy" ? settings.buy_rate : settings.sell_rate,
+    schedules: settings.scheduled_prices,
+    tiers: settings.bulk_price_tiers,
+  }).rate;
   const total = useMemo(() => Math.max(amount, 0) * rate, [amount, rate]);
 
   function continueToCheckout() {
@@ -45,8 +56,13 @@ export function QuoteCard() {
       return;
     }
 
-    if (amount < settings.minimum_order_m || amount > settings.maximum_order_m) {
-      setMessage(`Orders must be between ${settings.minimum_order_m}M and ${settings.maximum_order_m}M.`);
+    if (
+      amount < settings.minimum_order_m ||
+      amount > settings.maximum_order_m
+    ) {
+      setMessage(
+        `Orders must be between ${settings.minimum_order_m}M and ${settings.maximum_order_m}M.`,
+      );
       setBusy(false);
       return;
     }
@@ -71,17 +87,25 @@ export function QuoteCard() {
       <div className="quote-inner">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[.14em] text-amber-300">OSRS Gold Calculator</p>
+            <p className="text-sm font-bold uppercase tracking-[.14em] text-amber-300">
+              OSRS Gold Calculator
+            </p>
             <h2 className="mt-2 text-3xl font-black">Instant estimate</h2>
           </div>
           <span className="preview-pill">PREVIEW</span>
         </div>
 
         <div className="mt-7 grid grid-cols-2 rounded-2xl bg-white/5 p-1">
-          <button onClick={() => setType("buy")} className={`quote-tab ${type === "buy" ? "active-buy" : ""}`}>
+          <button
+            onClick={() => setType("buy")}
+            className={`quote-tab ${type === "buy" ? "active-buy" : ""}`}
+          >
             Buy Gold
           </button>
-          <button onClick={() => setType("sell")} className={`quote-tab ${type === "sell" ? "active-sell" : ""}`}>
+          <button
+            onClick={() => setType("sell")}
+            className={`quote-tab ${type === "sell" ? "active-sell" : ""}`}
+          >
             Sell Gold
           </button>
         </div>
@@ -101,14 +125,22 @@ export function QuoteCard() {
             min={settings.minimum_order_m}
             max={settings.maximum_order_m}
             value={amount}
-            onChange={(event) => setAmount(Math.max(1, Number(event.target.value)))}
+            onChange={(event) =>
+              setAmount(Math.max(1, Number(event.target.value)))
+            }
           />
-          <span className="self-center text-xl font-black text-white/35">M</span>
+          <span className="self-center text-xl font-black text-white/35">
+            M
+          </span>
         </div>
 
         <div className="mt-4 grid grid-cols-4 gap-2">
           {[50, 100, 250, 500].map((value) => (
-            <button key={value} onClick={() => setAmount(value)} className="amount-button">
+            <button
+              key={value}
+              onClick={() => setAmount(value)}
+              className="amount-button"
+            >
               {value}M
             </button>
           ))}
@@ -125,25 +157,47 @@ export function QuoteCard() {
 
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-sm text-white/40">{type === "buy" ? "Estimated price" : "Estimated payout"}</p>
+            <p className="text-sm text-white/40">
+              {type === "buy" ? "Estimated price" : "Estimated payout"}
+            </p>
             <p className="mt-1 text-4xl font-black">${total.toFixed(2)}</p>
           </div>
-          <Coins className={type === "buy" ? "text-amber-300" : "text-emerald-300"} size={34} />
+          <Coins
+            className={type === "buy" ? "text-amber-300" : "text-emerald-300"}
+            size={34}
+          />
         </div>
 
-        <button disabled={busy || settings.maintenance_mode} onClick={continueToCheckout} className={`quote-submit ${type === "sell" ? "sell-submit" : ""}`}>
-          {busy ? "Opening checkout..." : type === "buy" ? "Review Buy Order" : "Review Sell Order"}
+        <button
+          disabled={busy || settings.maintenance_mode}
+          onClick={continueToCheckout}
+          className={`quote-submit ${type === "sell" ? "sell-submit" : ""}`}
+        >
+          {busy
+            ? "Opening checkout..."
+            : type === "buy"
+              ? "Review Buy Order"
+              : "Review Sell Order"}
           {!busy && <ArrowRight size={18} />}
         </button>
 
         <div className="mt-5 grid grid-cols-2 gap-3 text-xs font-semibold text-white/35">
-          <span className="inline-flex items-center gap-2"><ShieldCheck size={15} /> Review first</span>
-          <span className="inline-flex items-center gap-2"><CheckCircle2 size={15} /> No payment yet</span>
+          <span className="inline-flex items-center gap-2">
+            <ShieldCheck size={15} /> Review first
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <CheckCircle2 size={15} /> No payment yet
+          </span>
         </div>
 
-        {message && <p className="mt-4 rounded-xl border border-white/10 bg-white/[.025] p-3 text-sm text-white/60">{message}</p>}
+        {message && (
+          <p className="mt-4 rounded-xl border border-white/10 bg-white/[.025] p-3 text-sm text-white/60">
+            {message}
+          </p>
+        )}
         <p className="mt-5 text-center text-xs leading-5 text-white/28">
-          Preview environment: no live payment or automated in-game transaction is processed.
+          Preview environment: no live payment or automated in-game transaction
+          is processed.
         </p>
       </div>
     </div>
