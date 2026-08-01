@@ -19,6 +19,7 @@
 - Added a real local multi-item OSRS buy/sell cart with quantity edits, removal, clear, combined estimates, and navigation into independent secure order/payment references.
 - Cart estimates use the same scheduled/tier resolver as quote, checkout, and order creation; corrupted persisted entries are rejected and storage is capped at 25 items.
 - TypeScript, ESLint, the 71-route production build, and all 14 critical tests pass locally; live responsive verification is recorded separately after deployment.
+- Live production browser verification: a signed-in sell item persisted from `/quote` to `/cart`, editing 250M to 300M updated the checkout URL and checkout fields, and a 390×844 viewport rendered the cart at 375px document width with no horizontal overflow.
 
 ## Passed
 
