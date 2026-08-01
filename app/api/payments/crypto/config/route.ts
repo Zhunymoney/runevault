@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOrderByReference, rateLimit, requestIp, requireOrderOwner, supabaseUrl, userHeaders } from "@/lib/launch-server";
+import { rateLimit, requestIp, requireOrderOwner, safeGetOrderByReference, supabaseUrl, userHeaders } from "@/lib/launch-server";
 import { createCryptoQuote } from "@/lib/crypto-quote";
 
 export const runtime = "nodejs";
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const order = await getOrderByReference(
+  const order = await safeGetOrderByReference(
     reference,
     request.headers.get("authorization"),
   );

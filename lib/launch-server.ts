@@ -91,6 +91,11 @@ export async function getOrderByReference(
   return rows[0] ?? null;
 }
 
+export async function safeGetOrderByReference(reference: string, authorization?: string | null) {
+  try { return await getOrderByReference(reference, authorization); }
+  catch { return null; }
+}
+
 export async function updateOrder(
   id: string,
   values: Record<string, unknown>,
