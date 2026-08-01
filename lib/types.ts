@@ -1,5 +1,6 @@
 export type UserRole = "customer" | "staff" | "admin";
 export type OrderType = "buy" | "sell";
+export type SavedCheckoutDraft={id:string;user_id:string;name:string;order_type:OrderType;amount_m:number;delivery_name:string|null;preferred_world:number|null;contact_details:string|null;notes:string|null;payout_method:string|null;payout_details:string|null;coupon_code:string|null;created_at:string;updated_at:string};
 export type OrderStatus =
   | "pending"
   | "awaiting_payment"

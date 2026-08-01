@@ -1,4 +1,4 @@
-import type { LoyaltyAccount, LoyaltyTransaction, MarketplaceSettings, Order, OrderStatus, OrderStatusHistory, OrderType, Profile, SavedCharacter } from "@/lib/types";
+import type { LoyaltyAccount, LoyaltyTransaction, MarketplaceSettings, Order, OrderStatus, OrderStatusHistory, OrderType, Profile, SavedCharacter, SavedCheckoutDraft } from "@/lib/types";
 import { createClient } from "@/lib/supabase-browser";
 import { parseApiResponse } from "@/lib/client-api";
 
@@ -78,6 +78,10 @@ export async function deleteSavedCharacter(id: string) {
   const { error } = await createClient().from("saved_characters").delete().eq("id", id);
   if (error) throw error;
 }
+
+export async function getSavedCheckoutDrafts():Promise<SavedCheckoutDraft[]>{const{data,error}=await createClient().from("saved_checkout_drafts").select("*").order("updated_at",{ascending:false});if(error)throw error;return(data??[]).map(item=>({...item,amount_m:Number(item.amount_m)})) as SavedCheckoutDraft[];}
+export async function saveCheckoutDraft(input:Omit<SavedCheckoutDraft,"id"|"user_id"|"created_at"|"updated_at">){const supabase=createClient(),{data:userData}=await supabase.auth.getUser();if(!userData.user)throw new Error("Sign in before saving a checkout draft.");const values={...input,user_id:userData.user.id,name:input.name.trim().slice(0,80),updated_at:new Date().toISOString()};if(!values.name)throw new Error("Name the saved checkout draft.");const{data,error}=await supabase.from("saved_checkout_drafts").insert(values).select("*").single();if(error)throw error;return{...data,amount_m:Number(data.amount_m)} as SavedCheckoutDraft;}
+export async function deleteSavedCheckoutDraft(id:string){const{error}=await createClient().from("saved_checkout_drafts").delete().eq("id",id);if(error)throw error;}
 
 export async function requestAccountDeletion() {
   const supabase = createClient();

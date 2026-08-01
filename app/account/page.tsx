@@ -16,10 +16,12 @@ import {
 import {
   addSavedCharacter,
   deleteSavedCharacter,
+  deleteSavedCheckoutDraft,
   getCurrentProfile,
   getMyOrders,
   getMyRewards,
   getSavedCharacters,
+  getSavedCheckoutDrafts,
   requestAccountDeletion,
   updateMyProfile,
 } from "@/lib/marketplace";
@@ -29,6 +31,7 @@ import type {
   Order,
   Profile,
   SavedCharacter,
+  SavedCheckoutDraft,
 } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
 import { parseApiResponse } from "@/lib/client-api";
@@ -59,6 +62,7 @@ export default function AccountPage() {
   const [referralCode, setReferralCode] = useState("");
   const [claimCode, setClaimCode] = useState("");
   const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [savedDrafts,setSavedDrafts]=useState<SavedCheckoutDraft[]>([]);
 
   useEffect(() => {
     void Promise.all([getCurrentProfile(), getMyOrders()])
@@ -92,6 +96,7 @@ export default function AccountPage() {
             ),
           );
         void loadReferrals();
+        void getSavedCheckoutDrafts().then(setSavedDrafts).catch(()=>setMessage("Saved checkout drafts require the account migration."));
       })
       .catch((reason) => {
         setError(
@@ -154,6 +159,8 @@ export default function AccountPage() {
       setSaving(false);
     }
   }
+
+  async function removeDraft(id:string){setSaving(true);try{await deleteSavedCheckoutDraft(id);setSavedDrafts(current=>current.filter(item=>item.id!==id));setMessage("Saved checkout draft deleted.");}catch(reason){setMessage(reason instanceof Error?reason.message:"Draft could not be deleted.");}finally{setSaving(false);}}
 
   const stats = useMemo(() => {
     const completed = orders.filter((order) => order.status === "completed");
@@ -518,6 +525,7 @@ export default function AccountPage() {
           </article>
         </aside>
       </section>
+      <section className="mt-10 rounded-3xl border border-white/10 bg-white/[.025] p-6 sm:p-8"><p className="text-sm font-black uppercase tracking-[.16em] text-amber-400">Saved checkout drafts</p><h2 className="mt-2 text-2xl font-black">Resume an order later.</h2><div className="mt-5 grid gap-3 lg:grid-cols-2">{savedDrafts.map(draft=><article key={draft.id} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 p-5"><div><b>{draft.name}</b><p className="mt-1 text-sm capitalize text-white/40">{draft.order_type} · {draft.amount_m}M{draft.delivery_name?` · ${draft.delivery_name}`:""}</p><p className="mt-1 text-xs text-white/25">Updated {new Date(draft.updated_at).toLocaleString()}</p></div><div className="flex gap-2"><Link href={`/checkout?draft=${encodeURIComponent(draft.id)}`} className="rounded-lg bg-amber-400 px-4 py-2 font-black text-black">Resume</Link><button type="button" disabled={saving} onClick={()=>void removeDraft(draft.id)} className="rounded-lg border border-rose-300/20 px-3 text-rose-100 disabled:opacity-50">Delete</button></div></article>)}{!savedDrafts.length&&<p className="rounded-2xl border border-dashed border-white/10 p-6 text-sm text-white/35">No saved drafts. Use “Save checkout draft” during checkout.</p>}</div></section>
       <AccountSecurity />
       <section className="mt-10 rounded-3xl border border-white/10 bg-white/[.025] p-6 sm:p-8">
         <p className="text-sm font-black uppercase tracking-[.16em] text-amber-400">

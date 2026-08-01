@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { createOrder, getSettings } from "@/lib/marketplace";
+import { createOrder, getSavedCheckoutDrafts, getSettings, saveCheckoutDraft } from "@/lib/marketplace";
 import type { MarketplaceSettings, OrderType } from "@/lib/types";
 
 const fallback: MarketplaceSettings = {
@@ -77,6 +77,8 @@ export default function CheckoutPage() {
           "Could not load live settings. Preview values are shown.",
         ),
       );
+    const draftId=params.get("draft");
+    if(draftId)void getSavedCheckoutDrafts().then(items=>{const draft=items.find(item=>item.id===draftId);if(!draft)return setMessage("Saved checkout draft was not found.");setType(draft.order_type);setAmount(draft.amount_m);setDeliveryName(draft.delivery_name??"");setPreferredWorld(draft.preferred_world?String(draft.preferred_world):"");setContactDetails(draft.contact_details??"");setNotes(draft.notes??"");setPayoutMethod(draft.payout_method??"");setPayoutDetails(draft.payout_details??"");setCouponCode(draft.coupon_code??"");setMessage(`Loaded saved draft: ${draft.name}`);}).catch(()=>setMessage("Saved checkout drafts require the account migration."));
   }, []);
 
   const rate =
@@ -153,6 +155,8 @@ router.push(
       setBusy(false);
     }
   }
+
+  async function saveDraft(){const name=window.prompt("Name this saved checkout draft:",`${type==="buy"?"Buy":"Sell"} ${amount}M`);if(!name?.trim())return;setBusy(true);try{await saveCheckoutDraft({name:name.trim(),order_type:type,amount_m:Math.trunc(amount),delivery_name:deliveryName.trim()||null,preferred_world:Number(preferredWorld)||null,contact_details:contactDetails.trim()||null,notes:notes.trim()||null,payout_method:type==="sell"?payoutMethod||null:null,payout_details:type==="sell"?payoutDetails.trim()||null:null,coupon_code:couponCode.trim()||null});setMessage("Checkout draft saved to your account.");}catch(reason){setMessage(reason instanceof Error?reason.message:"Checkout draft could not be saved.");}finally{setBusy(false);}}
 
   return (
     <main className="mx-auto min-h-[800px] max-w-6xl px-6 py-14 sm:py-20">
@@ -363,6 +367,7 @@ router.push(
 
             {!busy && <ArrowRight size={18} />}
           </button>
+          <button type="button" disabled={busy} onClick={()=>void saveDraft()} className="mt-3 min-h-12 w-full rounded-xl border border-white/10 font-black text-white/65 disabled:opacity-50">Save checkout draft</button>
 
           <div className="mt-6 space-y-3 text-sm text-white/40">
             <p className="flex items-center gap-3">
