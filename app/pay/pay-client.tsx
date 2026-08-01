@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
   Bitcoin,
@@ -14,12 +15,13 @@ import {
 } from "lucide-react";
 import { findOrder } from "@/lib/marketplace";
 import type { Order } from "@/lib/types";
-
+import {generateBitcoinQR, generateUSDCQR} from "@/lib/qr";
 type CryptoMethod = {
   id: string;
   name: string;
   network: string;
   address: string;
+  qr: string;
 };
 
 export function PayClient() {
@@ -52,8 +54,20 @@ export function PayClient() {
       .then(async (response) => {
         const data = await response.json();
         if (response.ok) {
-          setCrypto(data.methods ?? []);
-          setSelected(data.methods?.[0] ?? null);
+const methods = (data.methods ?? []) as CryptoMethod[];
+
+const methodsWithQR = await Promise.all(
+  methods.map(async (method) => ({
+    ...method,
+    qr:
+      method.id === "btc"
+        ? await generateBitcoinQR(method.address)
+        : await generateUSDCQR(method.address),
+  })),
+);
+
+setCrypto(methodsWithQR);
+setSelected(methodsWithQR[0] ?? null);
         }
       })
       .catch(() => undefined);
@@ -205,6 +219,21 @@ export function PayClient() {
                 </div>
               )}
 
+{selected?.qr && (
+  <div className="mt-6 flex justify-center">
+    <div className="rounded-2xl border border-white/10 bg-white p-4">
+      <Image
+        src={selected?.qr ?? ""}
+        alt={`${selected.name} QR Code`}
+        width={260}
+        height={260}
+        unoptimized
+      />
+    </div>
+  </div>
+)}
+
+<label className="mt-4 block text-sm font-bold text-white/45"></label>
               <label className="mt-4 block text-sm font-bold text-white/45">
                 Transaction ID
                 <input
