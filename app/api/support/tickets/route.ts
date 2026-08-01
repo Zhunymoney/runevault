@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { durableRateLimit, requestIp, supabaseUrl, userHeaders } from "@/lib/launch-server";
+import { durableRateLimit, requestIp, serviceHeaders, supabaseUrl, userHeaders } from "@/lib/launch-server";
 
 type User = { id: string };
 
@@ -21,9 +21,16 @@ export async function GET(request: Request) {
   try {
     const { authorization } = await authenticated(request);
     const response = await fetch(`${supabaseUrl()}/rest/v1/support_tickets?select=*,ticket_messages(id,author_type,body,internal,created_at)&order=updated_at.desc&ticket_messages.order=created_at.asc`, { headers: userHeaders(authorization), cache: "no-store" });
-    const data = await json(response);
+    const data = await json(response) as Array<Record<string, unknown>> | null;
     if (!response.ok) return NextResponse.json({ error: response.status === 404 ? "Support tickets are not configured yet." : "Tickets could not be loaded." }, { status: response.status === 404 ? 503 : response.status });
-    return NextResponse.json({ tickets: data });
+    const tickets = Array.isArray(data) ? data : [];
+    const ids = tickets.map((ticket) => String(ticket.id ?? "")).filter((id) => /^[0-9a-f-]{36}$/i.test(id));
+    if (ids.length) {
+      const attachmentsResponse = await fetch(`${supabaseUrl()}/rest/v1/support_attachments?ticket_id=in.(${ids.join(",")})&select=id,ticket_id,mime_type,size_bytes,created_at&order=created_at.asc`, { headers: serviceHeaders(), cache: "no-store" });
+      const attachments = attachmentsResponse.ok ? await json(attachmentsResponse) as Array<Record<string, unknown>> : [];
+      for (const ticket of tickets) ticket.support_attachments = attachments.filter((attachment) => attachment.ticket_id === ticket.id);
+    }
+    return NextResponse.json({ tickets });
   } catch (reason) {
     if (reason instanceof Response) return NextResponse.json({ error: await reason.text() || "Authentication required." }, { status: reason.status });
     return NextResponse.json({ error: reason instanceof Error ? reason.message : "Tickets could not be loaded." }, { status: 500 });
