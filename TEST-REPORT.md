@@ -2,6 +2,9 @@
 
 ## Passed
 
+- `npm run test:critical`: 5 passed, 0 failed; BTC and USDC payload mapping, unsupported-asset rejection, and valid/structured/non-JSON/empty API response handling are executable assertions.
+- GitHub Actions runs critical tests, lint, TypeScript, and production build on `main` pushes and pull requests.
+
 - `npm run lint`: passed with zero ESLint errors.
 - `npm run typecheck`: passed with zero TypeScript errors.
 - `npm run build`: passed locally; 39 routes generated.

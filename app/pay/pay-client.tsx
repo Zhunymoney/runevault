@@ -17,6 +17,7 @@ import { findOrder } from "@/lib/marketplace";
 import type { Order } from "@/lib/types";
 import {generateBitcoinQR, generateUSDCQR} from "@/lib/qr";
 import { createClient } from "@/lib/supabase-browser";
+import { buildCryptoSubmission } from "@/lib/payment-submission";
 type CryptoMethod = {
   id: string;
   name: string;
@@ -154,12 +155,7 @@ export function PayClient() {
       }
       const response = await fetch("/api/payments/crypto/mark-sent", {
         method: "POST", headers,
-        body: JSON.stringify({
-          reference,
-          paymentMethod: selected.id,
-          quoteToken: selected.quoteToken,
-          txid,
-        }),
+        body: JSON.stringify(buildCryptoSubmission(reference, selected, txid)),
         signal: AbortSignal.timeout(20_000),
       });
       const data = await readApiResponse(response);

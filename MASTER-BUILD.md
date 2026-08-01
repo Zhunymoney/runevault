@@ -138,7 +138,7 @@ This document is the implementation checklist and evidence log for the complete 
 ## Section 13 — performance and code quality
 
 - [ ] Caching, query/index optimization, images, lazy loading, bundle/API optimization, SSR/code splitting, and duplicate/dead-code cleanup. (Indexed reporting/operational queries, server-rendered static surfaces, route-level bundles, and duplicate client JSON parser cleanup implemented; profiling and live cache validation remain.)
-- [ ] Central API/errors/env validation, migrations, automated critical-flow tests, and deployment verifier. (Reusable safe client API parser, environment validation including secret-leak checks, strict typecheck script, and executable page/header/API-JSON deployment smoke test implemented; authenticated flow automation remains.)
+- [ ] Central API/errors/env validation, migrations, automated critical-flow tests, and deployment verifier. (Reusable safe client API parser, environment validation including secret-leak checks, strict typecheck, five executable payment/API critical-flow tests, GitHub CI, and executable page/header/schema/API-JSON deployment smoke test implemented; authenticated browser/database flow automation remains.)
 - [ ] Zero TypeScript/build errors, broken links, dead controls, unsafe secrets, and unhandled failures. (Lint, TypeScript, and production build are enforced locally; deployment verifier covers primary links and invalid API JSON behavior; full live control audit remains.)
 - [ ] Section 13 live tests and deployment.
 
@@ -163,7 +163,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 17 — complete end-to-end testing
 
-- [ ] Execute and record every available desktop, mobile, customer, admin, payment, inventory, analytics, notification, support, security, build, and production test. (All available lint/type/build/deployment/public-route/header/API-JSON checks executed and recorded in `TEST-REPORT.md`; authenticated database/provider/device tests remain.)
+- [ ] Execute and record every available desktop, mobile, customer, admin, payment, inventory, analytics, notification, support, security, build, and production test. (Five executable payment/API unit tests plus all available lint/type/build/deployment/public-route/header/schema/API-JSON checks are recorded in `TEST-REPORT.md`; authenticated database/provider/device/browser tests remain.)
 - [x] Clearly record tests blocked by unconfigured external providers without claiming success. (`TEST-REPORT.md` and `FINAL-REPORT.md` identify each external or migration blocker.)
 
 ## Section 18 — completion report
