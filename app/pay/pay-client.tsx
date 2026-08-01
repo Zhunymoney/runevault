@@ -25,6 +25,31 @@ type CryptoMethod = {
   qr: string;
 };
 
+async function readApiResponse(response: Response): Promise<{
+  error?: string;
+  message?: string;
+  methods?: CryptoMethod[];
+  url?: string;
+}> {
+  const text = await response.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text) as {
+      error?: string;
+      message?: string;
+      methods?: CryptoMethod[];
+      url?: string;
+    };
+  } catch {
+    return {
+      error: response.ok
+        ? "The payment service returned an invalid response. Please try again."
+        : text.trim() || `Payment service request failed (${response.status}).`,
+    };
+  }
+}
+
 export function PayClient() {
   const params = useSearchParams();
   const reference = params.get("reference")?.toUpperCase() ?? "";
@@ -48,7 +73,7 @@ export function PayClient() {
           method: "POST", headers, body: JSON.stringify({ reference }),
           signal: AbortSignal.timeout(15_000),
         });
-        const data = await response.json();
+        const data = await readApiResponse(response);
         if (!response.ok) throw new Error(data.error ?? "Could not load crypto addresses.");
         const methods = (data.methods ?? []) as CryptoMethod[];
         const methodsWithQR = await Promise.all(methods.map(async (method) => ({
@@ -73,7 +98,7 @@ export function PayClient() {
         method: "POST", headers, body: JSON.stringify({ reference }),
         signal: AbortSignal.timeout(20_000),
       });
-      const data = (await response.json()) as { url?: string; error?: string };
+      const data = await readApiResponse(response);
       if (!response.ok || !data.url) throw new Error(data.error ?? "Card checkout is unavailable.");
       window.location.assign(data.url);
     } catch (reason) {
@@ -101,7 +126,7 @@ export function PayClient() {
         body: JSON.stringify({ reference, asset: selected.id, txid }),
         signal: AbortSignal.timeout(20_000),
       });
-      const data = (await response.json()) as { message?: string; error?: string };
+      const data = await readApiResponse(response);
       if (!response.ok) throw new Error(data.error ?? "Submission failed.");
       setMessage(data.message ?? "Payment submitted for review.");
     } catch (reason) {
