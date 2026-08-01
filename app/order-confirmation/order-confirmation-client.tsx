@@ -15,6 +15,7 @@ import {
 import { findOrder } from "@/lib/marketplace";
 import type { Order } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
+import { createClient } from "@/lib/supabase-browser";
 
 export function OrderConfirmationClient() {
   const params = useSearchParams();
@@ -37,11 +38,11 @@ export function OrderConfirmationClient() {
         if (!result) setMessage("The order was created, but it could not be loaded.");
 
         if (result) {
-          void fetch("/api/notifications/order", {
+          void createClient().auth.getSession().then(({ data }) => fetch("/api/notifications/order", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token ?? ""}` },
             body: JSON.stringify({ reference: result.reference }),
-          }).catch(() => undefined);
+          })).catch(() => undefined);
         }
       })
       .catch((reason) =>

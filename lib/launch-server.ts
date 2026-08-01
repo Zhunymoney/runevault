@@ -269,7 +269,7 @@ export async function sendDiscord(
   const webhook = process.env.DISCORD_WEBHOOK_URL;
   if (!webhook) return;
 
-  await fetch(webhook, {
+  const response = await fetch(webhook, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -284,6 +284,7 @@ export async function sendDiscord(
       ],
     }),
   });
+  if (!response.ok) console.error(`Discord notification failed (${response.status}).`);
 }
 
 export async function sendEmail(args: {

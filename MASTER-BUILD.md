@@ -98,9 +98,9 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 7 — automation and notifications
 
-- [ ] Deduplicated Discord notifications.
-- [ ] Customer/admin email notifications.
-- [ ] Scheduled reports, stale/expired orders, reconciliation, stock and failure alerts, and automation logs.
+- [ ] Deduplicated Discord notifications. (Authenticated persistent claim ledger and provider failure handling implemented for order notifications; remaining event wiring/live credentials remain.)
+- [ ] Customer/admin email notifications. (Branded order notification wiring and provider failure handling implemented; credentials and remaining lifecycle events remain.)
+- [ ] Scheduled reports, stale/expired orders, reconciliation, stock and failure alerts, and automation logs. (Execution ledger schema implemented; scheduled job endpoints remain.)
 - [ ] Section 7 live tests and deployment.
 
 ## Section 8 — rewards and marketing
