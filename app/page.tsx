@@ -197,7 +197,7 @@ export default function Home() {
             <p className="section-kicker">Questions answered</p>
             <h2 className="mt-4 text-4xl font-black tracking-[-.04em] sm:text-5xl">What to know before ordering.</h2>
             <p className="mt-5 leading-7 text-white/45">
-              RuneVault is currently a marketplace preview with working quotes, accounts, and database order tracking.
+              RuneVault provides working quotes, protected customer accounts, payment instructions, and database-backed order tracking.
             </p>
           </div>
 

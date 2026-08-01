@@ -50,7 +50,7 @@ export default function SupportPage() {
       <section className="mt-12 grid gap-10 lg:grid-cols-[.75fr_1.25fr]">
         <div>
           <h2 className="text-3xl font-black">Frequently asked questions</h2>
-          <p className="mt-4 leading-7 text-white/40">Answers for the current RuneVault preview marketplace.</p>
+          <p className="mt-4 leading-7 text-white/40">Answers for the RuneVault OSRS marketplace.</p>
         </div>
         <div className="space-y-3">
           {faqs.map(([question, answer]) => (

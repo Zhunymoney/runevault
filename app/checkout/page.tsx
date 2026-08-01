@@ -317,7 +317,7 @@ export default function CheckoutPage() {
               <textarea
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
-                placeholder="Anything staff should know about this preview order?"
+                placeholder="Anything staff should know about this order?"
                 rows={4}
                 className="w-full resize-none bg-transparent outline-none placeholder:text-white/25"
               />

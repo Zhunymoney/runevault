@@ -114,7 +114,7 @@ export function QuoteCard() {
             </p>
             <h2 className="mt-2 text-3xl font-black">Instant estimate</h2>
           </div>
-          <span className="preview-pill">PREVIEW</span>
+          <span className="preview-pill">ESTIMATE</span>
         </div>
 
         <div className="mt-7 grid grid-cols-2 rounded-2xl bg-white/5 p-1">
@@ -225,8 +225,8 @@ export function QuoteCard() {
           </p>
         )}
         <p className="mt-5 text-center text-xs leading-5 text-white/28">
-          Preview environment: no live payment or automated in-game transaction
-          is processed.
+          Payment instructions are provided securely after order creation. No
+          payment or in-game transaction occurs while reviewing this estimate.
         </p>
       </div>
     </div>
