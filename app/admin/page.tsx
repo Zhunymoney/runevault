@@ -33,6 +33,13 @@ import type {
 } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
 
+type AdminOrder = Order & {
+  payment_provider?: string | null;
+  crypto_asset?: string | null;
+  transaction_id?: string | null;
+  payment_status?: string | null;
+};
+
 const statuses: OrderStatus[] = [
   "pending",
   "awaiting_payment",
@@ -43,9 +50,21 @@ const statuses: OrderStatus[] = [
   "cancelled",
 ];
 
+function formatPayment(order: AdminOrder) {
+  const asset = order.crypto_asset?.trim().toLowerCase();
+  const provider = order.payment_provider?.trim().toLowerCase();
+
+  if (asset === "btc" || asset === "bitcoin") return "Bitcoin";
+  if (asset === "usdc") return "USDC";
+  if (provider === "stripe") return "Card";
+  if (provider === "crypto_manual" || provider === "crypto") return "Crypto";
+  if (provider) return provider.replaceAll("_", " ");
+  return "Not selected";
+}
+
 export default function AdminPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [settings, setSettings] = useState<MarketplaceSettings | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -118,7 +137,9 @@ export default function AdminPage() {
       const matchesSearch =
         !needle ||
         order.reference.toLowerCase().includes(needle) ||
-        (order.delivery_name ?? "").toLowerCase().includes(needle);
+        (order.delivery_name ?? "").toLowerCase().includes(needle) ||
+        formatPayment(order).toLowerCase().includes(needle) ||
+        (order.transaction_id ?? "").toLowerCase().includes(needle);
 
       const matchesStatus =
         statusFilter === "all" || order.status === statusFilter;
@@ -154,6 +175,9 @@ export default function AdminPage() {
       "Amount M",
       "Rate",
       "Total",
+      "Payment",
+      "Payment Status",
+      "Transaction ID",
       "Status",
       "OSRS Name",
       "Created",
@@ -165,6 +189,9 @@ export default function AdminPage() {
       order.amount_m,
       order.price_per_m,
       order.total_price,
+      formatPayment(order),
+      order.payment_status ?? "",
+      order.transaction_id ?? "",
       order.status,
       order.delivery_name ?? "",
       order.created_at,
@@ -372,7 +399,7 @@ export default function AdminPage() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Reference or OSRS name"
+                placeholder="Reference, OSRS name, payment, or TXID"
                 className="w-full bg-transparent text-sm outline-none placeholder:text-white/25"
               />
             </div>
@@ -414,7 +441,7 @@ export default function AdminPage() {
         </p>
 
         <div className="mt-4 overflow-x-auto rounded-3xl border border-white/10 bg-white/[.02]">
-          <table className="w-full min-w-[1050px] text-left text-sm">
+          <table className="w-full min-w-[1220px] text-left text-sm">
             <thead className="bg-white/[.04] text-xs font-black uppercase tracking-[.12em] text-white/35">
               <tr>
                 <th className="p-5">Reference</th>
@@ -422,6 +449,7 @@ export default function AdminPage() {
                 <th>Amount</th>
                 <th>Rate</th>
                 <th>Total</th>
+                <th>Payment</th>
                 <th>Status control</th>
                 <th>OSRS name</th>
                 <th>Created</th>
@@ -445,6 +473,24 @@ export default function AdminPage() {
                   <td className="font-bold">{order.amount_m}M</td>
                   <td>${order.price_per_m.toFixed(3)}</td>
                   <td className="font-black">${order.total_price.toFixed(2)}</td>
+                  <td>
+                    <div className="min-w-[120px]">
+                      <p className="font-black capitalize">{formatPayment(order)}</p>
+                      {order.payment_status && (
+                        <p className="mt-1 text-xs capitalize text-white/35">
+                          {order.payment_status.replaceAll("_", " ")}
+                        </p>
+                      )}
+                      {order.transaction_id && (
+                        <p
+                          className="mt-1 max-w-[170px] truncate font-mono text-xs text-white/30"
+                          title={order.transaction_id}
+                        >
+                          {order.transaction_id}
+                        </p>
+                      )}
+                    </div>
+                  </td>
                   <td>
                     <div className="flex items-center gap-3">
                       <StatusPill status={order.status} />
@@ -473,7 +519,7 @@ export default function AdminPage() {
 
               {filteredOrders.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="p-10 text-center text-white/35">
+                  <td colSpan={9} className="p-10 text-center text-white/35">
                     No orders match the current filters.
                   </td>
                 </tr>
