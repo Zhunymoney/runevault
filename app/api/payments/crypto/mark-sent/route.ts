@@ -1,4 +1,4 @@
-mport { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import {
   getOrderByReference,
   rateLimit,
@@ -94,8 +94,8 @@ export async function POST(request: Request) {
 
   await updateOrder(order.id, {
     status: "awaiting_payment",
-    payment_provider: "crypto",
-    payment_status: "awaiting_verification",
+    payment_provider: "crypto_manual",
+    payment_status: "customer_marked_sent",
     payment_id: txid,
     crypto_asset: asset,
     risk_score: risk.score,
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
       inline: true,
     },
     {
-      name: "Payment",
+      name: "Asset",
       value: asset,
       inline: true,
     },
@@ -119,8 +119,8 @@ export async function POST(request: Request) {
       value: txid.slice(0, 100),
     },
     {
-      name: "Payment status",
-      value: "Awaiting verification",
+      name: "Status",
+      value: "Customer marked sent",
       inline: true,
     },
     {
@@ -134,8 +134,8 @@ export async function POST(request: Request) {
     {
       ok: true,
       reference: order.reference,
-      payment_provider: "crypto",
-      payment_status: "awaiting_verification",
+      payment_provider: "crypto_manual",
+      payment_status: "customer_marked_sent",
       crypto_asset: asset,
       message: `${asset} payment submitted for manual verification.`,
     },
