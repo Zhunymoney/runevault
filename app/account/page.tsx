@@ -33,6 +33,7 @@ import type {
 import { StatusPill } from "@/components/status-pill";
 import { parseApiResponse } from "@/lib/client-api";
 import { createClient } from "@/lib/supabase-browser";
+import { AccountSecurity } from "@/components/account-security";
 
 type Referral = { id:string; status:string; referrer_id:string; referred_id:string|null; created_at:string; rewarded_at:string|null };
 
@@ -517,6 +518,7 @@ export default function AccountPage() {
           </article>
         </aside>
       </section>
+      <AccountSecurity />
       <section className="mt-10 rounded-3xl border border-white/10 bg-white/[.025] p-6 sm:p-8">
         <p className="text-sm font-black uppercase tracking-[.16em] text-amber-400">
           Vault rewards

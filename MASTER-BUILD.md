@@ -63,7 +63,7 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 2 — customer accounts, dashboard, and email
 
-- [ ] Registration, verification, login/logout, password recovery/update, sessions, security alerts, and deletion request. (Recovery/update and deletion-request implementation complete; live email and migration tests remain.)
+- [ ] Registration, verification, login/logout, password recovery/update, sessions, security alerts, and deletion request. (Recovery/update and deletion-request flows, privacy-preserving active-session tracking, customer security-event history, and global device sign-out are implemented; live email, migration, and authenticated multi-device tests remain.)
 - [ ] Profile, characters, contact and payment preferences, and notification preferences. (UI, data access, migration, and RLS implemented; live migration test remains.)
 - [ ] Dashboard, order/payment history, invoices, timelines, reorders, saved carts, and linked support.
 - [ ] Branded transactional email templates and provider integration. (All requested branded responsive HTML/plain-text template variants implemented; Resend credentials and event wiring tests remain.)
@@ -125,7 +125,7 @@ This document is the implementation checklist and evidence log for the complete 
 ## Section 11 — security, fraud, and audit logging
 
 - [ ] Complete RLS and server authorization review. (Additive RLS, owner/admin API checks, server-only service credentials, audit records, security-event records, session records, and fraud-review schema implemented; live policy tests remain.)
-- [ ] CAPTCHA/bot controls, durable rate limits, validation, CSRF posture, fraud queues, idempotency, upload controls, sessions, headers, CSP, and safe errors. (Durable atomic rate-limit RPC is wired to crypto configuration/submission, Stripe creation, payment proof upload, order cancellation, and customer ticket create/reply with a safe local fallback; fraud queue, payment idempotency/quote validation, upload allowlist, HSTS, production CSP without unsafe-eval, and safe API errors are implemented; remaining endpoint coverage, CAPTCHA provider wiring, migration, and live tests remain.)
+- [ ] CAPTCHA/bot controls, durable rate limits, validation, CSRF posture, fraud queues, idempotency, upload controls, sessions, headers, CSP, and safe errors. (Durable atomic rate limiting covers high-risk payment/order/support/admin/session mutations; fraud queue, payment idempotency/quote validation, upload allowlist, keyed session/IP fingerprints, global session revocation, HSTS, production CSP without unsafe-eval, and safe API errors are implemented; CAPTCHA provider wiring, migration, and live authenticated tests remain.)
 - [ ] Backup/recovery and security operational documentation. (Backup, isolated restore, incident recovery, credential rotation, and abuse-control runbook added; owner must confirm Supabase backup retention.)
 - [ ] Section 11 live tests and deployment.
 
