@@ -22,6 +22,7 @@ import {
   getAdminOrders,
   getCurrentProfile,
   getSettings,
+  refundStripeOrder,
   updateOrderStatus,
   updateSellerStatus,
   updateSettings,
@@ -103,6 +104,17 @@ export default function AdminPage() {
       setMessage("Order status updated.");
     } catch (reason) {
       setMessage(reason instanceof Error ? reason.message : "Update failed.");
+    }
+  }
+
+  async function refundOrder(order: AdminOrder) {
+    if (!window.confirm(`Issue a full Stripe refund for ${order.reference}? This cannot be undone.`)) return;
+    try {
+      const updated = await refundStripeOrder(order.id);
+      setOrders((current) => current.map((item) => item.id === order.id ? updated : item));
+      setMessage("Stripe refund submitted and recorded.");
+    } catch (reason) {
+      setMessage(reason instanceof Error ? reason.message : "Refund failed.");
     }
   }
 
@@ -536,6 +548,9 @@ export default function AdminPage() {
                           {["awaiting_meetup","gold_received","verification","payout_pending","payout_completed","rejected"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
                         </select>
                       </label>
+                    )}
+                    {order.payment_provider === "stripe" && order.payment_status === "paid" && (
+                      <button type="button" onClick={() => void refundOrder(order)} className="mt-2 rounded-lg border border-rose-300/20 px-3 py-2 text-xs font-black text-rose-200">Full refund</button>
                     )}
                   </td>
                   <td>{order.delivery_name || "—"}</td>

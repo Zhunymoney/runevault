@@ -328,6 +328,16 @@ export async function updateSellerStatus(
   return normalizeOrder(data.order as Record<string, unknown>);
 }
 
+export async function refundStripeOrder(id: string) {
+  const response = await fetch("/api/admin/refunds", {
+    method: "POST",
+    headers: await authenticatedApiHeaders(),
+    body: JSON.stringify({ id }),
+  });
+  const data = await parseApiResponse(response);
+  return normalizeOrder(data.order as Record<string, unknown>);
+}
+
 export async function updateSettings(input: Partial<MarketplaceSettings>) {
   const response = await fetch("/api/admin/settings", {
     method: "PATCH",

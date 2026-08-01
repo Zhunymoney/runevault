@@ -29,7 +29,7 @@ Optional complete provider groups: Stripe (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_
 
 Migrations in `supabase/migrations` are the canonical schema, beginning with `202608010000_initial_schema.sql`, and are additive and ordered. Before production: create/verify a backup, link the correct project with `supabase link --project-ref ...`, inspect `supabase db diff`, apply with `supabase db push`, and record the CLI output. Never run against production using an unverified project reference. Test RLS with separate customer, staff, and anonymous sessions after applying.
 
-Production migration history is aligned with the canonical chain through `202608011500_sync_production_schema.sql`. Before future changes, confirm `supabase migration list --linked` is aligned and require a clean `supabase db push --linked --dry-run` after applying.
+Production migration history is aligned with the canonical chain through `202608011610_audit_service_role_grants.sql`. Before future changes, confirm `supabase migration list --linked` is aligned and require a clean `supabase db push --linked --dry-run` after applying.
 
 ## Provider setup
 

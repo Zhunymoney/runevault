@@ -17,6 +17,9 @@ for (const path of [
   "/marketplace",
   "/osrs",
   "/support",
+  "/contact",
+  "/disclosures",
+  "/prohibited-use",
   "/health",
   "/pay",
 ]) {
@@ -73,6 +76,15 @@ for (const [name, path, init] of [
     "ticket auth JSON",
     "/api/support/tickets",
     { headers: { Accept: "application/json" } },
+  ],
+  [
+    "admin refund auth JSON",
+    "/api/admin/refunds",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    },
   ],
   [
     "admin support auth JSON",

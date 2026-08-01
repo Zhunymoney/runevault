@@ -2,6 +2,8 @@
 
 This document is the implementation checklist and evidence log for the complete RuneVault build. A checkbox is marked complete only after the corresponding implementation has been validated at the appropriate level. Features that require an external provider remain unchecked until the provider is configured and a real integration test succeeds.
 
+The current feature-by-feature `COMPLETE` / `PARTIAL` / `MISSING` assessment is maintained in `MASTER-BUILD-AUDIT.md`.
+
 ## Baseline and recovery
 
 - Recovery branch: `backup/pre-master-build-20260801`

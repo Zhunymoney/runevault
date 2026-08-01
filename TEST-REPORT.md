@@ -12,7 +12,8 @@
 - Added permission-protected, audited admin controls for rate schedules and buy/sell bulk tiers, plus price-history visibility.
 - Quote, checkout, and order creation use the same deterministic resolver: newest active applicable schedule, then highest qualifying type-specific tier.
 - Resolver tests cover precedence, expiry, thresholds, and fallback; the critical suite now passes 13/13 with TypeScript and ESLint clean.
-- Production migration history is aligned through `202608011500`; authenticated order creation, signed BTC quote issuance, manual-review submission persistence, and test-data cleanup passed against production.
+- Production migration history is aligned through `202608011610`; authenticated order creation, signed BTC quote issuance, manual-review submission persistence, and test-data cleanup passed against production.
+- Production owner access passed across orders, inventory, support, customers, audit, automation, content, announcements, fraud, pricing, marketing, and settings APIs. Customer profile/saved-cart/order/ticket/referral flows, cross-user order isolation, owner cancellation, and customer admin denial passed with exact-ID cleanup.
 
 ## Persistent shopping cart
 

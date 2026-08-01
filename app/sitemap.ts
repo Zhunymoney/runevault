@@ -13,7 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/osrs", "/marketplace", "/news", "/guides", "/learn",
     "/privacy",
     "/terms",
-    "/cart", "/refund-policy", "/cancellation-policy", "/delivery-policy", "/cookie-policy", "/acceptable-use", "/fraud-prevention",
+    "/cart", "/refund-policy", "/cancellation-policy", "/delivery-policy", "/cookie-policy", "/acceptable-use", "/prohibited-use", "/fraud-prevention", "/disclosures", "/contact",
     "/health",
   ];
 

@@ -41,6 +41,9 @@ export function SiteFooter() {
             <Link href="/refund-policy">Refund policy</Link>
             <Link href="/delivery-policy">Delivery policy</Link>
             <Link href="/acceptable-use">Acceptable use</Link>
+            <Link href="/prohibited-use">Prohibited use</Link>
+            <Link href="/disclosures">Disclosures</Link>
+            <Link href="/contact">Contact</Link>
           </div>
           <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-amber-400/15 bg-amber-400/8 px-3 py-2 text-xs font-black text-amber-300">
             <ShieldCheck size={14} /> SECURE ORDER TRACKING
