@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+mport { NextResponse } from "next/server";
 import {
   getOrderByReference,
   rateLimit,
@@ -8,43 +8,94 @@ import {
   updateOrder,
 } from "@/lib/launch-server";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+type CryptoSubmissionBody = {
+  reference?: unknown;
+  asset?: unknown;
+  txid?: unknown;
+};
+
 export async function POST(request: Request) {
-  const limit = rateLimit(`crypto-sent:${requestIp(request)}`, 4, 5 * 60_000);
+  const limit = rateLimit(
+    `crypto-sent:${requestIp(request)}`,
+    4,
+    5 * 60_000,
+  );
+
   if (!limit.allowed) {
     return NextResponse.json(
-      { error: "This request was already submitted recently." },
+      {
+        error:
+          "This payment was submitted recently. Wait a few minutes before trying again.",
+      },
       { status: 429 },
     );
   }
 
-  const body = (await request.json()) as {
-    reference?: string;
-    asset?: string;
-    txid?: string;
-  };
+  const body = (await request
+    .json()
+    .catch(() => null)) as CryptoSubmissionBody | null;
 
-  const reference = body.reference?.trim().toUpperCase();
-  const asset = body.asset?.trim().toUpperCase();
-  const txid = body.txid?.trim();
+  const reference =
+    typeof body?.reference === "string"
+      ? body.reference.trim().toUpperCase()
+      : "";
 
-  if (!reference || !asset || !txid || txid.length < 8 || txid.length > 160) {
+  const rawAsset =
+    typeof body?.asset === "string"
+      ? body.asset.trim().toLowerCase()
+      : "";
+
+  const txid =
+    typeof body?.txid === "string"
+      ? body.txid.trim()
+      : "";
+
+  const asset =
+    rawAsset === "btc"
+      ? "BTC"
+      : rawAsset === "usdc"
+        ? "USDC"
+        : "";
+
+  if (!reference) {
     return NextResponse.json(
-      { error: "Reference, asset, and a valid transaction ID are required." },
+      { error: "Order reference is required." },
+      { status: 400 },
+    );
+  }
+
+  if (!asset) {
+    return NextResponse.json(
+      { error: "Select Bitcoin or USDC." },
+      { status: 400 },
+    );
+  }
+
+  if (txid.length < 8 || txid.length > 160) {
+    return NextResponse.json(
+      { error: "Enter a valid transaction ID." },
       { status: 400 },
     );
   }
 
   const order = await getOrderByReference(reference);
+
   if (!order) {
-    return NextResponse.json({ error: "Order not found." }, { status: 404 });
+    return NextResponse.json(
+      { error: "Order not found." },
+      { status: 404 },
+    );
   }
 
   const risk = riskScore(order);
 
   await updateOrder(order.id, {
     status: "awaiting_payment",
-    payment_provider: "crypto_manual",
-    payment_status: "customer_marked_sent",
+    payment_provider: "crypto",
+    payment_status: "awaiting_verification",
     payment_id: txid,
     crypto_asset: asset,
     risk_score: risk.score,
@@ -53,15 +104,46 @@ export async function POST(request: Request) {
   });
 
   await sendDiscord("Crypto payment submitted for review", [
-    { name: "Reference", value: order.reference, inline: true },
-    { name: "Asset", value: asset, inline: true },
-    { name: "Transaction ID", value: txid.slice(0, 100) },
-    { name: "Risk", value: `${risk.level} (${risk.score}/100)`, inline: true },
+    {
+      name: "Reference",
+      value: order.reference,
+      inline: true,
+    },
+    {
+      name: "Payment",
+      value: asset,
+      inline: true,
+    },
+    {
+      name: "Transaction ID",
+      value: txid.slice(0, 100),
+    },
+    {
+      name: "Payment status",
+      value: "Awaiting verification",
+      inline: true,
+    },
+    {
+      name: "Risk",
+      value: `${risk.level} (${risk.score}/100)`,
+      inline: true,
+    },
   ]);
 
-  return NextResponse.json({
-    ok: true,
-    message:
-      "Submitted for manual review. This does not confirm payment.",
-  });
+  return NextResponse.json(
+    {
+      ok: true,
+      reference: order.reference,
+      payment_provider: "crypto",
+      payment_status: "awaiting_verification",
+      crypto_asset: asset,
+      message: `${asset} payment submitted for manual verification.`,
+    },
+    {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
+    },
+  );
 }
