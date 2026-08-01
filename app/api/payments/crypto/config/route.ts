@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { rateLimit, requestIp } from "@/lib/launch-server";
+import { getOrderByReference, rateLimit, requestIp, requireOrderOwner } from "@/lib/launch-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,6 +28,15 @@ export async function POST(request: Request) {
       { error: "Order reference required." },
       { status: 400 },
     );
+  }
+
+  const order = await getOrderByReference(reference);
+  if (!order) return NextResponse.json({ error: "Order not found." }, { status: 404 });
+  try {
+    await requireOrderOwner(request, order);
+  } catch (reason) {
+    if (reason instanceof Response) return reason;
+    throw reason;
   }
 
   const btcAddress = process.env.CRYPTO_BTC_ADDRESS?.trim() ?? "";

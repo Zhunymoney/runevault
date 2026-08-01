@@ -16,6 +16,7 @@ import {
 import { findOrder } from "@/lib/marketplace";
 import type { Order } from "@/lib/types";
 import {generateBitcoinQR, generateUSDCQR} from "@/lib/qr";
+import { createClient } from "@/lib/supabase-browser";
 type CryptoMethod = {
   id: string;
   name: string;
@@ -29,68 +30,62 @@ export function PayClient() {
   const reference = params.get("reference")?.toUpperCase() ?? "";
   const [order, setOrder] = useState<Order | null>(null);
   const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [cardBusy, setCardBusy] = useState(false);
+  const [cryptoBusy, setCryptoBusy] = useState(false);
   const [crypto, setCrypto] = useState<CryptoMethod[]>([]);
   const [selected, setSelected] = useState<CryptoMethod | null>(null);
   const [txid, setTxid] = useState("");
 
   useEffect(() => {
-    if (!reference) {
-      setMessage("No order reference supplied.");
-      return;
-    }
-
-    void findOrder(reference)
-      .then(setOrder)
-      .catch((reason) =>
-        setMessage(reason instanceof Error ? reason.message : "Could not load order."),
-      );
-
-    void fetch("/api/payments/crypto/config", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reference }),
-    })
-      .then(async (response) => {
+    if (!reference) return;
+    async function load() {
+      try {
+        const loadedOrder = await findOrder(reference);
+        setOrder(loadedOrder);
+        if (!loadedOrder) throw new Error("Order not found.");
+        const headers = await authenticatedHeaders();
+        const response = await fetch("/api/payments/crypto/config", {
+          method: "POST", headers, body: JSON.stringify({ reference }),
+          signal: AbortSignal.timeout(15_000),
+        });
         const data = await response.json();
-        if (response.ok) {
-const methods = (data.methods ?? []) as CryptoMethod[];
-
-const methodsWithQR = await Promise.all(
-  methods.map(async (method) => ({
-    ...method,
-    qr:
-      method.id === "btc"
-        ? await generateBitcoinQR(method.address)
-        : await generateUSDCQR(method.address),
-  })),
-);
-
-setCrypto(methodsWithQR);
-setSelected(methodsWithQR[0] ?? null);
-        }
-      })
-      .catch(() => undefined);
+        if (!response.ok) throw new Error(data.error ?? "Could not load crypto addresses.");
+        const methods = (data.methods ?? []) as CryptoMethod[];
+        const methodsWithQR = await Promise.all(methods.map(async (method) => ({
+          ...method,
+          qr: method.id === "btc" ? await generateBitcoinQR(method.address) : await generateUSDCQR(method.address),
+        })));
+        setCrypto(methodsWithQR);
+        setSelected(methodsWithQR[0] ?? null);
+      } catch (reason) {
+        setMessage(reason instanceof Error ? reason.message : "Could not load payment options.");
+      }
+    }
+    void load();
   }, [reference]);
 
   async function openCardCheckout() {
-    setBusy(true);
+    setCardBusy(true);
     setMessage("");
-
-    const response = await fetch("/api/payments/stripe/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reference }),
-    });
-
-    const data = (await response.json()) as { url?: string; error?: string };
-    if (!response.ok || !data.url) {
-      setMessage(data.error ?? "Card checkout is unavailable.");
-      setBusy(false);
-      return;
+    try {
+      const headers = await authenticatedHeaders();
+      const response = await fetch("/api/payments/stripe/create", {
+        method: "POST", headers, body: JSON.stringify({ reference }),
+        signal: AbortSignal.timeout(20_000),
+      });
+      const data = (await response.json()) as { url?: string; error?: string };
+      if (!response.ok || !data.url) throw new Error(data.error ?? "Card checkout is unavailable.");
+      window.location.assign(data.url);
+    } catch (reason) {
+      setMessage(reason instanceof Error ? reason.message : "Card checkout failed.");
+      setCardBusy(false);
     }
+  }
 
-    window.location.assign(data.url);
+  async function authenticatedHeaders() {
+    const { data } = await createClient().auth.getSession();
+    if (!data.session?.access_token) throw new Error("Sign in again before continuing.");
+    return { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` };
   }
 
   async function markCryptoSent() {
@@ -99,20 +94,21 @@ setSelected(methodsWithQR[0] ?? null);
       return;
     }
 
-    setBusy(true);
-    const response = await fetch("/api/payments/crypto/mark-sent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        reference,
-        asset: selected.id,
-        txid,
-      }),
-    });
-
-    const data = (await response.json()) as { message?: string; error?: string };
-    setMessage(data.message ?? data.error ?? "Request finished.");
-    setBusy(false);
+    setCryptoBusy(true);
+    try {
+      const response = await fetch("/api/payments/crypto/mark-sent", {
+        method: "POST", headers: await authenticatedHeaders(),
+        body: JSON.stringify({ reference, asset: selected.id, txid }),
+        signal: AbortSignal.timeout(20_000),
+      });
+      const data = (await response.json()) as { message?: string; error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Submission failed.");
+      setMessage(data.message ?? "Payment submitted for review.");
+    } catch (reason) {
+      setMessage(reason instanceof Error ? reason.message : "Submission failed.");
+    } finally {
+      setCryptoBusy(false);
+    }
   }
 
   if (!order) {
@@ -159,11 +155,11 @@ setSelected(methodsWithQR[0] ?? null);
 
           <button
             onClick={() => void openCardCheckout()}
-            disabled={busy}
+            disabled={cardBusy}
             className="primary-button mt-7 w-full justify-center"
           >
             <LockKeyhole size={18} />
-            {busy ? "Opening…" : "Open secure card checkout"}
+            {cardBusy ? "Opening…" : "Open secure card checkout"}
             <ExternalLink size={17} />
           </button>
         </article>
@@ -246,11 +242,11 @@ setSelected(methodsWithQR[0] ?? null);
 
               <button
                 onClick={() => void markCryptoSent()}
-                disabled={busy || !selected}
+                disabled={cryptoBusy || !selected || txid.trim().length < 8}
                 className="header-button mt-5 w-full justify-center"
               >
                 <CheckCircle2 size={18} />
-                Submit for manual verification
+                {cryptoBusy ? "Submitting…" : "Submit for manual verification"}
               </button>
             </>
           )}

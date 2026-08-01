@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import {
-  getUserEmail,
   sendDiscord,
   sendEmail,
   updateOrder,
@@ -52,7 +51,7 @@ export async function POST(request: Request) {
         status: "paid",
         payment_provider: "stripe",
         payment_status: "paid",
-        payment_id: session.id,
+        transaction_id: session.id,
         paid_at: new Date().toISOString(),
       });
 

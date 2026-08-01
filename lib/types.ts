@@ -42,6 +42,14 @@ export interface Order {
   delivery_name: string | null;
   notes: string | null;
   assigned_to: string | null;
+  payment_provider: "stripe" | "crypto_manual" | null;
+  payment_asset: "BTC" | "USDC" | null;
+  payment_status: string | null;
+  transaction_id: string | null;
+  paid_at: string | null;
+  risk_score: number;
+  risk_level: "low" | "medium" | "high" | null;
+  risk_reasons: string[];
   created_at: string;
   updated_at: string;
 }

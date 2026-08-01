@@ -3,6 +3,7 @@ import {
   getOrderByReference,
   rateLimit,
   requestIp,
+  requireOrderOwner,
   riskScore,
   siteUrl,
   updateOrder,
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
     if (!order) {
       return NextResponse.json({ error: "Order not found." }, { status: 404 });
     }
+    await requireOrderOwner(request, order);
 
     if (order.order_type !== "buy") {
       return NextResponse.json(
@@ -61,15 +63,11 @@ export async function POST(request: Request) {
     }
 
     const risk = riskScore(order);
-    await updateOrder(order.id, {
-      payment_provider: "stripe",
-      payment_status: "checkout_created",
-      risk_score: risk.score,
-      risk_level: risk.level,
-      risk_reasons: risk.reasons,
-    });
-
     if (risk.level === "high") {
+      await updateOrder(order.id, {
+        payment_provider: "stripe", payment_status: "manual_review",
+        risk_score: risk.score, risk_level: risk.level, risk_reasons: risk.reasons,
+      });
       return NextResponse.json(
         {
           error:
@@ -78,6 +76,11 @@ export async function POST(request: Request) {
         { status: 403 },
       );
     }
+
+    await updateOrder(order.id, {
+      payment_provider: "stripe", payment_status: "checkout_created",
+      risk_score: risk.score, risk_level: risk.level, risk_reasons: risk.reasons,
+    });
 
     const params = new URLSearchParams();
     params.set("mode", "payment");
@@ -129,9 +132,10 @@ export async function POST(request: Request) {
       );
     }
 
-    await updateOrder(order.id, { payment_id: result.id ?? null });
+    await updateOrder(order.id, { transaction_id: result.id ?? null });
     return NextResponse.json({ url: result.url });
   } catch (reason) {
+    if (reason instanceof Response) return reason;
     return NextResponse.json(
       {
         error:

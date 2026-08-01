@@ -33,12 +33,7 @@ import type {
 } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
 
-type AdminOrder = Order & {
-  payment_provider?: string | null;
-  crypto_asset?: string | null;
-  transaction_id?: string | null;
-  payment_status?: string | null;
-};
+type AdminOrder = Order;
 
 const statuses: OrderStatus[] = [
   "pending",
@@ -51,7 +46,7 @@ const statuses: OrderStatus[] = [
 ];
 
 function formatPayment(order: AdminOrder) {
-  const asset = order.crypto_asset?.trim().toLowerCase();
+  const asset = order.payment_asset?.trim().toLowerCase();
   const provider = order.payment_provider?.trim().toLowerCase();
 
   if (asset === "btc" || asset === "bitcoin") return "Bitcoin";
