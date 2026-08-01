@@ -267,12 +267,13 @@ export async function sendEmail(args: {
   to: string;
   subject: string;
   html: string;
+  text?: string;
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;
   if (!apiKey || !from) return;
 
-  await fetch("https://api.resend.com/emails", {
+  const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -283,6 +284,8 @@ export async function sendEmail(args: {
       to: [args.to],
       subject: args.subject,
       html: args.html,
+      text: args.text,
     }),
   });
+  if (!response.ok) console.error(`Transactional email failed (${response.status}).`);
 }

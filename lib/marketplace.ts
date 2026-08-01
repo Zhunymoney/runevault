@@ -1,4 +1,4 @@
-import type { MarketplaceSettings, Order, OrderStatus, OrderType, Profile } from "@/lib/types";
+import type { MarketplaceSettings, Order, OrderStatus, OrderType, Profile, SavedCharacter } from "@/lib/types";
 import { createClient } from "@/lib/supabase-browser";
 
 export async function getCurrentProfile(): Promise<Profile | null> {
@@ -28,6 +28,53 @@ export async function getSettings(): Promise<MarketplaceSettings> {
     minimum_order_m: Number(data.minimum_order_m),
     maximum_order_m: Number(data.maximum_order_m),
   } as MarketplaceSettings;
+}
+
+export async function updateMyProfile(input: Pick<Profile, "full_name" | "runescape_name" | "contact_email" | "preferred_payment_method" | "notification_preferences">) {
+  const supabase = createClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) throw new Error("Sign in before updating your profile.");
+  const { data, error } = await supabase.from("profiles").update({
+    full_name: input.full_name?.trim() || null,
+    runescape_name: input.runescape_name?.trim() || null,
+    contact_email: input.contact_email?.trim() || null,
+    preferred_payment_method: input.preferred_payment_method || null,
+    notification_preferences: input.notification_preferences,
+    updated_at: new Date().toISOString(),
+  }).eq("id", userData.user.id).select("*").single();
+  if (error) throw error;
+  return data as Profile;
+}
+
+export async function getSavedCharacters(): Promise<SavedCharacter[]> {
+  const { data, error } = await createClient().from("saved_characters").select("*").order("is_default", { ascending: false }).order("created_at");
+  if (error) throw error;
+  return (data ?? []) as SavedCharacter[];
+}
+
+export async function addSavedCharacter(name: string, preferredWorld?: number) {
+  const supabase = createClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) throw new Error("Sign in before saving a character.");
+  const cleanName = name.trim();
+  if (!/^[A-Za-z0-9 _-]{1,12}$/.test(cleanName)) throw new Error("Enter a valid OSRS character name (1–12 characters).");
+  const world = preferredWorld && preferredWorld >= 301 && preferredWorld <= 999 ? preferredWorld : null;
+  const { data, error } = await supabase.from("saved_characters").insert({ user_id: userData.user.id, name: cleanName, preferred_world: world }).select("*").single();
+  if (error) throw error;
+  return data as SavedCharacter;
+}
+
+export async function deleteSavedCharacter(id: string) {
+  const { error } = await createClient().from("saved_characters").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function requestAccountDeletion() {
+  const supabase = createClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) throw new Error("Sign in before requesting account deletion.");
+  const { error } = await supabase.from("account_deletion_requests").insert({ user_id: userData.user.id });
+  if (error) throw error;
 }
 
 export async function createOrder(input: {

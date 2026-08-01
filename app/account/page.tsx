@@ -13,8 +13,8 @@ import {
   ShoppingCart,
   TrendingUp,
 } from "lucide-react";
-import { getCurrentProfile, getMyOrders } from "@/lib/marketplace";
-import type { Order, Profile } from "@/lib/types";
+import { addSavedCharacter, deleteSavedCharacter, getCurrentProfile, getMyOrders, getSavedCharacters, requestAccountDeletion, updateMyProfile } from "@/lib/marketplace";
+import type { Order, Profile, SavedCharacter } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
 
 export default function AccountPage() {
@@ -22,18 +22,59 @@ export default function AccountPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [characters, setCharacters] = useState<SavedCharacter[]>([]);
+  const [fullName, setFullName] = useState("");
+  const [runescapeName, setRunescapeName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [preferredPayment, setPreferredPayment] = useState<"" | "card" | "btc" | "usdc">("");
+  const [emailUpdates, setEmailUpdates] = useState(true);
+  const [characterName, setCharacterName] = useState("");
+  const [preferredWorld, setPreferredWorld] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     void Promise.all([getCurrentProfile(), getMyOrders()])
       .then(([currentProfile, currentOrders]) => {
         setProfile(currentProfile);
         setOrders(currentOrders);
+        if (currentProfile) {
+          setFullName(currentProfile.full_name ?? "");
+          setRunescapeName(currentProfile.runescape_name ?? "");
+          setContactEmail(currentProfile.contact_email ?? "");
+          setPreferredPayment(currentProfile.preferred_payment_method ?? "");
+          setEmailUpdates(currentProfile.notification_preferences?.email !== false);
+        }
+        void getSavedCharacters().then(setCharacters).catch(() => setMessage("Account profile migration is required before saved characters can load."));
       })
       .catch((reason) => {
         setError(reason instanceof Error ? reason.message : "Could not load account.");
       })
       .finally(() => setLoading(false));
   }, []);
+
+  async function saveProfile() {
+    if (!profile) return;
+    setSaving(true); setMessage("");
+    try {
+      const updated = await updateMyProfile({
+        full_name: fullName, runescape_name: runescapeName, contact_email: contactEmail,
+        preferred_payment_method: preferredPayment || null,
+        notification_preferences: { email: emailUpdates, order_updates: emailUpdates, security: true },
+      });
+      setProfile(updated); setMessage("Profile preferences saved.");
+    } catch (reason) { setMessage(reason instanceof Error ? reason.message : "Profile update failed."); }
+    finally { setSaving(false); }
+  }
+
+  async function addCharacter() {
+    setSaving(true); setMessage("");
+    try {
+      const character = await addSavedCharacter(characterName, Number(preferredWorld) || undefined);
+      setCharacters((current) => [...current, character]); setCharacterName(""); setPreferredWorld(""); setMessage("OSRS character saved.");
+    } catch (reason) { setMessage(reason instanceof Error ? reason.message : "Could not save character."); }
+    finally { setSaving(false); }
+  }
 
   const stats = useMemo(() => {
     const completed = orders.filter((order) => order.status === "completed");
@@ -129,6 +170,33 @@ export default function AccountPage() {
             <p className="mt-4 text-3xl font-black">{value}</p>
           </article>
         ))}
+      </section>
+
+      {message && <p className="mt-6 rounded-xl border border-white/10 bg-white/[.025] p-4 text-sm text-white/60" role="status">{message}</p>}
+
+      <section className="mt-10 grid gap-6 lg:grid-cols-2">
+        <article className="rounded-3xl border border-white/10 bg-white/[.025] p-6 sm:p-8">
+          <p className="text-sm font-black uppercase tracking-[.16em] text-amber-400">Profile and notifications</p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-bold text-white/45">Name<input value={fullName} onChange={(event) => setFullName(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-black/15 p-3 text-white" /></label>
+            <label className="text-sm font-bold text-white/45">Primary OSRS name<input value={runescapeName} maxLength={12} onChange={(event) => setRunescapeName(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-black/15 p-3 text-white" /></label>
+            <label className="text-sm font-bold text-white/45">Contact email<input type="email" value={contactEmail} onChange={(event) => setContactEmail(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-black/15 p-3 text-white" /></label>
+            <label className="text-sm font-bold text-white/45">Preferred payment<select value={preferredPayment} onChange={(event) => setPreferredPayment(event.target.value as typeof preferredPayment)} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b0e14] p-3 text-white"><option value="">No preference</option><option value="card">Card</option><option value="btc">BTC</option><option value="usdc">USDC on Base</option></select></label>
+          </div>
+          <label className="mt-5 flex items-center gap-3 text-sm text-white/55"><input type="checkbox" checked={emailUpdates} onChange={(event) => setEmailUpdates(event.target.checked)} className="h-5 w-5 accent-amber-400" />Email order and payment updates</label>
+          <button type="button" disabled={saving} onClick={() => void saveProfile()} className="mt-5 rounded-xl bg-amber-400 px-5 py-3 font-black text-black disabled:opacity-50">Save profile</button>
+        </article>
+
+        <article className="rounded-3xl border border-white/10 bg-white/[.025] p-6 sm:p-8">
+          <p className="text-sm font-black uppercase tracking-[.16em] text-amber-400">Saved OSRS characters</p>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <input value={characterName} maxLength={12} onChange={(event) => setCharacterName(event.target.value)} placeholder="Character name" className="min-h-12 flex-1 rounded-xl border border-white/10 bg-black/15 px-4" />
+            <input value={preferredWorld} onChange={(event) => setPreferredWorld(event.target.value)} type="number" min="301" max="999" placeholder="World" className="min-h-12 w-full rounded-xl border border-white/10 bg-black/15 px-4 sm:w-28" />
+            <button type="button" disabled={saving || !characterName.trim()} onClick={() => void addCharacter()} className="rounded-xl border border-amber-300/30 px-4 font-black text-amber-300 disabled:opacity-50">Add</button>
+          </div>
+          <div className="mt-4 space-y-2">{characters.map((character) => <div key={character.id} className="flex items-center justify-between rounded-xl border border-white/10 p-3"><span><b>{character.name}</b>{character.preferred_world ? <small className="ml-2 text-white/35">World {character.preferred_world}</small> : null}</span><button type="button" onClick={() => void deleteSavedCharacter(character.id).then(() => setCharacters((current) => current.filter((item) => item.id !== character.id))).catch((reason) => setMessage(reason instanceof Error ? reason.message : "Delete failed."))} className="text-xs font-bold text-rose-300">Remove</button></div>)}</div>
+          <div className="mt-6 flex flex-wrap gap-4 text-sm"><Link href="/auth/update-password" className="font-bold text-amber-300">Update password</Link><button type="button" onClick={() => void requestAccountDeletion().then(() => setMessage("Account deletion request submitted for review.")).catch((reason) => setMessage(reason instanceof Error ? reason.message : "Request failed."))} className="font-bold text-rose-300">Request account deletion</button></div>
+        </article>
       </section>
 
       <section className="mt-10 grid gap-4 lg:grid-cols-[1.5fr_.5fr]">

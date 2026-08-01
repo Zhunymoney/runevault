@@ -13,6 +13,21 @@ export interface Profile {
   id: string;
   full_name: string | null;
   role: UserRole;
+  runescape_name?: string | null;
+  contact_email?: string | null;
+  preferred_payment_method?: "card" | "btc" | "usdc" | null;
+  notification_preferences?: { email?: boolean; order_updates?: boolean; security?: boolean };
+  deletion_requested_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavedCharacter {
+  id: string;
+  user_id: string;
+  name: string;
+  preferred_world: number | null;
+  is_default: boolean;
   created_at: string;
   updated_at: string;
 }

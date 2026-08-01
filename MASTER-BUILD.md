@@ -63,10 +63,10 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 2 — customer accounts, dashboard, and email
 
-- [ ] Registration, verification, login/logout, password recovery/update, sessions, security alerts, and deletion request.
-- [ ] Profile, characters, contact and payment preferences, and notification preferences.
+- [ ] Registration, verification, login/logout, password recovery/update, sessions, security alerts, and deletion request. (Recovery/update and deletion-request implementation complete; live email and migration tests remain.)
+- [ ] Profile, characters, contact and payment preferences, and notification preferences. (UI, data access, migration, and RLS implemented; live migration test remains.)
 - [ ] Dashboard, order/payment history, invoices, timelines, reorders, saved carts, and linked support.
-- [ ] Branded transactional email templates and provider integration.
+- [ ] Branded transactional email templates and provider integration. (All requested branded responsive HTML/plain-text template variants implemented; Resend credentials and event wiring tests remain.)
 - [ ] Section 2 live tests and deployment.
 
 ## Section 3 — buy and sell workflows
