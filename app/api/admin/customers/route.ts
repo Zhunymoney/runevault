@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { requireAdmin, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
+import { requireAdmin, requirePermission, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const staffRoles = new Set(["owner", "manager", "support"]);
 const roles = new Set(["customer", "staff", "admin"]);
 const adminRoles = new Set(["owner", "manager", "support", "fulfillment", "analytics"]);
 
@@ -13,8 +12,7 @@ function denied(reason: unknown) {
 
 export async function GET(request: Request) {
   try {
-    const admin = await requireAdmin(request);
-    if (!(admin.role === "admin" && !admin.adminRole) && !staffRoles.has(admin.adminRole ?? "")) throw new Response("Customer access denied.", { status: 403 });
+    await requirePermission(request, "customers.read");
     const url = new URL(request.url);
     const search = (url.searchParams.get("q") ?? "").trim().replace(/[,*()]/g, "").slice(0, 100);
     const filters = ["select=id,full_name,runescape_name,contact_email,role,admin_role,deletion_requested_at,created_at,updated_at", "order=created_at.desc", "limit=500"];

@@ -1,8 +1,307 @@
 import { NextResponse } from "next/server";
-import { rateLimit, requestIp, requireAdmin, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
-const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-async function json(response:Response){const text=await response.text();try{return text?JSON.parse(text) as unknown:null;}catch{throw new Error(`Inventory database returned invalid JSON (${response.status}).`);}}
-function denied(reason:unknown){if(reason instanceof Response)return NextResponse.json({error:reason.status===401?"Authentication required.":"Admin access denied."},{status:reason.status});return NextResponse.json({error:reason instanceof Error?reason.message:"Inventory request failed."},{status:500});}
-async function audit(actor:string,action:string,entity:string,id:string|null,details:Record<string,unknown>){await fetch(`${supabaseUrl()}/rest/v1/audit_logs`,{method:"POST",headers:{...serviceHeaders(),Prefer:"return=minimal"},body:JSON.stringify({actor_id:actor,action,entity_type:entity,entity_id:id,details})});}
-export async function GET(request:Request){try{await requireAdmin(request);const headers=serviceHeaders();const[listingsResponse,transactionsResponse,reservationsResponse,balanceResponse]=await Promise.all([fetch(`${supabaseUrl()}/rest/v1/listings?select=*&order=updated_at.desc`,{headers,cache:"no-store"}),fetch(`${supabaseUrl()}/rest/v1/inventory_transactions?select=*&order=created_at.desc&limit=200`,{headers,cache:"no-store"}),fetch(`${supabaseUrl()}/rest/v1/inventory_reservations?select=*&order=created_at.desc&limit=200`,{headers,cache:"no-store"}),fetch(`${supabaseUrl()}/rest/v1/rpc/current_inventory_m`,{method:"POST",headers,body:"{}",cache:"no-store"})]);if(!listingsResponse.ok||!transactionsResponse.ok||!reservationsResponse.ok||!balanceResponse.ok)return NextResponse.json({error:"Inventory operations migration is required."},{status:503});return NextResponse.json({listings:await json(listingsResponse),transactions:await json(transactionsResponse),reservations:await json(reservationsResponse),availableM:Number(await json(balanceResponse)??0)});}catch(reason){return denied(reason);}}
-export async function POST(request:Request){const limit=rateLimit(`admin-inventory:${requestIp(request)}`,40,60_000);if(!limit.allowed)return NextResponse.json({error:"Too many inventory updates."},{status:429});try{const admin=await requireAdmin(request);const body=await request.json().catch(()=>null) as Record<string,unknown>|null;const action=typeof body?.action==="string"?body.action:"";const headers=serviceHeaders();if(action==="adjust"){const amount=Math.trunc(Number(body?.amountM)),reason=typeof body?.reason==="string"?body.reason.trim():"";if(!Number.isSafeInteger(amount)||amount===0||reason.length<3||reason.length>500)return NextResponse.json({error:"A non-zero whole-million amount and reason are required."},{status:400});const response=await fetch(`${supabaseUrl()}/rest/v1/rpc/adjust_inventory`,{method:"POST",headers,body:JSON.stringify({p_amount_m:amount,p_reason:reason,p_actor_id:admin.id})});if(!response.ok)return NextResponse.json({error:"Inventory adjustment failed or would make inventory negative."},{status:409});const availableM=Number(await json(response));await audit(admin.id,"inventory.adjusted","inventory",null,{amount_m:amount,reason,available_m:availableM});return NextResponse.json({availableM});}if(action==="reserve"||action==="release"){const orderId=typeof body?.orderId==="string"?body.orderId:"";if(!uuid.test(orderId))return NextResponse.json({error:"Valid order required."},{status:400});const endpoint=action==="reserve"?"reserve_inventory":"release_inventory_reservation";const values=action==="reserve"?{p_order_id:orderId,p_amount_m:Math.trunc(Number(body?.amountM))}:{p_order_id:orderId,p_reason:typeof body?.reason==="string"?body.reason:"Manual admin release",p_status:"released"};const response=await fetch(`${supabaseUrl()}/rest/v1/rpc/${endpoint}`,{method:"POST",headers,body:JSON.stringify(values)});if(!response.ok)return NextResponse.json({error:`Inventory ${action} failed.`},{status:409});await audit(admin.id,`inventory.${action}d`,"order",orderId,values);return NextResponse.json({result:await json(response)});}if(action==="note"){const orderId=typeof body?.orderId==="string"?body.orderId:"",message=typeof body?.message==="string"?body.message.trim():"";if(!uuid.test(orderId)||message.length<1||message.length>5000)return NextResponse.json({error:"Valid order and note required."},{status:400});const response=await fetch(`${supabaseUrl()}/rest/v1/order_notes`,{method:"POST",headers:{...headers,Prefer:"return=representation"},body:JSON.stringify({order_id:orderId,author_id:admin.id,body:message,customer_visible:body?.customerVisible===true})});if(!response.ok)return NextResponse.json({error:"Order note could not be saved."},{status:503});await audit(admin.id,"order.note_added","order",orderId,{customer_visible:body?.customerVisible===true});return NextResponse.json({note:(await json(response) as unknown[])[0]});}if(action==="listing"){const id=typeof body?.id==="string"&&uuid.test(body.id)?body.id:null;const slug=typeof body?.slug==="string"?body.slug.trim().toLowerCase():"",title=typeof body?.title==="string"?body.title.trim():"";const min=Math.trunc(Number(body?.minimumAmountM)),max=Math.trunc(Number(body?.maximumAmountM)),stock=body?.availableStockM==null||body.availableStockM===""?null:Math.trunc(Number(body.availableStockM));if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||title.length<2||title.length>160||min<1||max<min||stock!==null&&stock<0)return NextResponse.json({error:"Valid listing title, slug, stock, and limits required."},{status:400});const values={slug,title,category:typeof body?.category==="string"?body.category.trim().slice(0,80):"osrs-gold",description:typeof body?.description==="string"?body.description.trim().slice(0,2000):null,active:body?.active!==false,featured:body?.featured===true,available_stock_m:stock,minimum_amount_m:min,maximum_amount_m:max,created_by:admin.id,updated_at:new Date().toISOString()};const response=await fetch(`${supabaseUrl()}/rest/v1/listings${id?`?id=eq.${id}`:""}`,{method:id?"PATCH":"POST",headers:{...headers,Prefer:"return=representation"},body:JSON.stringify(values)});const rows=await json(response) as Array<Record<string,unknown>>|null;if(!response.ok||!rows?.[0])return NextResponse.json({error:"Listing could not be saved."},{status:503});await audit(admin.id,id?"listing.updated":"listing.created","listing",String(rows[0].id),{slug,active:values.active,featured:values.featured});return NextResponse.json({listing:rows[0]});}return NextResponse.json({error:"Unsupported inventory action."},{status:400});}catch(reason){return denied(reason);}}
+import {
+  durableRateLimit,
+  requestIp,
+  requirePermission,
+  serviceHeaders,
+  supabaseUrl,
+} from "@/lib/launch-server";
+const uuid =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+async function json(response: Response) {
+  const text = await response.text();
+  try {
+    return text ? (JSON.parse(text) as unknown) : null;
+  } catch {
+    throw new Error(
+      `Inventory database returned invalid JSON (${response.status}).`,
+    );
+  }
+}
+function denied(reason: unknown) {
+  if (reason instanceof Response)
+    return NextResponse.json(
+      {
+        error:
+          reason.status === 401
+            ? "Authentication required."
+            : "Admin access denied.",
+      },
+      { status: reason.status },
+    );
+  return NextResponse.json(
+    {
+      error:
+        reason instanceof Error ? reason.message : "Inventory request failed.",
+    },
+    { status: 500 },
+  );
+}
+async function audit(
+  actor: string,
+  action: string,
+  entity: string,
+  id: string | null,
+  details: Record<string, unknown>,
+) {
+  await fetch(`${supabaseUrl()}/rest/v1/audit_logs`, {
+    method: "POST",
+    headers: { ...serviceHeaders(), Prefer: "return=minimal" },
+    body: JSON.stringify({
+      actor_id: actor,
+      action,
+      entity_type: entity,
+      entity_id: id,
+      details,
+    }),
+  });
+}
+export async function GET(request: Request) {
+  try {
+    await requirePermission(request, "inventory.manage");
+    const headers = serviceHeaders();
+    const [
+      listingsResponse,
+      transactionsResponse,
+      reservationsResponse,
+      balanceResponse,
+    ] = await Promise.all([
+      fetch(
+        `${supabaseUrl()}/rest/v1/listings?select=*&order=updated_at.desc`,
+        { headers, cache: "no-store" },
+      ),
+      fetch(
+        `${supabaseUrl()}/rest/v1/inventory_transactions?select=*&order=created_at.desc&limit=200`,
+        { headers, cache: "no-store" },
+      ),
+      fetch(
+        `${supabaseUrl()}/rest/v1/inventory_reservations?select=*&order=created_at.desc&limit=200`,
+        { headers, cache: "no-store" },
+      ),
+      fetch(`${supabaseUrl()}/rest/v1/rpc/current_inventory_m`, {
+        method: "POST",
+        headers,
+        body: "{}",
+        cache: "no-store",
+      }),
+    ]);
+    if (
+      !listingsResponse.ok ||
+      !transactionsResponse.ok ||
+      !reservationsResponse.ok ||
+      !balanceResponse.ok
+    )
+      return NextResponse.json(
+        { error: "Inventory operations migration is required." },
+        { status: 503 },
+      );
+    return NextResponse.json({
+      listings: await json(listingsResponse),
+      transactions: await json(transactionsResponse),
+      reservations: await json(reservationsResponse),
+      availableM: Number((await json(balanceResponse)) ?? 0),
+    });
+  } catch (reason) {
+    return denied(reason);
+  }
+}
+export async function POST(request: Request) {
+  const limit = await durableRateLimit(`admin-inventory:${requestIp(request)}`, 40, 60_000);
+  if (!limit.allowed)
+    return NextResponse.json(
+      { error: "Too many inventory updates." },
+      { status: 429 },
+    );
+  try {
+    const admin = await requirePermission(request, "inventory.manage");
+    const body = (await request.json().catch(() => null)) as Record<
+      string,
+      unknown
+    > | null;
+    const action = typeof body?.action === "string" ? body.action : "";
+    const headers = serviceHeaders();
+    if (action === "adjust") {
+      const amount = Math.trunc(Number(body?.amountM)),
+        reason = typeof body?.reason === "string" ? body.reason.trim() : "";
+      if (
+        !Number.isSafeInteger(amount) ||
+        amount === 0 ||
+        reason.length < 3 ||
+        reason.length > 500
+      )
+        return NextResponse.json(
+          { error: "A non-zero whole-million amount and reason are required." },
+          { status: 400 },
+        );
+      const response = await fetch(
+        `${supabaseUrl()}/rest/v1/rpc/adjust_inventory`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            p_amount_m: amount,
+            p_reason: reason,
+            p_actor_id: admin.id,
+          }),
+        },
+      );
+      if (!response.ok)
+        return NextResponse.json(
+          {
+            error:
+              "Inventory adjustment failed or would make inventory negative.",
+          },
+          { status: 409 },
+        );
+      const availableM = Number(await json(response));
+      await audit(admin.id, "inventory.adjusted", "inventory", null, {
+        amount_m: amount,
+        reason,
+        available_m: availableM,
+      });
+      return NextResponse.json({ availableM });
+    }
+    if (action === "reserve" || action === "release") {
+      const orderId = typeof body?.orderId === "string" ? body.orderId : "";
+      if (!uuid.test(orderId))
+        return NextResponse.json(
+          { error: "Valid order required." },
+          { status: 400 },
+        );
+      const endpoint =
+        action === "reserve"
+          ? "reserve_inventory"
+          : "release_inventory_reservation";
+      const values =
+        action === "reserve"
+          ? {
+              p_order_id: orderId,
+              p_amount_m: Math.trunc(Number(body?.amountM)),
+            }
+          : {
+              p_order_id: orderId,
+              p_reason:
+                typeof body?.reason === "string"
+                  ? body.reason
+                  : "Manual admin release",
+              p_status: "released",
+            };
+      const response = await fetch(`${supabaseUrl()}/rest/v1/rpc/${endpoint}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(values),
+      });
+      if (!response.ok)
+        return NextResponse.json(
+          { error: `Inventory ${action} failed.` },
+          { status: 409 },
+        );
+      await audit(admin.id, `inventory.${action}d`, "order", orderId, values);
+      return NextResponse.json({ result: await json(response) });
+    }
+    if (action === "note") {
+      const orderId = typeof body?.orderId === "string" ? body.orderId : "",
+        message = typeof body?.message === "string" ? body.message.trim() : "";
+      if (!uuid.test(orderId) || message.length < 1 || message.length > 5000)
+        return NextResponse.json(
+          { error: "Valid order and note required." },
+          { status: 400 },
+        );
+      const response = await fetch(`${supabaseUrl()}/rest/v1/order_notes`, {
+        method: "POST",
+        headers: { ...headers, Prefer: "return=representation" },
+        body: JSON.stringify({
+          order_id: orderId,
+          author_id: admin.id,
+          body: message,
+          customer_visible: body?.customerVisible === true,
+        }),
+      });
+      if (!response.ok)
+        return NextResponse.json(
+          { error: "Order note could not be saved." },
+          { status: 503 },
+        );
+      await audit(admin.id, "order.note_added", "order", orderId, {
+        customer_visible: body?.customerVisible === true,
+      });
+      return NextResponse.json({
+        note: ((await json(response)) as unknown[])[0],
+      });
+    }
+    if (action === "listing") {
+      const id =
+        typeof body?.id === "string" && uuid.test(body.id) ? body.id : null;
+      const slug =
+          typeof body?.slug === "string" ? body.slug.trim().toLowerCase() : "",
+        title = typeof body?.title === "string" ? body.title.trim() : "";
+      const min = Math.trunc(Number(body?.minimumAmountM)),
+        max = Math.trunc(Number(body?.maximumAmountM)),
+        stock =
+          body?.availableStockM == null || body.availableStockM === ""
+            ? null
+            : Math.trunc(Number(body.availableStockM));
+      if (
+        !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ||
+        title.length < 2 ||
+        title.length > 160 ||
+        min < 1 ||
+        max < min ||
+        (stock !== null && stock < 0)
+      )
+        return NextResponse.json(
+          { error: "Valid listing title, slug, stock, and limits required." },
+          { status: 400 },
+        );
+      const values = {
+        slug,
+        title,
+        category:
+          typeof body?.category === "string"
+            ? body.category.trim().slice(0, 80)
+            : "osrs-gold",
+        description:
+          typeof body?.description === "string"
+            ? body.description.trim().slice(0, 2000)
+            : null,
+        active: body?.active !== false,
+        featured: body?.featured === true,
+        available_stock_m: stock,
+        minimum_amount_m: min,
+        maximum_amount_m: max,
+        created_by: admin.id,
+        updated_at: new Date().toISOString(),
+      };
+      const response = await fetch(
+        `${supabaseUrl()}/rest/v1/listings${id ? `?id=eq.${id}` : ""}`,
+        {
+          method: id ? "PATCH" : "POST",
+          headers: { ...headers, Prefer: "return=representation" },
+          body: JSON.stringify(values),
+        },
+      );
+      const rows = (await json(response)) as Array<
+        Record<string, unknown>
+      > | null;
+      if (!response.ok || !rows?.[0])
+        return NextResponse.json(
+          { error: "Listing could not be saved." },
+          { status: 503 },
+        );
+      await audit(
+        admin.id,
+        id ? "listing.updated" : "listing.created",
+        "listing",
+        String(rows[0].id),
+        { slug, active: values.active, featured: values.featured },
+      );
+      return NextResponse.json({ listing: rows[0] });
+    }
+    return NextResponse.json(
+      { error: "Unsupported inventory action." },
+      { status: 400 },
+    );
+  } catch (reason) {
+    return denied(reason);
+  }
+}

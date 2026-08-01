@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { rateLimit, requestIp, requireAdmin, supabaseUrl, userHeaders } from "@/lib/launch-server";
+import { durableRateLimit, requestIp, requirePermission, supabaseUrl, userHeaders } from "@/lib/launch-server";
 
 export async function GET(request: Request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, "settings.manage");
     const authorization = request.headers.get("authorization") ?? "";
     const response = await fetch(`${supabaseUrl()}/rest/v1/settings?id=eq.1&select=*`, { headers: userHeaders(authorization), cache: "no-store" });
     const rows = await response.json().catch(() => []);
@@ -13,10 +13,10 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const limit = rateLimit(`admin-settings:${requestIp(request)}`, 12, 60_000);
+  const limit = await durableRateLimit(`admin-settings:${requestIp(request)}`, 12, 60_000);
   if (!limit.allowed) return NextResponse.json({ error: "Too many settings updates." }, { status: 429 });
   try {
-    const admin = await requireAdmin(request);
+    const admin = await requirePermission(request, "settings.manage");
     const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
     if (!body) return NextResponse.json({ error: "Settings payload is required." }, { status: 400 });
     const numeric = (name: string, min: number, max: number) => { const value = Number(body[name]); if (!Number.isFinite(value) || value < min || value > max) throw new Error(`Invalid ${name}.`); return value; };

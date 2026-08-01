@@ -37,7 +37,7 @@ This document is the implementation checklist and evidence log for the complete 
 - Production schema drift: production orders use `crypto_asset` and `payment_id`; the original checked-in schema declares `payment_asset` and `transaction_id`. Migrations must support existing names and preserve rows.
 - Production `service_role` lacks direct orders-table grants; customer payment writes currently succeed through the verified owner session and RLS.
 - The original in-memory rate limiter was not durable across serverless instances; a database-backed atomic limiter with a safe local fallback is now wired to the highest-risk payment, cancellation, proof-upload, and support-ticket mutations.
-- Admin access is checked in client code and protected by existing RLS, but dedicated server-side admin route/API authorization is incomplete.
+- Admin routes now enforce server-side role permissions; production migration and authenticated role-matrix tests remain outstanding.
 - Stripe readiness depends on external Stripe credentials, account approval, wallet-domain configuration, and webhook setup.
 - Email, Discord, CAPTCHA, file storage, realtime support, monitoring, scheduled jobs, and analytics providers require implementation and/or external credentials.
 - Terms and privacy pages explicitly contain owner-review placeholders; the remaining required legal pages do not exist.
@@ -78,9 +78,9 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 4 — admin system
 
-- [ ] Server-protected roles and permissions. (Authenticated admin order/settings APIs, explicit role schema, validation, RLS, and audit writes implemented; production migration and role tests remain.)
+- [ ] Server-protected roles and permissions. (Every admin API now enforces a server-side permission, owner wildcard access, permission implications for read/manage roles, legacy-admin compatibility without legacy-staff escalation, durable mutation limits, and fulfillment-only delivery transitions; production migration and authenticated role-matrix tests remain.)
 - [ ] Complete operational queues, searches, actions, notes, refunds, inventory, customers, support, and chat. (Order, support/chat, inventory/listing, and customer queues now have server-authorized search/actions, staff notes, assignment/status controls, deletion-request handling, owner-only role management, and audits; Stripe refund UI remains.)
-- [ ] Complete editable settings and audit trail. (Editable marketplace settings, server-authorized audit writes, and a read-only searchable admin audit viewer are implemented; fine-grained permission enforcement, production migration, and live admin tests remain.)
+- [ ] Complete editable settings and audit trail. (Editable marketplace settings, server-authorized audit writes, a read-only searchable admin audit viewer, and fine-grained settings/audit/automation/content/marketing/inventory/support permissions are implemented; production migration and live admin tests remain.)
 - [ ] Section 4 live tests and deployment.
 
 ## Section 5 — inventory, listings, and operations

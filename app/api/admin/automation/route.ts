@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { requireAdmin, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
+import { requirePermission, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
 
 export async function GET(request: Request) {
   try {
-    const admin = await requireAdmin(request);
-    if (!new Set(["owner", "manager", "analytics"]).has(admin.adminRole ?? "") && !(admin.role === "admin" && !admin.adminRole)) throw new Response("Automation access denied.", { status: 403 });
+    await requirePermission(request, "analytics.read");
     const headers = serviceHeaders();
     const [runsResponse, notificationsResponse] = await Promise.all([
       fetch(`${supabaseUrl()}/rest/v1/automation_runs?select=id,job_name,status,safe_details,error_message,started_at,completed_at&order=started_at.desc&limit=200`, { headers, cache: "no-store" }),

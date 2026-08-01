@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import {
   durableRateLimit,
   requestIp,
-  requireAdmin,
+  requirePermission,
   serviceHeaders,
   supabaseUrl,
 } from "@/lib/launch-server";
@@ -33,7 +33,7 @@ function failure(reason: unknown) {
 function optionalIso(value: unknown) { if (value == null || value === "") return null; const date = new Date(String(value)); return Number.isNaN(date.getTime()) ? undefined : date.toISOString(); }
 export async function GET(request: Request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, "marketing.manage");
     const headers = serviceHeaders();
     const [coupons, promotions, referrals] = await Promise.all([
       fetch(
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       { status: 429 },
     );
   try {
-    const admin = await requireAdmin(request);
+    const admin = await requirePermission(request, "marketing.manage");
     const body = (await request.json().catch(() => null)) as Record<
       string,
       unknown

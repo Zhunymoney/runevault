@@ -1,1 +1,127 @@
-import{NextResponse}from"next/server";import{rateLimit,requestIp,requireAdmin,serviceHeaders,supabaseUrl}from"@/lib/launch-server";const uuid=/^[0-9a-f-]{36}$/i;async function json(response:Response){const text=await response.text();try{return text?JSON.parse(text)as unknown:null;}catch{return null;}}function error(reason:unknown){if(reason instanceof Response)return NextResponse.json({error:reason.status===401?"Authentication required.":"Admin access denied."},{status:reason.status});return NextResponse.json({error:"Content request failed."},{status:500});}export async function GET(request:Request){try{await requireAdmin(request);const response=await fetch(`${supabaseUrl()}/rest/v1/content_posts?select=*&order=updated_at.desc&limit=500`,{headers:serviceHeaders(),cache:"no-store"});if(!response.ok)return NextResponse.json({error:"Content migration is required."},{status:503});return NextResponse.json({posts:await json(response)});}catch(reason){return error(reason);}}export async function POST(request:Request){const limit=rateLimit(`admin-content:${requestIp(request)}`,30,60_000);if(!limit.allowed)return NextResponse.json({error:"Too many content updates."},{status:429});try{const admin=await requireAdmin(request);const body=await request.json().catch(()=>null)as Record<string,unknown>|null;const id=typeof body?.id==="string"&&uuid.test(body.id)?body.id:null,slug=typeof body?.slug==="string"?body.slug.trim().toLowerCase():"",title=typeof body?.title==="string"?body.title.trim():"",summary=typeof body?.summary==="string"?body.summary.trim():"",content=typeof body?.bodyMarkdown==="string"?body.bodyMarkdown.trim():"",type=new Set(["news","blog","guide","quest_helper"]).has(String(body?.type))?String(body?.type):"guide",status=new Set(["draft","review","published","archived"]).has(String(body?.status))?String(body?.status):"draft";if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||title.length<3||title.length>200||summary.length<10||summary.length>500||content.length<20||content.length>100000)return NextResponse.json({error:"Valid slug, title, summary, and article body are required."},{status:400});const values={slug,title,summary,body_markdown:content,type,status,featured:body?.featured===true,author_id:admin.id,published_at:status==="published"?new Date().toISOString():null,updated_at:new Date().toISOString()};const response=await fetch(`${supabaseUrl()}/rest/v1/content_posts${id?`?id=eq.${id}`:""}`,{method:id?"PATCH":"POST",headers:{...serviceHeaders(),Prefer:"return=representation"},body:JSON.stringify(values)});const rows=await json(response)as Array<Record<string,unknown>>|null;if(!response.ok||!rows?.[0])return NextResponse.json({error:"Content could not be saved; the slug may already exist."},{status:409});return NextResponse.json({post:rows[0]},{status:id?200:201});}catch(reason){return error(reason);}}
+import { NextResponse } from "next/server";
+import {
+  durableRateLimit,
+  requestIp,
+  requirePermission,
+  serviceHeaders,
+  supabaseUrl,
+} from "@/lib/launch-server";
+const uuid = /^[0-9a-f-]{36}$/i;
+async function json(response: Response) {
+  const text = await response.text();
+  try {
+    return text ? (JSON.parse(text) as unknown) : null;
+  } catch {
+    return null;
+  }
+}
+function error(reason: unknown) {
+  if (reason instanceof Response)
+    return NextResponse.json(
+      {
+        error:
+          reason.status === 401
+            ? "Authentication required."
+            : "Admin access denied.",
+      },
+      { status: reason.status },
+    );
+  return NextResponse.json(
+    { error: "Content request failed." },
+    { status: 500 },
+  );
+}
+export async function GET(request: Request) {
+  try {
+    await requirePermission(request, "content.manage");
+    const response = await fetch(
+      `${supabaseUrl()}/rest/v1/content_posts?select=*&order=updated_at.desc&limit=500`,
+      { headers: serviceHeaders(), cache: "no-store" },
+    );
+    if (!response.ok)
+      return NextResponse.json(
+        { error: "Content migration is required." },
+        { status: 503 },
+      );
+    return NextResponse.json({ posts: await json(response) });
+  } catch (reason) {
+    return error(reason);
+  }
+}
+export async function POST(request: Request) {
+  const limit = await durableRateLimit(`admin-content:${requestIp(request)}`, 30, 60_000);
+  if (!limit.allowed)
+    return NextResponse.json(
+      { error: "Too many content updates." },
+      { status: 429 },
+    );
+  try {
+    const admin = await requirePermission(request, "content.manage");
+    const body = (await request.json().catch(() => null)) as Record<
+      string,
+      unknown
+    > | null;
+    const id =
+        typeof body?.id === "string" && uuid.test(body.id) ? body.id : null,
+      slug =
+        typeof body?.slug === "string" ? body.slug.trim().toLowerCase() : "",
+      title = typeof body?.title === "string" ? body.title.trim() : "",
+      summary = typeof body?.summary === "string" ? body.summary.trim() : "",
+      content =
+        typeof body?.bodyMarkdown === "string" ? body.bodyMarkdown.trim() : "",
+      type = new Set(["news", "blog", "guide", "quest_helper"]).has(
+        String(body?.type),
+      )
+        ? String(body?.type)
+        : "guide",
+      status = new Set(["draft", "review", "published", "archived"]).has(
+        String(body?.status),
+      )
+        ? String(body?.status)
+        : "draft";
+    if (
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ||
+      title.length < 3 ||
+      title.length > 200 ||
+      summary.length < 10 ||
+      summary.length > 500 ||
+      content.length < 20 ||
+      content.length > 100000
+    )
+      return NextResponse.json(
+        { error: "Valid slug, title, summary, and article body are required." },
+        { status: 400 },
+      );
+    const values = {
+      slug,
+      title,
+      summary,
+      body_markdown: content,
+      type,
+      status,
+      featured: body?.featured === true,
+      author_id: admin.id,
+      published_at: status === "published" ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    };
+    const response = await fetch(
+      `${supabaseUrl()}/rest/v1/content_posts${id ? `?id=eq.${id}` : ""}`,
+      {
+        method: id ? "PATCH" : "POST",
+        headers: { ...serviceHeaders(), Prefer: "return=representation" },
+        body: JSON.stringify(values),
+      },
+    );
+    const rows = (await json(response)) as Array<
+      Record<string, unknown>
+    > | null;
+    if (!response.ok || !rows?.[0])
+      return NextResponse.json(
+        { error: "Content could not be saved; the slug may already exist." },
+        { status: 409 },
+      );
+    return NextResponse.json({ post: rows[0] }, { status: id ? 200 : 201 });
+  } catch (reason) {
+    return error(reason);
+  }
+}

@@ -152,6 +152,26 @@ export async function requireAdmin(request: Request): Promise<AdminIdentity> {
   return { ...user, role: profile.role as "staff" | "admin", adminRole: profile.admin_role ?? null };
 }
 
+export async function requirePermission(request: Request, permission: string): Promise<AdminIdentity> {
+  const admin = await requireAdmin(request);
+  if (!admin.adminRole) {
+    if (admin.role === "admin") return admin;
+    throw new Response("Administrative permission denied.", { status: 403 });
+  }
+  const implications: Record<string, string[]> = {
+    "orders.read": ["orders.read", "orders.manage", "orders.fulfill"],
+    "orders.update": ["orders.manage", "orders.fulfill"],
+    "customers.read": ["customers.read", "customers.manage"],
+    "analytics.read": ["analytics.read", "automation.read"],
+  };
+  const candidates = implications[permission] ?? [permission];
+  const query = ["*", ...candidates].join(",");
+  const response = await fetch(`${supabaseUrl()}/rest/v1/admin_permissions?admin_role=eq.${encodeURIComponent(admin.adminRole)}&permission=in.(${encodeURIComponent(query)})&select=permission&limit=1`, { headers: serviceHeaders(), cache: "no-store" });
+  const rows = response.ok ? await response.json() as Array<{ permission: string }> : [];
+  if (!rows.length) throw new Response("Administrative permission denied.", { status: 403 });
+  return admin;
+}
+
 export async function getUserEmail(userId: string) {
   const response = await fetch(
     `${supabaseUrl()}/auth/v1/admin/users/${encodeURIComponent(userId)}`,

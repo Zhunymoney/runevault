@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { requireAdmin, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
+import { requirePermission, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
 
 const safe = (value: string) => value.replace(/[^a-zA-Z0-9_.:-]/g, "").slice(0, 80);
 
 export async function GET(request: Request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, "audit.read");
     const url = new URL(request.url);
     const action = safe(url.searchParams.get("action") ?? "");
     const entity = safe(url.searchParams.get("entity") ?? "");

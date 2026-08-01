@@ -8,7 +8,9 @@ create table if not exists public.admin_permissions (
 insert into public.admin_permissions(admin_role, permission) values
 ('owner','*'),('manager','orders.manage'),('manager','settings.manage'),('manager','customers.read'),
 ('support','orders.read'),('support','customers.read'),('support','support.manage'),
-('fulfillment','orders.read'),('fulfillment','orders.fulfill'),('analytics','analytics.read') on conflict do nothing;
+('fulfillment','orders.read'),('fulfillment','orders.fulfill'),('analytics','analytics.read'),
+('manager','inventory.manage'),('manager','marketing.manage'),('manager','content.manage'),('manager','audit.read'),('manager','automation.read'),
+('fulfillment','inventory.manage') on conflict do nothing;
 
 alter table public.admin_permissions enable row level security;
 create policy "admin permissions staff read" on public.admin_permissions for select to authenticated using (public.is_admin());
