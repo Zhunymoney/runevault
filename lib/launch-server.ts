@@ -9,6 +9,11 @@ type SupabaseOrder = {
   total_price: number;
   delivery_name: string | null;
   status: string;
+  payment_status?: string | null;
+  payment_id?: string | null;
+  transaction_id?: string | null;
+  crypto_asset?: string | null;
+  payment_asset?: string | null;
 };
 
 type SupabaseUser = { id: string; email?: string };
@@ -63,10 +68,7 @@ export async function getOrderByReference(
 ) {
   const url = new URL(`${supabaseUrl()}/rest/v1/orders`);
   url.searchParams.set("reference", `eq.${reference}`);
-  url.searchParams.set(
-    "select",
-    "id,user_id,reference,order_type,amount_m,total_price,delivery_name,status",
-  );
+  url.searchParams.set("select", "*");
   url.searchParams.set("limit", "1");
 
   const response = await fetch(url, {

@@ -52,13 +52,13 @@ This document is the implementation checklist and evidence log for the complete 
 ## Section 1 — payments and checkout
 
 - [ ] Stripe test/live configuration, intents/checkout, wallets, webhook outcomes, refunds, and idempotency.
-- [ ] BTC exact amount, exchange-rate lock/countdown, copy controls, warnings, evidence, and verification.
-- [ ] USDC Base exact amount, copy controls, warning, evidence, and verification.
+- [x] BTC exact amount, exchange-rate lock/countdown, copy controls, and Bitcoin network warning implemented.
+- [x] USDC Base exact amount, copy controls, countdown, and Base-only warning implemented.
 - [x] BTC selection sends `paymentMethod: "btc"` and succeeds through the live customer flow.
 - [x] USDC selection sends `paymentMethod: "usdc"` and succeeds through the live customer flow.
 - [x] Non-JSON/empty API responses display cleanly.
 - [ ] One-page checkout, cart, validation, discounts, terms, inventory/price verification, cancellation/retry, and mobile tests.
-- [ ] Complete payment status model and secure proof upload.
+- [ ] Complete payment status model and secure proof upload. (Implementation and additive migration created; production migration and live proof test remain.)
 - [ ] Required Section 1 live tests and deployment.
 
 ## Section 2 — customer accounts, dashboard, and email

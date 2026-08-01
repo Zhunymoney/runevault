@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOrderByReference, rateLimit, requestIp, requireOrderOwner } from "@/lib/launch-server";
+import { createCryptoQuote } from "@/lib/crypto-quote";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,24 +52,45 @@ export async function POST(request: Request) {
     name: string;
     network: string;
     address: string;
+    amount: string;
+    usdRate: string;
+    expiresAt: string;
+    quoteToken: string;
   }> = [];
 
-  if (btcAddress) {
-    methods.push({
-      id: "btc",
-      name: "Bitcoin",
-      network: "Bitcoin",
-      address: btcAddress,
-    });
-  }
+  try {
+    if (btcAddress) {
+      const quote = await createCryptoQuote(reference, "btc", Number(order.total_price));
+      methods.push({
+        id: "btc",
+        name: "Bitcoin",
+        network: "Bitcoin",
+        address: btcAddress,
+        amount: quote.cryptoAmount,
+        usdRate: quote.usdRate,
+        expiresAt: quote.expiresAt,
+        quoteToken: quote.token,
+      });
+    }
 
-  if (usdcAddress) {
-    methods.push({
-      id: "usdc",
-      name: "USDC",
-      network: usdcNetwork,
-      address: usdcAddress,
-    });
+    if (usdcAddress) {
+      const quote = await createCryptoQuote(reference, "usdc", Number(order.total_price));
+      methods.push({
+        id: "usdc",
+        name: "USDC",
+        network: usdcNetwork,
+        address: usdcAddress,
+        amount: quote.cryptoAmount,
+        usdRate: quote.usdRate,
+        expiresAt: quote.expiresAt,
+        quoteToken: quote.token,
+      });
+    }
+  } catch (reason) {
+    return NextResponse.json(
+      { error: reason instanceof Error ? reason.message : "Crypto pricing is temporarily unavailable." },
+      { status: 502 },
+    );
   }
 
   if (methods.length === 0) {

@@ -8,6 +8,7 @@ import {
   sendDiscord,
   updateOrder,
 } from "@/lib/launch-server";
+import { verifyCryptoQuote } from "@/lib/crypto-quote";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +16,7 @@ export const dynamic = "force-dynamic";
 type CryptoSubmissionBody = {
   reference?: unknown;
   paymentMethod?: unknown;
+  quoteToken?: unknown;
   txid?: unknown;
 };
 
@@ -54,6 +56,9 @@ export async function POST(request: Request) {
       ? body.txid.trim()
       : "";
 
+  const quoteToken =
+    typeof body?.quoteToken === "string" ? body.quoteToken.trim() : "";
+
   const asset =
     rawPaymentMethod === "btc"
       ? "BTC"
@@ -71,6 +76,19 @@ export async function POST(request: Request) {
   if (!asset) {
     return NextResponse.json(
       { error: "Select Bitcoin or USDC." },
+      { status: 400 },
+    );
+  }
+
+  if (!quoteToken) {
+    return NextResponse.json({ error: "A current payment quote is required." }, { status: 400 });
+  }
+
+  try {
+    verifyCryptoQuote(quoteToken, reference, rawPaymentMethod as "btc" | "usdc");
+  } catch (reason) {
+    return NextResponse.json(
+      { error: reason instanceof Error ? reason.message : "Payment quote is invalid." },
       { status: 400 },
     );
   }
@@ -99,6 +117,30 @@ export async function POST(request: Request) {
   } catch (reason) {
     if (reason instanceof Response) return reason;
     throw reason;
+  }
+
+  const existingTransaction = order.payment_id ?? order.transaction_id ?? null;
+  const existingAsset = order.crypto_asset ?? order.payment_asset ?? null;
+  if (
+    existingTransaction === txid &&
+    existingAsset?.toLowerCase() === rawPaymentMethod
+  ) {
+    return NextResponse.json({
+      ok: true,
+      duplicate: true,
+      reference: order.reference,
+      payment_provider: "crypto_manual",
+      payment_status: order.payment_status ?? "customer_marked_sent",
+      payment_asset: asset,
+      message: `${asset} payment was already submitted for manual verification.`,
+    });
+  }
+
+  if (existingTransaction && order.payment_status === "customer_marked_sent") {
+    return NextResponse.json(
+      { error: "A payment transaction is already awaiting verification for this order." },
+      { status: 409 },
+    );
   }
 
   const risk = riskScore(order);

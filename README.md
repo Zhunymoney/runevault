@@ -35,9 +35,12 @@ If the project already has older `profiles`, `settings`, or `orders` tables, use
 ## Payments
 
 - Configure `CRYPTO_BTC_ADDRESS`, `CRYPTO_USDC_ADDRESS`, and `CRYPTO_USDC_NETWORK` to enable crypto choices and QR codes.
+- Configure `PAYMENT_QUOTE_SECRET` with a long random server-only value. It signs the 15-minute BTC/USDC amount locks and must never use a `NEXT_PUBLIC_` prefix.
 - Configure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`; point Stripe's webhook at `/api/payments/stripe/webhook`.
-- Apply the complete `supabase/schema.sql` before deploying this version. It includes an additive upgrade path for existing `orders` tables.
+- Apply `supabase/migrations/202608010100_section1_payments.sql` to an existing project before enabling proof uploads or Stripe webhooks. It is additive, preserves existing orders, creates the private proof bucket and payment event ledger, and restores the server-only grants required by webhook processing.
 - Keep `SUPABASE_SERVICE_ROLE_KEY`, Stripe secrets, notification credentials, and webhook URLs server-only.
+
+BTC amounts use Coinbase's unauthenticated BTC-USD spot-price endpoint and are signed with an expiry. USDC is quoted at one USD per USDC. A customer must refresh an expired quote before submitting a transaction hash. Stripe Checkout requests use a stable per-order idempotency key; Apple Pay and Google Pay availability remains controlled by Stripe, the approved account, domain registration, and the customer's supported device/wallet.
 
 ## Production warning
 Payment code is implemented, but real-money launch still requires approved provider accounts, reviewed legal policies, durable distributed rate limiting, monitoring, backups, and operational testing. See `PRODUCTION-CHECKLIST.txt`.

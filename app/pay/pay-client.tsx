@@ -23,6 +23,10 @@ type CryptoMethod = {
   network: string;
   address: string;
   qr: string;
+  amount: string;
+  usdRate: string;
+  expiresAt: string;
+  quoteToken: string;
 };
 
 async function readApiResponse(response: Response): Promise<{
@@ -56,10 +60,18 @@ export function PayClient() {
   const [order, setOrder] = useState<Order | null>(null);
   const [message, setMessage] = useState("");
   const [cardBusy, setCardBusy] = useState(false);
+  const [cancelBusy, setCancelBusy] = useState(false);
   const [cryptoBusy, setCryptoBusy] = useState(false);
   const [crypto, setCrypto] = useState<CryptoMethod[]>([]);
   const [selected, setSelected] = useState<CryptoMethod | null>(null);
   const [txid, setTxid] = useState("");
+  const [proof, setProof] = useState<File | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!reference) return;
@@ -78,10 +90,17 @@ export function PayClient() {
         const methods = (data.methods ?? []) as CryptoMethod[];
         const methodsWithQR = await Promise.all(methods.map(async (method) => ({
           ...method,
-          qr: method.id === "btc" ? await generateBitcoinQR(method.address) : await generateUSDCQR(method.address),
+          qr: method.id === "btc"
+            ? await generateBitcoinQR(method.address, Number(method.amount))
+            : await generateUSDCQR(method.address),
         })));
         setCrypto(methodsWithQR);
-        setSelected(methodsWithQR[0] ?? null);
+        const savedMethod = window.sessionStorage.getItem(`runevault-payment-${reference}`);
+        setSelected(
+          methodsWithQR.find((method) => method.id === savedMethod) ??
+          methodsWithQR[0] ??
+          null,
+        );
       } catch (reason) {
         setMessage(reason instanceof Error ? reason.message : "Could not load payment options.");
       }
@@ -121,11 +140,24 @@ export function PayClient() {
 
     setCryptoBusy(true);
     try {
+      const headers = await authenticatedHeaders();
+      if (proof) {
+        const form = new FormData();
+        form.set("reference", reference);
+        form.set("file", proof);
+        const proofResponse = await fetch("/api/payments/proof", {
+          method: "POST", headers: { Authorization: headers.Authorization }, body: form,
+          signal: AbortSignal.timeout(30_000),
+        });
+        const proofData = await readApiResponse(proofResponse);
+        if (!proofResponse.ok) throw new Error(proofData.error ?? "Proof upload failed.");
+      }
       const response = await fetch("/api/payments/crypto/mark-sent", {
-        method: "POST", headers: await authenticatedHeaders(),
+        method: "POST", headers,
         body: JSON.stringify({
           reference,
           paymentMethod: selected.id,
+          quoteToken: selected.quoteToken,
           txid,
         }),
         signal: AbortSignal.timeout(20_000),
@@ -139,6 +171,35 @@ export function PayClient() {
       setCryptoBusy(false);
     }
   }
+
+  async function cancelOrder() {
+    setCancelBusy(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/orders/cancel", {
+        method: "POST", headers: await authenticatedHeaders(), body: JSON.stringify({ reference }),
+        signal: AbortSignal.timeout(15_000),
+      });
+      const data = await readApiResponse(response);
+      if (!response.ok) throw new Error(data.error ?? "Cancellation failed.");
+      setMessage(data.message ?? "Order cancelled.");
+      setOrder((current) => current ? { ...current, status: "cancelled" } : current);
+    } catch (reason) {
+      setMessage(reason instanceof Error ? reason.message : "Cancellation failed.");
+    } finally {
+      setCancelBusy(false);
+    }
+  }
+
+  function selectCryptoMethod(method: CryptoMethod) {
+    setSelected(method);
+    setMessage("");
+    window.sessionStorage.setItem(`runevault-payment-${reference}`, method.id);
+  }
+
+  const secondsRemaining = selected
+    ? Math.max(0, Math.ceil((new Date(selected.expiresAt).getTime() - now) / 1_000))
+    : 0;
 
   if (!order) {
     return (
@@ -210,7 +271,7 @@ export function PayClient() {
                 {crypto.map((method) => (
                   <button
                     key={method.id}
-                    onClick={() => setSelected(method)}
+                    onClick={() => selectCryptoMethod(method)}
                     className={`rounded-xl border p-4 text-left ${
                       selected?.id === method.id
                         ? "border-amber-300/35 bg-amber-300/[.07]"
@@ -241,6 +302,32 @@ export function PayClient() {
                       <Clipboard size={16} />
                     </button>
                   </div>
+                  <div className="mt-4 border-t border-white/10 pt-4">
+                    <p className="text-xs font-black uppercase tracking-[.14em] text-white/30">
+                      Exact amount to send
+                    </p>
+                    <div className="mt-2 flex items-center gap-3">
+                      <code className="min-w-0 flex-1 break-all text-lg font-black">
+                        {selected.amount} {selected.id.toUpperCase()}
+                      </code>
+                      <button
+                        type="button"
+                        aria-label={`Copy ${selected.name} amount`}
+                        onClick={() => void navigator.clipboard.writeText(selected.amount)}
+                        className="rounded-lg border border-white/10 p-2"
+                      >
+                        <Clipboard size={16} />
+                      </button>
+                    </div>
+                    <p className="mt-3 text-xs text-white/40">
+                      Rate locked for {Math.floor(secondsRemaining / 60)}:{String(secondsRemaining % 60).padStart(2, "0")}
+                    </p>
+                    <p className="mt-2 text-xs font-bold text-amber-200/70">
+                      {selected.id === "btc"
+                        ? "Send BTC only on the Bitcoin network. Sending another asset or network can permanently lose funds."
+                        : "Send only native USDC on Base. Do not use another network or a bridged token."}
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -258,7 +345,6 @@ export function PayClient() {
   </div>
 )}
 
-<label className="mt-4 block text-sm font-bold text-white/45"></label>
               <label className="mt-4 block text-sm font-bold text-white/45">
                 Transaction ID
                 <input
@@ -269,9 +355,26 @@ export function PayClient() {
                 />
               </label>
 
+              <label className="mt-4 block text-sm font-bold text-white/45">
+                Payment proof <span className="font-normal text-white/30">(optional)</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    if (file && file.size > 5 * 1024 * 1024) {
+                      setMessage("Payment proof must be no larger than 5 MB."); event.target.value = ""; setProof(null); return;
+                    }
+                    setProof(file);
+                  }}
+                  className="mt-2 block w-full rounded-xl border border-white/10 bg-black/15 p-3 text-sm"
+                />
+                <span className="mt-2 block text-xs font-normal text-white/30">JPEG, PNG, WebP, or PDF up to 5 MB.</span>
+              </label>
+
               <button
                 onClick={() => void markCryptoSent()}
-                disabled={cryptoBusy || !selected || txid.trim().length < 8}
+                disabled={cryptoBusy || !selected || secondsRemaining === 0 || txid.trim().length < 8}
                 className="header-button mt-5 w-full justify-center"
               >
                 <CheckCircle2 size={18} />
@@ -288,6 +391,16 @@ export function PayClient() {
       >
         Return to order tracking
       </Link>
+      {order.status === "pending" || order.status === "awaiting_payment" ? (
+        <button
+          type="button"
+          onClick={() => void cancelOrder()}
+          disabled={cancelBusy}
+          className="ml-5 mt-7 text-sm font-black text-rose-300 disabled:opacity-50"
+        >
+          {cancelBusy ? "Cancelling…" : "Cancel order"}
+        </button>
+      ) : null}
     </main>
   );
 }

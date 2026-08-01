@@ -42,7 +42,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid order reference." }, { status: 400 });
     }
 
-    const order = await getOrderByReference(reference);
+    const authorization = request.headers.get("authorization");
+    const order = await getOrderByReference(reference, authorization);
     if (!order) {
       return NextResponse.json({ error: "Order not found." }, { status: 404 });
     }
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
       await updateOrder(order.id, {
         payment_provider: "stripe", payment_status: "manual_review",
         risk_score: risk.score, risk_level: risk.level, risk_reasons: risk.reasons,
-      });
+      }, authorization);
       return NextResponse.json(
         {
           error:
@@ -80,7 +81,7 @@ export async function POST(request: Request) {
     await updateOrder(order.id, {
       payment_provider: "stripe", payment_status: "checkout_created",
       risk_score: risk.score, risk_level: risk.level, risk_reasons: risk.reasons,
-    });
+    }, authorization);
 
     const params = new URLSearchParams();
     params.set("mode", "payment");
@@ -115,6 +116,7 @@ export async function POST(request: Request) {
       headers: {
         Authorization: `Bearer ${secretKey}`,
         "Content-Type": "application/x-www-form-urlencoded",
+        "Idempotency-Key": `runevault-checkout-${order.id}`,
       },
       body: params,
     });
@@ -132,7 +134,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await updateOrder(order.id, { transaction_id: result.id ?? null });
+    await updateOrder(order.id, { payment_id: result.id ?? null }, authorization);
     return NextResponse.json({ url: result.url });
   } catch (reason) {
     if (reason instanceof Response) return reason;

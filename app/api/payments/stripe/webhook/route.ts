@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         status: "paid",
         payment_provider: "stripe",
         payment_status: "paid",
-        transaction_id: session.id,
+        payment_id: session.id,
         paid_at: new Date().toISOString(),
       });
 
