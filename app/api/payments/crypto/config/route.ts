@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOrderByReference, rateLimit, requestIp, requireOrderOwner } from "@/lib/launch-server";
+import { getOrderByReference, rateLimit, requestIp, requireOrderOwner, supabaseUrl, userHeaders } from "@/lib/launch-server";
 import { createCryptoQuote } from "@/lib/crypto-quote";
 
 export const runtime = "nodejs";
@@ -96,6 +96,10 @@ export async function POST(request: Request) {
   const authorization = request.headers.get("authorization") ?? "";
   if (!/^Bearer\s+\S+$/i.test(authorization)) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+  const sessionResponse = await fetch(`${supabaseUrl()}/auth/v1/user`, { headers: userHeaders(authorization), cache: "no-store" });
+  if (!sessionResponse.ok) {
+    return NextResponse.json({ error: "Invalid or expired session." }, { status: 401 });
   }
 
   if (methods.length === 0) {
