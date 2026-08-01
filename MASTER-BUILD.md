@@ -137,9 +137,9 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 13 — performance and code quality
 
-- [ ] Caching, query/index optimization, images, lazy loading, bundle/API optimization, SSR/code splitting, and duplicate/dead-code cleanup.
-- [ ] Central API/errors/env validation, migrations, automated critical-flow tests, and deployment verifier.
-- [ ] Zero TypeScript/build errors, broken links, dead controls, unsafe secrets, and unhandled failures.
+- [ ] Caching, query/index optimization, images, lazy loading, bundle/API optimization, SSR/code splitting, and duplicate/dead-code cleanup. (Indexed reporting/operational queries, server-rendered static surfaces, route-level bundles, and duplicate client JSON parser cleanup implemented; profiling and live cache validation remain.)
+- [ ] Central API/errors/env validation, migrations, automated critical-flow tests, and deployment verifier. (Reusable safe client API parser, environment validation including secret-leak checks, strict typecheck script, and executable page/header/API-JSON deployment smoke test implemented; authenticated flow automation remains.)
+- [ ] Zero TypeScript/build errors, broken links, dead controls, unsafe secrets, and unhandled failures. (Lint, TypeScript, and production build are enforced locally; deployment verifier covers primary links and invalid API JSON behavior; full live control audit remains.)
 - [ ] Section 13 live tests and deployment.
 
 ## Section 14 — OSRS features and content

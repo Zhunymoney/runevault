@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
+import { parseApiResponse } from "@/lib/client-api";
 
 type Message = { id: string; author_type: string; body: string; created_at: string };
 type Ticket = { id: string; ticket_number: string; subject: string; status: string; ticket_messages?: Message[] };
@@ -10,12 +11,7 @@ async function request(path: string, init?: RequestInit) {
   const { data } = await createClient().auth.getSession();
   if (!data.session?.access_token) throw new Error("Sign in to contact support and view your tickets.");
   const response = await fetch(path, { ...init, headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}`, ...init?.headers } });
-  const text = await response.text();
-  let payload: Record<string, unknown> = {};
-  try { payload = text ? JSON.parse(text) as Record<string, unknown> : {}; }
-  catch { throw new Error(response.ok ? "Support returned an invalid response." : text.trim() || `Request failed (${response.status}).`); }
-  if (!response.ok) throw new Error(typeof payload.error === "string" ? payload.error : `Request failed (${response.status}).`);
-  return payload;
+  return parseApiResponse(response);
 }
 
 export function SupportClient() {

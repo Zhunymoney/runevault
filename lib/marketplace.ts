@@ -1,19 +1,11 @@
 import type { MarketplaceSettings, Order, OrderStatus, OrderStatusHistory, OrderType, Profile, SavedCharacter } from "@/lib/types";
 import { createClient } from "@/lib/supabase-browser";
+import { parseApiResponse } from "@/lib/client-api";
 
 async function authenticatedApiHeaders() {
   const { data } = await createClient().auth.getSession();
   if (!data.session?.access_token) throw new Error("Sign in again before continuing.");
   return { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` };
-}
-
-async function apiJson(response: Response) {
-  const text = await response.text();
-  let data: Record<string, unknown> = {};
-  try { data = text ? JSON.parse(text) as Record<string, unknown> : {}; }
-  catch { throw new Error(response.ok ? "The server returned an invalid response." : text.trim() || `Request failed (${response.status}).`); }
-  if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : `Request failed (${response.status}).`);
-  return data;
 }
 
 export async function getCurrentProfile(): Promise<Profile | null> {
@@ -171,7 +163,7 @@ export async function findOrder(reference: string): Promise<Order | null> {
 
 export async function getAdminOrders(): Promise<Order[]> {
   const response = await fetch("/api/admin/orders", { headers: await authenticatedApiHeaders(), cache: "no-store" });
-  const data = await apiJson(response);
+  const data = await parseApiResponse(response);
   return (Array.isArray(data.orders) ? data.orders : []).map((order) => normalizeOrder(order as Record<string, unknown>));
 }
 
@@ -186,12 +178,12 @@ export async function getOrderTimeline(order: Order): Promise<OrderStatusHistory
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {
   const response = await fetch("/api/admin/orders", { method: "PATCH", headers: await authenticatedApiHeaders(), body: JSON.stringify({ id, status }) });
-  await apiJson(response);
+  await parseApiResponse(response);
 }
 
 export async function updateSettings(input: Partial<MarketplaceSettings>) {
   const response = await fetch("/api/admin/settings", { method: "PATCH", headers: await authenticatedApiHeaders(), body: JSON.stringify(input) });
-  const data = await apiJson(response);
+  const data = await parseApiResponse(response);
   return data.settings as unknown as MarketplaceSettings;
 }
 
