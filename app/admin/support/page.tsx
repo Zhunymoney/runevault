@@ -1,13 +1,280 @@
 "use client";
-import { FormEvent,useEffect,useMemo,useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Headphones,RefreshCw,Search } from "lucide-react";
+import { Headphones, RefreshCw, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase-browser";
 import { parseApiResponse } from "@/lib/client-api";
+import { useSupportRealtime } from "@/lib/use-support-realtime";
 
-type RecordItem={id:string;status:string;ticket_number?:string;subject?:string;customer_name?:string;email?:string;guest_email?:string;category?:string;priority?:string;ticket_messages?:Message[];chat_messages?:Message[]};type Message={id:string;author_type?:string;sender_type?:string;body:string;internal:boolean;created_at:string};
-async function headers(){const{data}=await createClient().auth.getSession();if(!data.session?.access_token)throw new Error("Admin sign-in required.");return{"Content-Type":"application/json",Authorization:`Bearer ${data.session.access_token}`};}
-export default function AdminSupportPage(){const[tickets,setTickets]=useState<RecordItem[]>([]),[chats,setChats]=useState<RecordItem[]>([]),[search,setSearch]=useState(""),[status,setStatus]=useState("all"),[notice,setNotice]=useState(""),[loading,setLoading]=useState(true);async function load(){setLoading(true);try{const response=await fetch(`/api/admin/support?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`,{headers:await headers(),cache:"no-store"});const data=await parseApiResponse(response);setTickets(Array.isArray(data.tickets)?data.tickets as RecordItem[]:[]);setChats(Array.isArray(data.chats)?data.chats as RecordItem[]:[]);}catch(reason){setNotice(reason instanceof Error?reason.message:"Support queue failed.");}finally{setLoading(false);}}
-// The first load intentionally uses the initial unfiltered queue; later searches are explicit.
-// eslint-disable-next-line react-hooks/exhaustive-deps
-useEffect(()=>{void load();},[]);async function update(kind:"ticket"|"chat",id:string,event:FormEvent<HTMLFormElement>){event.preventDefault();const form=event.currentTarget;try{await parseApiResponse(await fetch("/api/admin/support",{method:"PATCH",headers:await headers(),body:JSON.stringify({kind,id,...Object.fromEntries(new FormData(form).entries()),internal:new FormData(form).get("internal")==="on"})}));form.reset();setNotice("Support record updated.");await load();}catch(reason){setNotice(reason instanceof Error?reason.message:"Update failed.");}}const groups=useMemo(()=>[{title:"Tickets",kind:"ticket" as const,items:tickets},{title:"Live chat",kind:"chat" as const,items:chats}],[tickets,chats]);return <main className="mx-auto min-h-[800px] max-w-7xl px-6 py-14"><section className="flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><p className="text-sm font-black uppercase tracking-[.2em] text-amber-400">Admin support</p><h1 className="mt-3 text-4xl font-black">Tickets and chat inbox.</h1><p className="mt-3 text-white/40">Search, reply, add internal notes, assign, resolve, or block abusive chat conversations.</p></div><Link href="/admin" className="font-bold text-amber-300">Back to operations</Link></section><div className="mt-8 grid gap-3 sm:grid-cols-[1fr_180px_auto]"><label className="flex items-center gap-3 rounded-xl border border-white/10 px-4"><Search size={17}/><input value={search} onChange={event=>setSearch(event.target.value)} placeholder="Ticket, customer, email, OSRS name" className="min-h-12 w-full bg-transparent outline-none"/></label><select value={status} onChange={event=>setStatus(event.target.value)} className="rounded-xl border border-white/10 bg-[#0b0e14] px-4"><option value="all">All statuses</option><option value="open">Open</option><option value="pending">Pending</option><option value="resolved">Resolved</option><option value="closed">Closed</option><option value="blocked">Blocked</option></select><button onClick={()=>void load()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 font-black text-black"><RefreshCw size={17}/>Search</button></div>{notice&&<p role="status" className="mt-5 rounded-xl border border-white/10 p-4 text-sm text-white/60">{notice}</p>}{loading?<p className="mt-8 text-white/40">Loading support queue...</p>:groups.map(group=><section key={group.title} className="mt-10"><div className="flex items-center gap-3"><Headphones className="text-amber-300"/><h2 className="text-2xl font-black">{group.title} ({group.items.length})</h2></div><div className="mt-4 grid gap-4 xl:grid-cols-2">{group.items.map(item=><article key={item.id} className="rounded-3xl border border-white/10 bg-white/[.025] p-6"><div className="flex justify-between gap-4"><div><b>{item.ticket_number??item.customer_name??item.id}</b><p className="mt-1 text-sm text-white/40">{item.subject??item.email??item.guest_email??"No customer email"}</p></div><span className="h-fit rounded-full bg-amber-300/10 px-3 py-1 text-xs font-black uppercase text-amber-200">{item.status}</span></div><div className="mt-5 max-h-56 space-y-2 overflow-y-auto">{(item.ticket_messages??item.chat_messages??[]).map(message=><div key={message.id} className={`rounded-xl border p-3 text-sm ${message.internal?"border-rose-300/20 bg-rose-300/[.05]":"border-white/10"}`}><b className="text-xs uppercase text-white/35">{message.author_type??message.sender_type}{message.internal?" · internal":""}</b><p className="mt-1 whitespace-pre-wrap text-white/65">{message.body}</p></div>)}</div><form onSubmit={event=>void update(group.kind,item.id,event)} className="mt-5 grid gap-3"><textarea name="message" maxLength={10000} rows={3} placeholder="Staff reply or internal note" className="rounded-xl border border-white/10 bg-black/15 p-3"/><div className="grid gap-3 sm:grid-cols-[150px_1fr]"><select name="status" defaultValue={item.status} className="rounded-xl border border-white/10 bg-[#0b0e14] p-3">{(group.kind==="chat"?["open","pending","resolved","blocked"]:["open","pending","resolved","closed"]).map(value=><option key={value}>{value}</option>)}</select><input name="assignedTo" placeholder="Staff user UUID (optional)" className="rounded-xl border border-white/10 bg-black/15 p-3"/></div><div className="flex items-center justify-between"><label className="text-sm text-white/45"><input name="internal" type="checkbox" className="mr-2 accent-amber-400"/>Internal note</label><button className="rounded-xl bg-amber-400 px-5 py-3 font-black text-black">Save</button></div></form></article>)}{!group.items.length&&<p className="rounded-2xl border border-dashed border-white/10 p-8 text-white/35">No matching {group.title.toLowerCase()}.</p>}</div></section>)}</main>}
+type RecordItem = {
+  id: string;
+  status: string;
+  ticket_number?: string;
+  subject?: string;
+  customer_name?: string;
+  email?: string;
+  guest_email?: string;
+  category?: string;
+  priority?: string;
+  ticket_messages?: Message[];
+  chat_messages?: Message[];
+};
+type Message = {
+  id: string;
+  author_type?: string;
+  sender_type?: string;
+  body: string;
+  internal: boolean;
+  created_at: string;
+};
+async function headers() {
+  const { data } = await createClient().auth.getSession();
+  if (!data.session?.access_token) throw new Error("Admin sign-in required.");
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${data.session.access_token}`,
+  };
+}
+export default function AdminSupportPage() {
+  const [tickets, setTickets] = useState<RecordItem[]>([]),
+    [chats, setChats] = useState<RecordItem[]>([]),
+    [search, setSearch] = useState(""),
+    [status, setStatus] = useState("all"),
+    [notice, setNotice] = useState(""),
+    [loading, setLoading] = useState(true);
+  async function load() {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/admin/support?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`,
+        { headers: await headers(), cache: "no-store" },
+      );
+      const data = await parseApiResponse(response);
+      setTickets(
+        Array.isArray(data.tickets) ? (data.tickets as RecordItem[]) : [],
+      );
+      setChats(Array.isArray(data.chats) ? (data.chats as RecordItem[]) : []);
+    } catch (reason) {
+      setNotice(
+        reason instanceof Error ? reason.message : "Support queue failed.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+  const realtime = useSupportRealtime("staff", () => void load());
+  // The first load intentionally uses the initial unfiltered queue; later searches are explicit.
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  async function update(
+    kind: "ticket" | "chat",
+    id: string,
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    try {
+      await parseApiResponse(
+        await fetch("/api/admin/support", {
+          method: "PATCH",
+          headers: await headers(),
+          body: JSON.stringify({
+            kind,
+            id,
+            ...Object.fromEntries(new FormData(form).entries()),
+            internal: new FormData(form).get("internal") === "on",
+          }),
+        }),
+      );
+      form.reset();
+      if (kind === "chat") realtime.sendTyping(id, false);
+      setNotice("Support record updated.");
+      await load();
+    } catch (reason) {
+      setNotice(reason instanceof Error ? reason.message : "Update failed.");
+    }
+  }
+  const groups = useMemo(
+    () => [
+      { title: "Tickets", kind: "ticket" as const, items: tickets },
+      { title: "Live chat", kind: "chat" as const, items: chats },
+    ],
+    [tickets, chats],
+  );
+  return (
+    <main className="mx-auto min-h-[800px] max-w-7xl px-6 py-14">
+      <section className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+        <div>
+          <p className="text-sm font-black uppercase tracking-[.2em] text-amber-400">
+            Admin support
+          </p>
+          <h1 className="mt-3 text-4xl font-black">Tickets and chat inbox.</h1>
+          <p className="mt-3 text-white/40">
+            Search, reply, add internal notes, assign, resolve, or block abusive
+            chat conversations.
+          </p>
+        </div>
+        <Link href="/admin" className="font-bold text-amber-300">
+          Back to operations
+        </Link>
+      </section>
+      <div className="mt-8 grid gap-3 sm:grid-cols-[1fr_180px_auto]">
+        <label className="flex items-center gap-3 rounded-xl border border-white/10 px-4">
+          <Search size={17} />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Ticket, customer, email, OSRS name"
+            className="min-h-12 w-full bg-transparent outline-none"
+          />
+        </label>
+        <select
+          value={status}
+          onChange={(event) => setStatus(event.target.value)}
+          className="rounded-xl border border-white/10 bg-[#0b0e14] px-4"
+        >
+          <option value="all">All statuses</option>
+          <option value="open">Open</option>
+          <option value="pending">Pending</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+          <option value="blocked">Blocked</option>
+        </select>
+        <button
+          onClick={() => void load()}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 font-black text-black"
+        >
+          <RefreshCw size={17} />
+          Search
+        </button>
+      </div>
+      {notice && (
+        <p
+          role="status"
+          className="mt-5 rounded-xl border border-white/10 p-4 text-sm text-white/60"
+        >
+          {notice}
+        </p>
+      )}
+      {loading ? (
+        <p className="mt-8 text-white/40">Loading support queue...</p>
+      ) : (
+        groups.map((group) => (
+          <section key={group.title} className="mt-10">
+            <div className="flex items-center gap-3">
+              <Headphones className="text-amber-300" />
+              <h2 className="text-2xl font-black">
+                {group.title} ({group.items.length})
+              </h2>
+            </div>
+            <div className="mt-4 grid gap-4 xl:grid-cols-2">
+              {group.items.map((item) => (
+                <article
+                  key={item.id}
+                  className="rounded-3xl border border-white/10 bg-white/[.025] p-6"
+                >
+                  <div className="flex justify-between gap-4">
+                    <div>
+                      <b>
+                        {item.ticket_number ?? item.customer_name ?? item.id}
+                      </b>
+                      <p className="mt-1 text-sm text-white/40">
+                        {item.subject ??
+                          item.email ??
+                          item.guest_email ??
+                          "No customer email"}
+                      </p>
+                    </div>
+                    <span className="h-fit rounded-full bg-amber-300/10 px-3 py-1 text-xs font-black uppercase text-amber-200">
+                      {item.status}
+                    </span>
+                  </div>
+                  <div className="mt-5 max-h-56 space-y-2 overflow-y-auto">
+                    {(item.ticket_messages ?? item.chat_messages ?? []).map(
+                      (message) => (
+                        <div
+                          key={message.id}
+                          className={`rounded-xl border p-3 text-sm ${message.internal ? "border-rose-300/20 bg-rose-300/[.05]" : "border-white/10"}`}
+                        >
+                          <b className="text-xs uppercase text-white/35">
+                            {message.author_type ?? message.sender_type}
+                            {message.internal ? " · internal" : ""}
+                          </b>
+                          <p className="mt-1 whitespace-pre-wrap text-white/65">
+                            {message.body}
+                          </p>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                  <form
+                    onSubmit={(event) =>
+                      void update(group.kind, item.id, event)
+                    }
+                    className="mt-5 grid gap-3"
+                  >
+                    <textarea
+                      name="message"
+                      maxLength={10000}
+                      rows={3}
+                      placeholder="Staff reply or internal note"
+                      onChange={(event) => {
+                        if (group.kind === "chat") realtime.sendTyping(item.id, event.target.value.trim().length > 0);
+                      }}
+                      onBlur={() => {
+                        if (group.kind === "chat") realtime.sendTyping(item.id, false);
+                      }}
+                      className="rounded-xl border border-white/10 bg-black/15 p-3"
+                    />
+                    {group.kind === "chat" && realtime.typing[item.id] === "customer" && (
+                      <p className="text-xs text-white/40">Customer is typing…</p>
+                    )}
+                    <div className="grid gap-3 sm:grid-cols-[150px_1fr]">
+                      <select
+                        name="status"
+                        defaultValue={item.status}
+                        className="rounded-xl border border-white/10 bg-[#0b0e14] p-3"
+                      >
+                        {(group.kind === "chat"
+                          ? ["open", "pending", "resolved", "blocked"]
+                          : ["open", "pending", "resolved", "closed"]
+                        ).map((value) => (
+                          <option key={value}>{value}</option>
+                        ))}
+                      </select>
+                      <input
+                        name="assignedTo"
+                        placeholder="Staff user UUID (optional)"
+                        className="rounded-xl border border-white/10 bg-black/15 p-3"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm text-white/45">
+                        <input
+                          name="internal"
+                          type="checkbox"
+                          className="mr-2 accent-amber-400"
+                        />
+                        Internal note
+                      </label>
+                      <button className="rounded-xl bg-amber-400 px-5 py-3 font-black text-black">
+                        Save
+                      </button>
+                    </div>
+                  </form>
+                </article>
+              ))}
+              {!group.items.length && (
+                <p className="rounded-2xl border border-dashed border-white/10 p-8 text-white/35">
+                  No matching {group.title.toLowerCase()}.
+                </p>
+              )}
+            </div>
+          </section>
+        ))
+      )}
+    </main>
+  );
+}

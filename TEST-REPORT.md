@@ -1,5 +1,12 @@
 # RuneVault test report — 2026-08-01
 
+## Realtime support presence and typing
+
+- Added a shared Supabase Realtime channel for privacy-minimized staff/customer presence and per-conversation typing state.
+- Customer and staff clients refresh their already-authorized API views on new `chat_messages`; the existing polling path remains as a fallback.
+- Local validation: TypeScript passed with incremental output disabled (OneDrive locked the generated cache), ESLint passed, and all 11 critical tests passed.
+- Live authenticated verification remains pending the production support migration and usable test identities.
+
 ## Passed
 
 - `npm run test:critical`: 11 passed, 0 failed; BTC and USDC payload mapping, unsupported-asset rejection, valid/structured/non-JSON/empty API response handling, canonical OSRS XP thresholds, starter/maxed combat formulas, seller-payout transition/role invariants, and privacy-safe browser labels are executable assertions.

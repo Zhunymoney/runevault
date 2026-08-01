@@ -5,6 +5,7 @@ import { Headphones, MessageCircle, Send, X } from "lucide-react";
 import { createClient } from "@/lib/supabase-browser";
 import { parseApiResponse } from "@/lib/client-api";
 import { openSupportAttachment, type SupportAttachment, uploadSupportAttachment } from "@/lib/support-attachments";
+import { useSupportRealtime } from "@/lib/use-support-realtime";
 
 type Message = {
   id: string;
@@ -28,6 +29,7 @@ export function ChatWidget({ externalProvider, externalUrl }: Props) {
     [responseTime, setResponseTime] = useState(
       "We usually reply within one business day.",
     );
+  const realtime = useSupportRealtime("customer", () => { if (open && id) void load(); });
   useEffect(() => {
     setId(localStorage.getItem(idKey) ?? "");
     setToken(localStorage.getItem(tokenKey) ?? "");
@@ -127,6 +129,7 @@ export function ChatWidget({ externalProvider, externalUrl }: Props) {
         }),
       );
       form.reset();
+      realtime.sendTyping(id, false);
       await load();
     } catch (reason) {
       setNotice(reason instanceof Error ? reason.message : "Message failed.");
@@ -168,7 +171,7 @@ export function ChatWidget({ externalProvider, externalUrl }: Props) {
               <div>
                 <b>RuneVault support</b>
                 <p className="text-xs capitalize text-white/40">
-                  {availability} · {responseTime}
+                  {realtime.staffOnline ? "online" : availability} · {responseTime}
                 </p>
               </div>
             </div>
@@ -270,6 +273,8 @@ export function ChatWidget({ externalProvider, externalUrl }: Props) {
                     name="message"
                     maxLength={10000}
                     placeholder="Write a reply"
+                    onChange={(event) => realtime.sendTyping(id, event.target.value.trim().length > 0)}
+                    onBlur={() => realtime.sendTyping(id, false)}
                     className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 p-3"
                   />
                   <button
@@ -280,6 +285,7 @@ export function ChatWidget({ externalProvider, externalUrl }: Props) {
                     <Send size={18} />
                   </button>
                 </form>
+                {realtime.typing[id] === "staff" && <p className="mt-2 text-xs text-white/40">Support is typing…</p>}
                 {!!attachments.length && <div className="mt-3 flex flex-wrap gap-2">{attachments.map((attachment)=><button key={attachment.id} type="button" onClick={()=>void openSupportAttachment(attachment.id,token).catch(reason=>setNotice(reason instanceof Error?reason.message:"Attachment could not be opened."))} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-amber-200">Open {attachment.mime_type === "application/pdf" ? "PDF" : "image"}</button>)}</div>}
                 <label className="mt-3 block cursor-pointer rounded-xl border border-dashed border-white/10 p-3 text-center text-xs font-bold text-white/45">Attach image or PDF<input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="sr-only" disabled={busy} onChange={event=>{const file=event.target.files?.[0];if(file)void attach(file);event.currentTarget.value="";}}/></label>
                 <button
