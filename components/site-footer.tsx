@@ -14,7 +14,7 @@ export function SiteFooter() {
             </div>
           </div>
           <p className="mt-5 max-w-md text-sm leading-6 text-white/35">
-            A database-backed test environment for OSRS quotes, customer accounts, tracked orders, receipts, inventory, and administrative operations.
+            A database-backed OSRS marketplace for quotes, customer accounts, tracked orders, receipts, inventory, and administrative operations.
           </p>
         </div>
 
@@ -36,9 +36,12 @@ export function SiteFooter() {
             <Link href="/admin/launch">Launch readiness</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
+            <Link href="/refund-policy">Refund policy</Link>
+            <Link href="/delivery-policy">Delivery policy</Link>
+            <Link href="/acceptable-use">Acceptable use</Link>
           </div>
           <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-amber-400/15 bg-amber-400/8 px-3 py-2 text-xs font-black text-amber-300">
-            <ShieldCheck size={14} /> TEST MODE ACTIVE
+            <ShieldCheck size={14} /> SECURE ORDER TRACKING
           </div>
         </div>
       </div>
@@ -46,7 +49,7 @@ export function SiteFooter() {
       <div className="border-t border-white/7">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-6 py-5 text-xs text-white/25 sm:flex-row sm:items-center sm:justify-between">
           <span>© 2026 RuneVault.</span>
-          <span>No live payment or automated game transaction is processed.</span>
+          <span>OSRS only. Never share account passwords or wallet private keys.</span>
         </div>
       </div>
     </footer>

@@ -150,8 +150,8 @@ This document is the implementation checklist and evidence log for the complete 
 
 ## Section 15 — SEO, business, and legal structure
 
-- [ ] Complete metadata, canonicals, Open Graph, structured data, sitemap, robots, breadcrumbs, and analytics/search-console preparation.
-- [ ] Editable terms, privacy, refund, cancellation, delivery, cookie, acceptable-use, fraud, prohibited-use, contact, and disclosure pages marked for legal review.
+- [ ] Complete metadata, canonicals, Open Graph, structured data, sitemap, robots, breadcrumbs, and analytics/search-console preparation. (Global metadata/canonical/Open Graph/Twitter, robots, expanded sitemap, and optional analytics foundation implemented; per-page structured data and search-console token remain.)
+- [ ] Editable terms, privacy, refund, cancellation, delivery, cookie, acceptable-use, fraud, prohibited-use, contact, and disclosure pages marked for legal review. (Refund, cancellation, delivery, cookie, acceptable-use, and fraud/prohibited-use drafts added with explicit review warnings; terms/privacy remain drafts and final business contact/legal review are required.)
 - [ ] Section 15 live tests and deployment.
 
 ## Section 16 — infrastructure, deployment, monitoring, and recovery
