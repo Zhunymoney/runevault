@@ -131,6 +131,7 @@ export default function AdminSupportPage() {
           />
         </label>
         <select
+          aria-label="Filter support conversations by status"
           value={status}
           onChange={(event) => setStatus(event.target.value)}
           className="rounded-xl border border-white/10 bg-[#0b0e14] px-4"
