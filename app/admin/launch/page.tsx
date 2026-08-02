@@ -51,6 +51,7 @@ export default function LaunchPage() {
   }
 
   const repositoryChecks = checks.filter((check) => !check.external);
+  const hasReadiness = repositoryChecks.length > 0;
   const readiness = useMemo(() => repositoryChecks.length ? Math.round(repositoryChecks.filter((check) => ["ready", "configured"].includes(check.state)).length / repositoryChecks.length * 100) : 0, [repositoryChecks]);
 
   return (
@@ -68,10 +69,10 @@ export default function LaunchPage() {
 
       <section className="mt-9 rounded-3xl border border-white/10 bg-white/[.025] p-6 sm:p-8" aria-busy={loading}>
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div><p className="text-sm font-black text-white/45">Repository-controlled readiness</p><p className="mt-1 text-4xl font-black text-emerald-300">{loading ? "—" : `${readiness}%`}</p></div>
+          <div><p className="text-sm font-black text-white/45">Repository-controlled readiness</p><p className="mt-1 text-4xl font-black text-emerald-300">{loading ? "—" : hasReadiness ? `${readiness}%` : "Unavailable"}</p></div>
           <button onClick={() => void load()} disabled={loading} className="header-button"><RefreshCw className={loading ? "animate-spin" : ""} size={17} /> Refresh</button>
         </div>
-        <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/8" role="progressbar" aria-label="Repository-controlled readiness" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readiness}>
+        <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/8" role="progressbar" aria-label="Repository-controlled readiness" aria-valuemin={0} aria-valuemax={100} aria-valuenow={hasReadiness ? readiness : undefined}>
           <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-emerald-300 transition-[width] duration-500" style={{ width: `${readiness}%` }} />
         </div>
         {generatedAt && <p className="mt-3 text-xs text-white/30">Last checked {new Date(generatedAt).toLocaleString()}</p>}
