@@ -8,7 +8,6 @@ import {
   LockKeyhole,
   ShieldCheck,
   TrendingUp,
-  Zap,
   Radio,
 } from "lucide-react";
 import { QuoteCard } from "@/components/quote-card";
@@ -45,13 +44,13 @@ export default function Home() {
         <div className="hero-grid absolute inset-0 opacity-50" />
         <div className="hero-glow absolute left-1/2 top-0 h-[560px] w-[960px] -translate-x-1/2 rounded-full" />
 
-        <div className="relative mx-auto grid min-h-[760px] max-w-7xl items-center gap-14 px-6 py-16 lg:grid-cols-[1.04fr_.96fr] lg:py-24">
+        <div className="relative mx-auto grid min-h-[720px] max-w-7xl items-center gap-10 px-6 py-14 lg:grid-cols-[.92fr_1.08fr] lg:py-16">
           <div>
             <div className="eyebrow">
               <span className="live-dot" /> OSRS Gold Marketplace
             </div>
 
-            <h1 className="mt-7 max-w-4xl text-5xl font-black leading-[.94] tracking-[-.055em] sm:text-6xl lg:text-7xl">
+            <h1 className="mt-7 max-w-4xl text-5xl font-black leading-[.92] tracking-[-.06em] sm:text-6xl lg:text-[5.25rem]">
               Buy and sell
               <span className="gold-text block">OSRS gold.</span>
             </h1>
@@ -69,14 +68,16 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-white/45">
-              <span className="inline-flex items-center gap-2"><Zap size={17} className="text-amber-300" /> Instant estimate</span>
-              <span className="inline-flex items-center gap-2"><LockKeyhole size={17} className="text-amber-300" /> Tracked orders</span>
-              <span className="inline-flex items-center gap-2"><Coins size={17} className="text-amber-300" /> OSRS only</span>
+            <div className="mt-8 flex flex-wrap gap-2 text-xs font-bold text-white/55" aria-label="RuneVault order protections">
+              <span className="trust-chip"><TrendingUp size={15} /> Live pricing</span>
+              <span className="trust-chip"><LockKeyhole size={15} /> Secure checkout</span>
+              <span className="trust-chip"><ShieldCheck size={15} /> Manual fraud review</span>
+              <span className="trust-chip"><Radio size={15} /> Live tracking</span>
+              <span className="trust-chip"><Headphones size={15} /> Professional support</span>
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative lg:scale-[1.06] lg:pl-3">
             <div className="absolute -inset-6 rounded-[40px] bg-amber-400/5 blur-3xl" />
             <div className="relative"><QuoteCard /></div>
           </div>

@@ -4,7 +4,7 @@ import { ShieldCheck } from "lucide-react";
 export function SiteFooter() {
   return (
     <footer className="border-t border-white/8 bg-[#06080c]">
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 md:grid-cols-[1.2fr_.8fr_.8fr]">
+      <div className="mx-auto grid max-w-7xl gap-12 px-6 py-14 sm:py-16 md:grid-cols-[1.2fr_.8fr_.8fr]">
         <div>
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 font-black text-black">R</span>
@@ -20,7 +20,7 @@ export function SiteFooter() {
 
         <div>
           <p className="text-xs font-black uppercase tracking-[.18em] text-white/30">Platform</p>
-          <div className="mt-4 grid gap-3 text-sm font-bold text-white/55">
+          <div className="mt-5 grid gap-3.5 text-sm font-bold text-white/60">
             <Link href="/quote?type=buy">Buy Gold</Link>
             <Link href="/quote?type=sell">Sell Gold</Link>
             <Link href="/quote">Create quote</Link>
@@ -35,7 +35,7 @@ export function SiteFooter() {
 
         <div>
           <p className="text-xs font-black uppercase tracking-[.18em] text-white/30">Operations</p>
-          <div className="mt-4 grid gap-3 text-sm font-bold text-white/55">
+          <div className="mt-5 grid gap-3.5 text-sm font-bold text-white/60">
             <Link href="/health">Health check</Link>
             <Link href="/admin/launch">Launch readiness</Link>
             <Link href="/privacy">Privacy</Link>

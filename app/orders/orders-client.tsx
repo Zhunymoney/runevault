@@ -200,7 +200,7 @@ export function OrdersClient({initialReference:referenceFromPath}:{initialRefere
           <button
             onClick={() => void searchOrder()}
             disabled={busy}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-400 px-6 font-black text-black disabled:opacity-50"
+            className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-amber-400 px-7 font-black text-black shadow-[0_12px_30px_rgba(245,158,11,.16)] transition hover:-translate-y-0.5 disabled:opacity-50"
           >
             {busy ? "Searching…" : "Find order"} <ArrowRight size={18} />
           </button>

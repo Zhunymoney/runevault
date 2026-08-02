@@ -71,6 +71,7 @@ export function PayClient() {
   const [selected, setSelected] = useState<CryptoMethod | null>(null);
   const [txid, setTxid] = useState("");
   const [proof, setProof] = useState<File | null>(null);
+  const [verificationSubmitted, setVerificationSubmitted] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -164,6 +165,7 @@ export function PayClient() {
       });
       const data = await readApiResponse(response);
       if (!response.ok) throw new Error(data.error ?? "Submission failed.");
+      setVerificationSubmitted(true);
       setMessage(data.message ?? "Payment submitted for review.");
     } catch (reason) {
       setMessage(reason instanceof Error ? reason.message : "Submission failed.");
@@ -194,6 +196,7 @@ export function PayClient() {
   function selectCryptoMethod(method: CryptoMethod) {
     setSelected(method);
     setMessage("");
+    setVerificationSubmitted(false);
     window.sessionStorage.setItem(`runevault-payment-${reference}`, method.id);
   }
 
@@ -229,11 +232,14 @@ export function PayClient() {
         Card payments open in Stripe-hosted checkout. Crypto payments remain pending until authorized staff verifies the transaction on-chain.
       </div>
 
-      {message && (
-        <p className="mt-5 rounded-xl border border-white/10 bg-white/[.025] p-4 text-sm text-white/60">
-          {message}
-        </p>
-      )}
+      {verificationSubmitted ? (
+        <div role="status" className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-300/20 bg-emerald-300/[.06] p-5">
+          <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-300" size={22} />
+          <div><p className="font-black text-emerald-100">Verification submitted</p><p className="mt-1 text-sm leading-6 text-white/50">We’ll review the transaction and update your order status. You can follow progress from order tracking.</p></div>
+        </div>
+      ) : message ? (
+        <p role="status" className="mt-5 rounded-xl border border-white/10 bg-white/[.025] p-4 text-sm text-white/60">{message}</p>
+      ) : null}
 
       <section className="mt-8 grid gap-6 lg:grid-cols-2">
         <article className="rounded-3xl border border-white/10 bg-white/[.025] p-7">
@@ -252,6 +258,11 @@ export function PayClient() {
             {cardBusy ? "Opening…" : "Open secure card checkout"}
             <ExternalLink size={17} />
           </button>
+          <div className="mt-5 grid gap-3 rounded-2xl border border-white/10 bg-black/10 p-5 text-sm text-white/45">
+            <p className="flex items-center gap-3"><ExternalLink className="text-amber-300" size={17} /> Checkout opens on Stripe’s hosted payment page.</p>
+            <p className="flex items-center gap-3"><LockKeyhole className="text-amber-300" size={17} /> Card details are entered and processed by Stripe.</p>
+            <p className="flex items-center gap-3"><CheckCircle2 className="text-emerald-300" size={17} /> Your RuneVault order updates after payment confirmation.</p>
+          </div>
         </article>
 
         <article className="rounded-3xl border border-white/10 bg-white/[.025] p-7">
