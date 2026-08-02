@@ -192,11 +192,13 @@ export default function PricingPage() {
             />
             <input
               required
+              aria-label="Price schedule start time"
               name="startsAt"
               type="datetime-local"
               className="rounded-xl border border-white/10 bg-black/15 p-3"
             />
             <input
+              aria-label="Price schedule end time"
               name="endsAt"
               type="datetime-local"
               className="rounded-xl border border-white/10 bg-black/15 p-3"
@@ -226,6 +228,7 @@ export default function PricingPage() {
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <select
               required
+              aria-label="Bulk tier order type"
               name="orderType"
               className="rounded-xl border border-white/10 bg-[#0b0e14] p-3"
             >
