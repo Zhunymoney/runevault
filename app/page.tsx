@@ -9,15 +9,19 @@ import {
   ShieldCheck,
   TrendingUp,
   Zap,
+  Radio,
 } from "lucide-react";
 import { QuoteCard } from "@/components/quote-card";
 import { JsonLd } from "@/components/structured-data";
+import { LiveMarketStatus } from "@/components/live-market-status";
 
 const benefits = [
   { icon: Clock3, title: "Fast order flow", text: "Create an OSRS gold quote in seconds and receive a trackable order reference." },
   { icon: ShieldCheck, title: "Clear, secure workflow", text: "Account-based order history and protected administrative controls." },
   { icon: TrendingUp, title: "Competitive rates", text: "Buy and sell prices are managed from the existing RuneVault admin dashboard." },
-  { icon: Headphones, title: "Order support", text: "Customers can follow status updates without searching through scattered messages." },
+  { icon: Headphones, title: "Professional support", text: "Order-linked chat and support tickets keep help attached to the right customer and order." },
+  { icon: Radio, title: "Real-time tracking", text: "Follow database-backed status milestones and live order updates from one private page." },
+  { icon: Coins, title: "OSRS only", text: "A focused quote, payment, delivery, and support workflow built specifically for Old School RuneScape." },
 ];
 
 const steps = [
@@ -79,21 +83,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-y border-white/8 bg-white/[.018]">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px bg-white/8 md:grid-cols-4">
-          {[
-            ["24/7", "Quote access"],
-            ["OSRS", "Exclusive"],
-            ["Fast", "Order creation"],
-            ["Tracked", "Order status"],
-          ].map(([value, label]) => (
-            <div key={label} className="bg-[#090c12] px-6 py-8 text-center">
-              <p className="text-2xl font-black text-amber-300">{value}</p>
-              <p className="mt-1 text-xs font-bold uppercase tracking-[.16em] text-white/35">{label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      <LiveMarketStatus />
 
       <section className="section-shell">
         <div className="section-heading">
@@ -102,7 +92,7 @@ export default function Home() {
           <span>Everything is organized around one simple quote, one account, and one trackable order.</span>
         </div>
 
-        <div className="mt-12 grid gap-5 md:grid-cols-2">
+        <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {benefits.map(({ icon: Icon, title, text }) => (
             <article key={title} className="benefit-card">
               <span className="icon-box"><Icon size={23} /></span>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Coins, Printer, ReceiptText, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Clipboard, Coins, Headphones, Plus, Printer, ReceiptText, ShieldCheck } from "lucide-react";
 import { findOrder } from "@/lib/marketplace";
 import type { Order } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
@@ -58,9 +58,10 @@ export function ReceiptClient() {
         <Link href={`/orders/${encodeURIComponent(order.reference)}`} className="inline-flex items-center gap-2 text-sm font-bold text-white/45 hover:text-amber-300">
           <ArrowLeft size={17} /> Back to tracking
         </Link>
-        <button onClick={() => window.print()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 font-black text-black">
-          <Printer size={17} /> Print / Save PDF
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button aria-label="Copy order reference" onClick={() => void navigator.clipboard.writeText(order.reference)} className="header-button"><Clipboard size={17} /> Copy reference</button>
+          <button onClick={() => window.print()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 font-black text-black"><Printer size={17} /> Print / Save PDF</button>
+        </div>
       </div>
 
       <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#0b0f15] print:border-black print:bg-white print:text-black">
@@ -113,6 +114,10 @@ export function ReceiptClient() {
           </article>
         </div>
       </section>
+      <nav aria-label="Receipt actions" className="mt-6 grid gap-3 print:hidden sm:grid-cols-2">
+        <Link href={`/support?reference=${encodeURIComponent(order.reference)}`} className="secondary-button justify-center"><Headphones size={18} /> Need help</Link>
+        <Link href="/quote" className="primary-button justify-center"><Plus size={18} /> Place another order</Link>
+      </nav>
     </main>
   );
 }

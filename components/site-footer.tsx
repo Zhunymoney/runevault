@@ -21,6 +21,8 @@ export function SiteFooter() {
         <div>
           <p className="text-xs font-black uppercase tracking-[.18em] text-white/30">Platform</p>
           <div className="mt-4 grid gap-3 text-sm font-bold text-white/55">
+            <Link href="/quote?type=buy">Buy Gold</Link>
+            <Link href="/quote?type=sell">Sell Gold</Link>
             <Link href="/quote">Create quote</Link>
             <Link href="/marketplace">Marketplace listings</Link>
             <Link href="/orders">Track order</Link>
