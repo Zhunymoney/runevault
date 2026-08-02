@@ -205,7 +205,7 @@ export async function POST(request: Request) {
     };
     let response = await fetch(`${supabaseUrl()}/rest/v1/orders`, {
       method: "POST",
-      headers: { ...headers, Prefer: "return=representation" },
+      headers: { ...serviceHeaders(), Prefer: "return=representation" },
       body: JSON.stringify(base),
     });
     if (!response.ok) {
@@ -232,7 +232,7 @@ export async function POST(request: Request) {
       };
       response = await fetch(`${supabaseUrl()}/rest/v1/orders`, {
         method: "POST",
-        headers: { ...headers, Prefer: "return=representation" },
+        headers: { ...serviceHeaders(), Prefer: "return=representation" },
         body: JSON.stringify(legacy),
       });
     }
@@ -258,7 +258,7 @@ export async function POST(request: Request) {
       if (!couponResponse.ok) {
         await fetch(`${supabaseUrl()}/rest/v1/orders?id=eq.${order.id}`, {
           method: "PATCH",
-          headers: { ...headers, Prefer: "return=minimal" },
+          headers: { ...serviceHeaders(), Prefer: "return=minimal" },
           body: JSON.stringify({ status: "cancelled" }),
         });
         return NextResponse.json(

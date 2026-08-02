@@ -1,4 +1,5 @@
--- Replace the email below with the email you used to sign up, then Run.
+-- Run with a deliberately supplied email; no personal account belongs in source control.
+-- psql example: \set admin_email 'owner@example.com'
 update public.profiles
-set role = 'admin'
-where id = (select id from auth.users where email = 'Huntstattooing@outlook.com');
+set role = 'admin', admin_role = 'owner'
+where id = (select id from auth.users where email = :'admin_email');

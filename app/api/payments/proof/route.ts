@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { durableRateLimit, getOrderByReference, requestIp, requireOrderOwner, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
+import { hasValidFileSignature } from "@/lib/upload-validation";
 
 export const runtime = "nodejs";
 const allowedTypes = new Map([["image/jpeg", "jpg"], ["image/png", "png"], ["image/webp", "webp"], ["application/pdf", "pdf"]]);
@@ -16,6 +17,8 @@ export async function POST(request: Request) {
     const extension = allowedTypes.get(file.type);
     if (!extension) return NextResponse.json({ error: "Proof must be a JPEG, PNG, WebP, or PDF." }, { status: 400 });
     if (file.size < 1 || file.size > 5 * 1024 * 1024) return NextResponse.json({ error: "Proof must be no larger than 5 MB." }, { status: 400 });
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (!hasValidFileSignature(bytes, file.type)) return NextResponse.json({ error: "The file contents do not match the selected file type." }, { status: 400 });
 
     const authorization = request.headers.get("authorization");
     const order = await getOrderByReference(reference, authorization);
@@ -26,7 +29,7 @@ export async function POST(request: Request) {
     if (!key) throw new Error("Proof storage is not configured.");
     const upload = await fetch(`${supabaseUrl()}/storage/v1/object/payment-proofs/${path}`, {
       method: "POST", headers: { apikey: key, "Content-Type": file.type, "x-upsert": "false" },
-      body: Buffer.from(await file.arrayBuffer()),
+      body: Buffer.from(bytes),
     });
     if (!upload.ok) throw new Error("Proof upload failed.");
     const record = await fetch(`${supabaseUrl()}/rest/v1/payment_proofs`, {

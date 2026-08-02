@@ -7,7 +7,6 @@ import {
   Headphones,
   LockKeyhole,
   ShieldCheck,
-  Star,
   TrendingUp,
   Zap,
 } from "lucide-react";
@@ -27,17 +26,11 @@ const steps = [
   { number: "03", title: "Track the order", text: "Sign in, create the order, and follow its status using your RuneVault reference." },
 ];
 
-const reviews = [
-  { quote: "The quote calculator is quick and the mobile layout is easy to understand.", name: "Marketplace tester" },
-  { quote: "Everything from the rate to the order status is shown clearly in one place.", name: "Beta customer" },
-  { quote: "The account and tracking pages make the whole process feel organized.", name: "Early user" },
-];
-
 const faqs = [
   ["Does RuneVault support RS3?", "No. RuneVault is being built exclusively for Old School RuneScape gold."],
   ["Can I buy and sell OSRS gold?", "Yes. Choose Buy Gold or Sell Gold in the calculator to receive an instant estimate."],
   ["Can I track an order?", "Yes. Created orders receive a RuneVault reference that can be viewed from the tracking page and your account."],
-  ["Are live payments enabled?", "Not yet. The current deployment creates test database orders while payment, verification, and fulfillment systems are completed."],
+  ["How are payments handled?", "Supported buy orders can use configured card checkout or BTC and USDC on Base. Crypto submissions remain pending until staff verifies the on-chain transaction."],
 ];
 
 export default function Home() {
@@ -169,25 +162,6 @@ export default function Home() {
               <div key={item}><CheckCircle2 size={19} /> {item}</div>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="section-shell pt-0">
-        <div className="section-heading">
-          <p>Early feedback</p>
-          <h2>Simple on mobile. Clear from start to finish.</h2>
-        </div>
-
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
-          {reviews.map((review) => (
-            <article key={review.name} className="review-card">
-              <div className="flex gap-1 text-amber-300">
-                {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
-              </div>
-              <blockquote className="mt-6 text-lg font-semibold leading-8 text-white/80">“{review.quote}”</blockquote>
-              <div className="mt-8 border-t border-white/8 pt-5"><b>{review.name}</b></div>
-            </article>
-          ))}
         </div>
       </section>
 

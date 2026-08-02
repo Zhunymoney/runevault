@@ -3,11 +3,12 @@ import { NextResponse } from "next/server";
 import {
   durableRateLimit,
   requestIp,
-  requireAdmin,
+  requirePermission,
   serviceHeaders,
   supabaseUrl,
   userHeaders,
 } from "@/lib/launch-server";
+import { hasValidFileSignature } from "@/lib/upload-validation";
 
 const allowed = new Map([
   ["image/jpeg", "jpg"],
@@ -55,7 +56,7 @@ async function authorize(
   const current = await user(request);
   if (current) {
     try {
-      await requireAdmin(request);
+      await requirePermission(request, "support.manage");
       return current;
     } catch {}
   }
@@ -122,6 +123,12 @@ export async function POST(request: Request) {
         { error: "File must be no larger than 5 MB." },
         { status: 400 },
       );
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (!hasValidFileSignature(bytes, file.type))
+      return NextResponse.json(
+        { error: "The file contents do not match the selected file type." },
+        { status: 400 },
+      );
     const owner = await authorize(request, kind, id);
     if (owner === undefined || (kind === "ticket" && !owner))
       return NextResponse.json(
@@ -144,7 +151,7 @@ export async function POST(request: Request) {
           "Content-Type": file.type,
           "x-upsert": "false",
         },
-        body: Buffer.from(await file.arrayBuffer()),
+        body: Buffer.from(bytes),
       },
     );
     if (!upload.ok)

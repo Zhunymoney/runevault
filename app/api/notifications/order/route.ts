@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { emailTemplate } from "@/lib/email-templates";
-import { getOrderByReference, getUserEmail, rateLimit, requestIp, requireOrderOwner, sendDiscord, sendEmail, supabaseUrl, userHeaders } from "@/lib/launch-server";
+import { getOrderByReference, getUserEmail, rateLimit, requestIp, requireOrderOwner, sendDiscord, sendEmail, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
 
 export async function POST(request: Request) {
   const limit = rateLimit(`notify:${requestIp(request)}`, 5, 10 * 60_000);
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     if (!order) return NextResponse.json({ error: "Order not found." }, { status: 404 });
     await requireOrderOwner(request, order);
     const claim = await fetch(`${supabaseUrl()}/rest/v1/rpc/claim_order_notification`, {
-      method: "POST", headers: userHeaders(authorization ?? ""),
+      method: "POST", headers: serviceHeaders(),
       body: JSON.stringify({ p_order_id: order.id, p_event_key: `order-created:${order.id}`, p_event_type: "order_created", p_channel: "internal" }),
     });
     if (!claim.ok) return NextResponse.json({ error: "Notification ledger is not configured." }, { status: 503 });

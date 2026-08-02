@@ -222,7 +222,7 @@ export function PayClient() {
 
       <div className="mt-6 flex items-start gap-3 rounded-2xl border border-amber-300/20 bg-amber-300/[.05] p-5 text-sm leading-6 text-white/55">
         <ShieldAlert className="mt-0.5 shrink-0 text-amber-300" size={20} />
-        Card checkout remains disabled until Stripe approves the business and test credentials are configured. Crypto submissions require manual verification and are never marked paid by this page.
+        Card checkout is available only when approved Stripe credentials are configured. Crypto submissions require manual verification and are never marked paid by this page.
       </div>
 
       {message && (

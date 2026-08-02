@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Card checkout is not configured. Add approved Stripe test credentials first.",
+            "Card checkout is not configured. Add approved Stripe credentials first.",
         },
         { status: 503 },
       );
