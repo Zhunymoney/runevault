@@ -5,7 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
+  BadgeDollarSign,
   CheckCircle2,
+  CircleEllipsis,
   Clipboard,
   Coins,
   FileText,
@@ -13,7 +15,9 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  Truck,
   TimerReset,
+  UserCheck,
 } from "lucide-react";
 import { findOrder, getOrderTimeline, getSettings } from "@/lib/marketplace";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase-browser";
@@ -28,6 +32,15 @@ const progress = [
   "delivering",
   "completed",
 ];
+
+const progressIcons = {
+  pending: CircleEllipsis,
+  awaiting_payment: TimerReset,
+  paid: BadgeDollarSign,
+  assigned: UserCheck,
+  delivering: Truck,
+  completed: CheckCircle2,
+} as const;
 
 const statusCopy: Record<string, { title: string; text: string }> = {
   pending: {
@@ -311,6 +324,7 @@ export function OrdersClient({initialReference:referenceFromPath}:{initialRefere
               <div className="mt-6 grid gap-3 md:grid-cols-6">
                 {progress.map((status, index) => {
                   const complete = index <= activeIndex;
+                  const StageIcon = progressIcons[status as keyof typeof progressIcons];
 
                   return (
                     <div
@@ -321,9 +335,9 @@ export function OrdersClient({initialReference:referenceFromPath}:{initialRefere
                           : "border-white/8 bg-white/[.018]"
                       }`}
                     >
-                      <CheckCircle2
+                      <StageIcon
                         size={19}
-                        className={complete ? "text-amber-300" : "text-white/15"}
+                        className={`${complete ? "text-amber-300" : "text-white/15"} transition duration-500 ${index === activeIndex ? "scale-110 drop-shadow-[0_0_8px_rgba(251,191,36,.45)]" : ""}`}
                       />
                       <p
                         className={`mt-3 text-xs font-black capitalize ${

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, Coins, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, CircleDollarSign, Coins, ShieldCheck, TrendingUp } from "lucide-react";
 import { getSettings } from "@/lib/marketplace";
 import type { MarketplaceSettings, OrderType } from "@/lib/types";
 import { resolveEffectivePrice } from "@/lib/pricing";
@@ -133,9 +133,9 @@ export function QuoteCard() {
         </div>
 
         <div className="mt-7 flex items-center justify-between text-sm">
-          <span className="text-white/45">OSRS gold amount</span>
+          <span className="inline-flex items-center gap-2 text-white/45"><Coins size={16} /> OSRS gold amount</span>
           <b className={type === "buy" ? "text-amber-300" : "text-emerald-300"}>
-            ${rate.toFixed(3)} / M
+            <span className="inline-flex items-center gap-2"><TrendingUp size={15} /> ${rate.toFixed(3)} / M</span>
           </b>
         </div>
 
@@ -179,7 +179,8 @@ export function QuoteCard() {
 
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-sm text-white/40">
+            <p className="inline-flex items-center gap-2 text-sm text-white/40">
+              <CircleDollarSign size={16} />
               {type === "buy" ? "Estimated price" : "Estimated payout"}
             </p>
             <p className="mt-1 text-4xl font-black">${total.toFixed(2)}</p>

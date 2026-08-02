@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Headphones, MessageCircle, Send, X } from "lucide-react";
+import { Clock3, Headphones, MessageCircle, Send, X } from "lucide-react";
 import { createClient } from "@/lib/supabase-browser";
 import { parseApiResponse } from "@/lib/client-api";
 import { openSupportAttachment, type SupportAttachment, uploadSupportAttachment } from "@/lib/support-attachments";
@@ -175,8 +175,10 @@ export function ChatWidget({ externalProvider, externalUrl }: Props) {
               </span>
               <div>
                 <b>RuneVault support</b>
-                <p className="text-xs capitalize text-white/40">
-                  {realtime.staffOnline ? "online" : availability} · {responseTime}
+                <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs capitalize text-white/40">
+                  <span className={`h-2 w-2 rounded-full ${realtime.staffOnline || availability === "online" ? "bg-emerald-300" : "bg-white/25"}`} />
+                  {realtime.staffOnline ? "online" : availability}
+                  <span aria-hidden="true">·</span><Clock3 size={12} /> {responseTime}
                 </p>
               </div>
             </div>

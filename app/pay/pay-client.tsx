@@ -7,11 +7,15 @@ import { useSearchParams } from "next/navigation";
 import {
   Bitcoin,
   CheckCircle2,
+  Clock3,
   Clipboard,
   CreditCard,
   ExternalLink,
   LockKeyhole,
+  ListChecks,
+  QrCode,
   ShieldAlert,
+  Wallet,
 } from "lucide-react";
 import { findOrder } from "@/lib/marketplace";
 import type { Order } from "@/lib/types";
@@ -282,8 +286,8 @@ export function PayClient() {
 
               {selected && (
                 <div className="mt-4 rounded-2xl border border-white/10 bg-black/15 p-5">
-                  <p className="text-xs font-black uppercase tracking-[.14em] text-white/30">
-                    {selected.name} address · {selected.network}
+                  <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[.14em] text-white/30">
+                    <Wallet size={15} /> {selected.name} address · {selected.network}
                   </p>
                   <div className="mt-3 flex items-center gap-3">
                     <code className="min-w-0 flex-1 break-all text-sm">
@@ -315,8 +319,8 @@ export function PayClient() {
                         <Clipboard size={16} />
                       </button>
                     </div>
-                    <p className="mt-3 text-xs text-white/40">
-                      Rate locked for {Math.floor(secondsRemaining / 60)}:{String(secondsRemaining % 60).padStart(2, "0")}
+                    <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-300/15 bg-amber-300/[.05] px-3 py-2 text-xs font-bold text-amber-100/75">
+                      <Clock3 size={14} /> Rate locked for {Math.floor(secondsRemaining / 60)}:{String(secondsRemaining % 60).padStart(2, "0")}
                     </p>
                     <p className="mt-2 text-xs font-bold text-amber-200/70">
                       {selected.id === "btc"
@@ -329,7 +333,8 @@ export function PayClient() {
 
 {selected?.qr && (
   <div className="mt-6 flex justify-center">
-    <div className="rounded-2xl border border-white/10 bg-white p-4">
+    <div className="rounded-2xl border border-white/10 bg-white p-4 text-center text-black">
+      <p className="mb-3 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wide"><QrCode size={16} /> Scan to pay</p>
       <Image
         src={selected?.qr ?? ""}
         alt={`${selected.name} QR Code`}
@@ -376,6 +381,10 @@ export function PayClient() {
                 <CheckCircle2 size={18} />
                 {cryptoBusy ? "Submitting…" : "Submit for manual verification"}
               </button>
+              <div className="mt-4 flex items-start gap-3 rounded-xl border border-white/10 bg-white/[.025] p-4 text-xs leading-5 text-white/40">
+                <ListChecks className="mt-0.5 shrink-0 text-amber-300" size={17} />
+                Confirm the asset, network, wallet address, and exact amount before sending. Staff verifies the transaction manually.
+              </div>
             </>
           )}
         </article>

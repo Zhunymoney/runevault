@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Clipboard, Coins, Headphones, Plus, Printer, ReceiptText, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CalendarClock, Clipboard, Coins, CreditCard, Headphones, Package, Plus, Printer, ReceiptText, ShieldCheck, User } from "lucide-react";
 import { findOrder } from "@/lib/marketplace";
 import type { Order } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
@@ -85,17 +85,17 @@ export function ReceiptClient() {
 
         <div className="grid gap-px bg-white/10 print:bg-black/10 sm:grid-cols-2">
           {[
-            ["Order type", order.order_type === "buy" ? "Buy OSRS gold" : "Sell OSRS gold"],
-            ["Gold amount", `${order.amount_m}M`],
-            ["Rate", `$${order.price_per_m.toFixed(3)} / M`],
-            [order.order_type === "buy" ? "Total" : "Payout", `$${order.total_price.toFixed(2)}`],
-            ["Payment method", order.payment_provider === "stripe" ? "Card" : order.payment_asset ?? "Not selected"],
-            ["Payment status", order.payment_status?.replaceAll("_", " ") ?? "Unpaid"],
-            ["OSRS character", order.delivery_name || "Not supplied"],
-            ["Created", new Date(order.created_at).toLocaleString()],
-          ].map(([label, value]) => (
+            { label: "Order type", value: order.order_type === "buy" ? "Buy OSRS gold" : "Sell OSRS gold", icon: Package },
+            { label: "Gold amount", value: `${order.amount_m}M`, icon: Coins },
+            { label: "Rate", value: `$${order.price_per_m.toFixed(3)} / M`, icon: Coins },
+            { label: order.order_type === "buy" ? "Total" : "Payout", value: `$${order.total_price.toFixed(2)}`, icon: CreditCard },
+            { label: "Payment method", value: order.payment_provider === "stripe" ? "Card" : order.payment_asset ?? "Not selected", icon: CreditCard },
+            { label: "Payment status", value: order.payment_status?.replaceAll("_", " ") ?? "Unpaid", icon: ShieldCheck },
+            { label: "OSRS character", value: order.delivery_name || "Not supplied", icon: User },
+            { label: "Created", value: new Date(order.created_at).toLocaleString(), icon: CalendarClock },
+          ].map(({ label, value, icon: Icon }) => (
             <div key={label} className="bg-[#0b0f15] p-6 print:bg-white">
-              <p className="text-xs font-black uppercase tracking-[.14em] text-white/30 print:text-black/45">{label}</p>
+              <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[.14em] text-white/30 print:text-black/45"><Icon size={15} />{label}</p>
               <p className="mt-3 font-black">{value}</p>
             </div>
           ))}

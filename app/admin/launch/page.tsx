@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, CircleAlert, LoaderCircle, Play, RefreshCw, ShieldCheck, XCircle } from "lucide-react";
+import { Activity, CheckCircle2, CircleAlert, Cloud, CreditCard, Database, Globe2, KeyRound, LoaderCircle, Mail, Play, Radar, RefreshCw, Server, ShieldCheck, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase-browser";
 import { parseApiResponse } from "@/lib/client-api";
 
@@ -11,6 +11,7 @@ type Check = { id: string; label: string; state: State; detail: string; external
 type Probe = { label: string; passed: boolean; status: number; durationMs: number; detail?: string };
 
 const stateLabel: Record<State, string> = { ready: "Ready", configured: "Configured", needs_configuration: "Needs configuration", failed: "Failed" };
+const checkIcons = { payments: CreditCard, email: Mail, authentication: KeyRound, supabase: Database, api: Server, webhooks: Activity, domain: Globe2, fraud: Radar, monitoring: Cloud } as const;
 
 export default function LaunchPage() {
   const [checks, setChecks] = useState<Check[]>([]);
@@ -83,9 +84,10 @@ export default function LaunchPage() {
       <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {checks.map((check) => {
           const good = ["ready", "configured"].includes(check.state);
-          const Icon = good ? CheckCircle2 : check.state === "failed" ? XCircle : CircleAlert;
+          const StatusIcon = good ? CheckCircle2 : check.state === "failed" ? XCircle : CircleAlert;
+          const CategoryIcon = checkIcons[check.id as keyof typeof checkIcons] ?? ShieldCheck;
           return <article key={check.id} className="rounded-2xl border border-white/10 bg-white/[.025] p-6">
-            <div className="flex items-center justify-between gap-3"><Icon className={good ? "text-emerald-300" : check.state === "failed" ? "text-red-300" : "text-amber-300"} size={23} /><span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wide ${good ? "bg-emerald-300/10 text-emerald-200" : check.state === "failed" ? "bg-red-300/10 text-red-200" : "bg-amber-300/10 text-amber-200"}`}>{stateLabel[check.state]}</span></div>
+            <div className="flex items-center justify-between gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-300/[.08] text-amber-300"><CategoryIcon size={21} /></span><span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wide ${good ? "bg-emerald-300/10 text-emerald-200" : check.state === "failed" ? "bg-red-300/10 text-red-200" : "bg-amber-300/10 text-amber-200"}`}><StatusIcon size={12} />{stateLabel[check.state]}</span></div>
             <h2 className="mt-5 text-xl font-black">{check.label}</h2><p className="mt-3 text-sm leading-6 text-white/45">{check.detail}</p>
             {check.external && <p className="mt-4 text-xs font-bold uppercase tracking-wide text-white/25">Owner-controlled</p>}
           </article>;
