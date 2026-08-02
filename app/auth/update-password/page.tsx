@@ -25,8 +25,8 @@ export default function UpdatePasswordPage() {
       <form onSubmit={submit} className="w-full max-w-md rounded-3xl border border-white/10 bg-white/[.035] p-8">
         <h1 className="text-3xl font-black">Choose a new password</h1>
         <p className="mt-2 text-white/40">This page requires the secure recovery link sent to your email.</p>
-        <input required minLength={12} type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="New password" className="mt-7 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 outline-none" />
-        <input required minLength={12} type="password" autoComplete="new-password" value={confirm} onChange={(event) => setConfirm(event.target.value)} placeholder="Confirm new password" className="mt-4 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 outline-none" />
+        <label className="mt-7 block text-sm font-bold text-white/55">New password<input required minLength={12} type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 12 characters" className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 outline-none" /></label>
+        <label className="mt-4 block text-sm font-bold text-white/55">Confirm new password<input required minLength={12} type="password" autoComplete="new-password" value={confirm} onChange={(event) => setConfirm(event.target.value)} placeholder="Enter the same password again" className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 outline-none" /></label>
         <button disabled={busy} className="mt-4 w-full rounded-xl bg-amber-400 py-4 font-black text-black disabled:opacity-60">{busy ? "Updating…" : "Update password"}</button>
         {message && <p className="mt-4 rounded-xl border border-white/10 p-4 text-sm text-white/60" role="status">{message}</p>}
         <Link href="/account" className="mt-5 inline-block text-sm text-amber-300">Return to account</Link>

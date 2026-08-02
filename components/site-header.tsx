@@ -73,6 +73,8 @@ export function SiteHeader() {
 
         <button
           aria-label="Open menu"
+          aria-expanded={open}
+          aria-controls="mobile-navigation"
           onClick={() => setOpen((value) => !value)}
           className="mobile-menu-button lg:hidden"
         >
@@ -81,7 +83,7 @@ export function SiteHeader() {
       </div>
 
       {open && (
-        <div className="border-t border-white/8 bg-[#090c12] px-6 py-5 lg:hidden">
+        <div id="mobile-navigation" className="border-t border-white/8 bg-[#090c12] px-6 py-5 lg:hidden">
           <nav className="grid gap-2">
             {nav.map(([label, href]) => (
               <Link

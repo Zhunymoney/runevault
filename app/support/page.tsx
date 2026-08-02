@@ -21,7 +21,7 @@ export default function SupportPage() {
         </div>
         <p className="mt-6 text-sm font-black uppercase tracking-[.2em] text-amber-400">RuneVault support</p>
         <h1 className="mt-4 text-4xl font-black tracking-[-.04em] sm:text-5xl">Help with your OSRS gold order.</h1>
-        <p className="mt-5 leading-7 text-white/45">Track orders, review your account, and understand the RuneVault workflow.</p>
+        <p className="mt-5 leading-7 text-white/45">Get help with payment, delivery, account access, or an existing order. Include your reference for the fastest review.</p>
       </section>
 
       <SupportClient />
@@ -50,7 +50,7 @@ export default function SupportPage() {
       <section className="mt-12 grid gap-10 lg:grid-cols-[.75fr_1.25fr]">
         <div>
           <h2 className="text-3xl font-black">Frequently asked questions</h2>
-          <p className="mt-4 leading-7 text-white/40">Answers for the RuneVault OSRS marketplace.</p>
+          <p className="mt-4 leading-7 text-white/40">Clear answers to common questions before and after placing an order.</p>
         </div>
         <div className="space-y-3">
           {faqs.map(([question, answer]) => (

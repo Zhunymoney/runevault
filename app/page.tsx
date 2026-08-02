@@ -17,7 +17,7 @@ import { LiveMarketStatus } from "@/components/live-market-status";
 
 const benefits = [
   { icon: Clock3, title: "Fast order flow", text: "Create an OSRS gold quote in seconds and receive a trackable order reference." },
-  { icon: ShieldCheck, title: "Clear, secure workflow", text: "Account-based order history and protected administrative controls." },
+  { icon: ShieldCheck, title: "Secure checkout", text: "Review the live rate and final estimate before entering payment or payout details." },
   { icon: TrendingUp, title: "Competitive rates", text: "Buy and sell prices are managed from the existing RuneVault admin dashboard." },
   { icon: Headphones, title: "Professional support", text: "Order-linked chat and support tickets keep help attached to the right customer and order." },
   { icon: Radio, title: "Real-time tracking", text: "Follow database-backed status milestones and live order updates from one private page." },
@@ -31,7 +31,7 @@ const steps = [
 ];
 
 const faqs = [
-  ["Does RuneVault support RS3?", "No. RuneVault is being built exclusively for Old School RuneScape gold."],
+  ["Does RuneVault support RS3?", "No. RuneVault exclusively supports Old School RuneScape gold."],
   ["Can I buy and sell OSRS gold?", "Yes. Choose Buy Gold or Sell Gold in the calculator to receive an instant estimate."],
   ["Can I track an order?", "Yes. Created orders receive a RuneVault reference that can be viewed from the tracking page and your account."],
   ["How are payments handled?", "Supported buy orders can use configured card checkout or BTC and USDC on Base. Crypto submissions remain pending until staff verifies the on-chain transaction."],
@@ -57,7 +57,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-7 max-w-2xl text-lg leading-8 text-white/58">
-              Fast quotes, competitive rates, tracked orders, customer accounts, and a streamlined mobile experience built exclusively for Old School RuneScape.
+              Review live rates, create a secure order, and follow every status update from one private account—built exclusively for Old School RuneScape.
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -161,7 +161,7 @@ export default function Home() {
             <p className="section-kicker">Questions answered</p>
             <h2 className="mt-4 text-4xl font-black tracking-[-.04em] sm:text-5xl">What to know before ordering.</h2>
             <p className="mt-5 leading-7 text-white/45">
-              RuneVault provides working quotes, protected customer accounts, payment instructions, and database-backed order tracking.
+              RuneVault provides live quotes, protected customer accounts, clear payment instructions, and database-backed order tracking.
             </p>
           </div>
 

@@ -74,7 +74,7 @@ export function ReceiptClient() {
                 <p className="text-xs font-black uppercase tracking-[.16em] text-amber-300 print:text-black">OSRS Gold Marketplace</p>
               </div>
             </div>
-            <p className="mt-6 text-sm text-white/40 print:text-black/60">Preview order receipt and transaction summary.</p>
+            <p className="mt-6 text-sm text-white/40 print:text-black/60">Private order receipt and transaction summary.</p>
           </div>
           <div className="sm:text-right">
             <p className="text-xs font-black uppercase tracking-[.16em] text-white/30 print:text-black/50">Reference</p>
@@ -109,8 +109,8 @@ export function ReceiptClient() {
           </article>
           <article className="rounded-2xl border border-white/10 bg-white/[.025] p-5 print:border-black/15 print:bg-white">
             <Coins className="text-amber-300 print:text-black" size={23} />
-            <h2 className="mt-4 font-black">Preview receipt</h2>
-            <p className="mt-2 text-sm text-white/40 print:text-black/60">This does not prove payment or in-game delivery occurred.</p>
+            <h2 className="mt-4 font-black">Status-aware receipt</h2>
+            <p className="mt-2 text-sm text-white/40 print:text-black/60">Payment and delivery are confirmed only when their statuses above are marked complete.</p>
           </article>
         </div>
       </section>

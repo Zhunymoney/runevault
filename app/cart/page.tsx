@@ -68,8 +68,7 @@ export default function CartPage() {
           </p>
           <h1 className="mt-3 text-4xl font-black">Your OSRS gold cart.</h1>
           <p className="mt-3 max-w-2xl text-white/40">
-            Review multiple buy or sell estimates. Each line creates its own
-            secure order reference and payment or payout workflow.
+            Review your saved estimates before checkout. Each item becomes a separate order with its own secure reference and tracking timeline.
           </p>
         </div>
         <Link
@@ -137,7 +136,7 @@ export default function CartPage() {
                 href={`/checkout?${query.toString()}`}
                 className="rounded-xl bg-amber-400 px-4 py-3 text-center font-black text-black"
               >
-                Checkout item
+                Review order
               </Link>
               <button
                 onClick={() =>
@@ -159,7 +158,7 @@ export default function CartPage() {
               href="/quote"
               className="mt-5 inline-flex text-amber-300 font-bold"
             >
-              Create an estimate
+              Check today’s price
             </Link>
           </div>
         )}
@@ -175,8 +174,7 @@ export default function CartPage() {
               {total == null ? "Pending live pricing" : `$${total.toFixed(2)}`}
             </p>
             <p className="mt-2 text-xs text-white/30">
-              Orders are intentionally paid and tracked separately to preserve
-              payment idempotency and inventory accuracy.
+              Each item is reviewed, paid, and tracked separately so every transaction has a clear reference and status history.
             </p>
           </div>
           <button

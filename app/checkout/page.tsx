@@ -467,7 +467,7 @@ export default function CheckoutPage() {
             }
             className={`quote-submit ${type === "sell" ? "sell-submit" : ""}`}
           >
-            {busy ? "Creating order…" : "Continue to Payment"}
+            {busy ? "Creating order…" : type === "buy" ? "Create Order & Choose Payment" : "Create Sell Order"}
 
             {!busy && <ArrowRight size={18} />}
           </button>
@@ -493,7 +493,7 @@ export default function CheckoutPage() {
 
             <p className="flex items-center gap-3">
               <CheckCircle2 size={17} className="text-sky-300" />
-              Payment selection included
+              {type === "buy" ? "Choose payment after order creation" : "Payout details reviewed by staff"}
             </p>
           </div>
         </aside>

@@ -226,7 +226,7 @@ export function PayClient() {
 
       <div className="mt-6 flex items-start gap-3 rounded-2xl border border-amber-300/20 bg-amber-300/[.05] p-5 text-sm leading-6 text-white/55">
         <ShieldAlert className="mt-0.5 shrink-0 text-amber-300" size={20} />
-        Card checkout is available only when approved Stripe credentials are configured. Crypto submissions require manual verification and are never marked paid by this page.
+        Card payments open in Stripe-hosted checkout. Crypto payments remain pending until authorized staff verifies the transaction on-chain.
       </div>
 
       {message && (
@@ -258,7 +258,7 @@ export function PayClient() {
           <Bitcoin className="text-amber-300" size={32} />
           <h2 className="mt-5 text-3xl font-black">Crypto</h2>
           <p className="mt-3 leading-7 text-white/45">
-            Send only the configured asset on the exact network shown below.
+            Choose BTC or USDC on Base, then send the exact amount to the displayed address. Never send a different asset or use a different network.
           </p>
 
           {crypto.length === 0 ? (

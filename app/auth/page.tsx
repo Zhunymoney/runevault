@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LockKeyhole, ShieldCheck } from "lucide-react";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase-browser";
 
 type Mode = "login" | "signup" | "reset";
@@ -55,14 +56,16 @@ export default function AuthPage() {
     <main className="mx-auto grid min-h-[720px] max-w-5xl place-items-center px-6 py-16">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/[.035] p-8">
         <h1 className="text-3xl font-black">{title}</h1>
-        <p className="mt-2 text-white/40">Secure Supabase authentication.</p>
+        <p className="mt-2 leading-6 text-white/45">
+          {mode === "login" ? "Access your private orders, receipts, and account settings." : mode === "signup" ? "Create a private account to place and track RuneVault orders." : "Enter your account email to request a secure recovery link."}
+        </p>
         <form onSubmit={submit} className="mt-7 space-y-4">
           {mode === "signup" && (
-            <input required value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Full name" autoComplete="name" className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 outline-none" />
+            <label className="block text-sm font-bold text-white/55">Full name<input required value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Your name" autoComplete="name" className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 outline-none" /></label>
           )}
-          <input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email" autoComplete="email" className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 outline-none" />
+          <label className="block text-sm font-bold text-white/55">Email address<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 outline-none" /></label>
           {mode !== "reset" && (
-            <input required minLength={8} type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" autoComplete={mode === "login" ? "current-password" : "new-password"} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 outline-none" />
+            <label className="block text-sm font-bold text-white/55">Password<input required minLength={8} type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder={mode === "signup" ? "At least 8 characters" : "Your password"} autoComplete={mode === "login" ? "current-password" : "new-password"} className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 outline-none" /></label>
           )}
           <button disabled={busy} className="w-full rounded-xl bg-amber-400 py-4 font-black text-black disabled:opacity-60">
             {busy ? "Working…" : title}
@@ -75,6 +78,10 @@ export default function AuthPage() {
           </button>
           {mode === "login" ? <button type="button" onClick={() => setMode("reset")} className="text-white/45">Forgot password?</button> : null}
           {mode === "reset" ? <button type="button" onClick={() => setMode("login")} className="text-white/45">Return to sign in</button> : null}
+        </div>
+        <div className="mt-7 grid gap-2 border-t border-white/10 pt-5 text-xs text-white/38">
+          <span className="inline-flex items-center gap-2"><LockKeyhole size={14} className="text-amber-300" /> Encrypted connection and protected account session</span>
+          <span className="inline-flex items-center gap-2"><ShieldCheck size={14} className="text-amber-300" /> Orders are visible only to you and authorized staff</span>
         </div>
       </div>
     </main>

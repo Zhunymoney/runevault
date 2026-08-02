@@ -71,11 +71,10 @@ export default function Page() {
           RuneVault marketplace
         </p>
         <h1 className="mt-3 text-4xl font-black sm:text-6xl">
-          Available OSRS listings.
+          Browse available OSRS gold.
         </h1>
         <p className="mt-5 leading-7 text-white/45">
-          Browse live RuneVault inventory and order limits. Displayed prices
-          remain RuneVault quotes, not external market references.
+          Compare available order sizes and inventory, then open a live quote before deciding. Pricing is confirmed by RuneVault at checkout.
         </p>
       </section>
       {announcements.length > 0 && (
@@ -99,6 +98,7 @@ export default function Page() {
       <form onSubmit={submit} className="mt-8 flex gap-3">
         <label className="flex min-h-12 flex-1 items-center gap-3 rounded-xl border border-white/10 px-4">
           <Search size={17} />
+          <span className="sr-only">Search marketplace listings</span>
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -164,8 +164,8 @@ export default function Page() {
               </div>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <Link href={`/marketplace/${item.slug}`} className="inline-flex justify-center rounded-xl border border-white/10 px-5 py-3 font-black">Details</Link>
-              <Link href="/quote" className="inline-flex justify-center rounded-xl bg-amber-400 px-5 py-3 font-black text-black">Get a quote</Link>
+              <Link href={`/marketplace/${item.slug}`} className="inline-flex justify-center rounded-xl border border-white/10 px-5 py-3 font-black">View details</Link>
+              <Link href="/quote" className="inline-flex justify-center rounded-xl bg-amber-400 px-5 py-3 font-black text-black">Check live price</Link>
             </div>
           </article>
         ))}
