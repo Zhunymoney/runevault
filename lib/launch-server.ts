@@ -356,21 +356,47 @@ export async function sendEmail(args: {
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;
-  if (!apiKey || !from) return;
+  if (!apiKey || !from) {
+    const missing = [
+      !apiKey ? "RESEND_API_KEY" : null,
+      !from ? "RESEND_FROM_EMAIL" : null,
+    ].filter(Boolean);
+    console.error(`Transactional email is not configured; missing ${missing.join(", ")}.`);
+    return { sent: false as const, reason: "not_configured" as const };
+  }
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [args.to],
-      subject: args.subject,
-      html: args.html,
-      text: args.text,
-    }),
-  });
-  if (!response.ok) console.error(`Transactional email failed (${response.status}).`);
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: [args.to],
+        subject: args.subject,
+        html: args.html,
+        text: args.text,
+      }),
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as
+        | { name?: string; message?: string }
+        | null;
+      console.error(
+        `Transactional email failed (${response.status})${payload?.name ? `: ${payload.name}` : ""}${payload?.message ? ` - ${payload.message.slice(0, 300)}` : ""}.`,
+      );
+      return { sent: false as const, reason: "provider_rejected" as const };
+    }
+    const payload = (await response.json().catch(() => null)) as
+      | { id?: string }
+      | null;
+    return { sent: true as const, id: payload?.id ?? null };
+  } catch (reason) {
+    console.error(
+      `Transactional email request failed: ${reason instanceof Error ? reason.message : "network error"}.`,
+    );
+    return { sent: false as const, reason: "request_failed" as const };
+  }
 }
