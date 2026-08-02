@@ -8,6 +8,7 @@ import {
   Boxes,
   CheckCircle2,
   CircleDollarSign,
+  Clock3,
   Coins,
   Download,
   Filter,
@@ -16,6 +17,7 @@ import {
   Search,
   Settings2,
   ShoppingCart,
+  HeartPulse,
   TrendingUp,
 } from "lucide-react";
 import {
@@ -176,6 +178,10 @@ export default function AdminPage() {
     const completed = orders.filter((order) => order.status === "completed");
     const buyOrders = orders.filter((order) => order.order_type === "buy");
     const sellOrders = orders.filter((order) => order.order_type === "sell");
+    const today = new Date().toDateString();
+    const todayOrders = orders.filter((order) => new Date(order.created_at).toDateString() === today);
+    const completedToday = todayOrders.filter((order) => order.status === "completed");
+    const completedDurations = completed.map((order) => Math.max(0, new Date(order.updated_at).getTime() - new Date(order.created_at).getTime()));
 
     return {
       active: active.length,
@@ -183,6 +189,12 @@ export default function AdminPage() {
       buyVolume: buyOrders.reduce((sum, order) => sum + order.amount_m, 0),
       sellVolume: sellOrders.reduce((sum, order) => sum + order.amount_m, 0),
       totalValue: orders.reduce((sum, order) => sum + order.total_price, 0),
+      ordersToday: todayOrders.length,
+      revenueToday: completedToday.filter((order) => order.order_type === "buy").reduce((sum, order) => sum + order.total_price, 0),
+      pending: orders.filter((order) => order.status === "pending").length,
+      awaitingPayment: orders.filter((order) => order.status === "awaiting_payment").length,
+      delivering: orders.filter((order) => order.status === "delivering").length,
+      averageDeliveryMinutes: completedDurations.length ? Math.round(completedDurations.reduce((sum, duration) => sum + duration, 0) / completedDurations.length / 60_000) : null,
     };
   }, [orders]);
 
@@ -311,14 +323,20 @@ export default function AdminPage() {
         </div>
       )}
 
-      <section className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+      <section className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
         {[
-          { label: "All orders", value: orders.length, icon: ShoppingCart },
-          { label: "Active queue", value: metrics.active, icon: Activity },
+          { label: "Buy revenue today", value: `$${metrics.revenueToday.toFixed(2)}`, icon: CircleDollarSign },
+          { label: "Orders today", value: metrics.ordersToday, icon: ShoppingCart },
+          { label: "Pending", value: metrics.pending, icon: Activity },
+          { label: "Awaiting payment", value: metrics.awaitingPayment, icon: Clock3 },
+          { label: "Delivering", value: metrics.delivering, icon: TrendingUp },
           { label: "Completed", value: metrics.completed, icon: CheckCircle2 },
+          { label: "Average completion", value: metrics.averageDeliveryMinutes == null ? "No data" : `${metrics.averageDeliveryMinutes} min`, icon: Clock3 },
+          { label: "System health", value: settings?.maintenance_mode ? "Paused" : "Operational", icon: HeartPulse },
+          { label: "Live buy price", value: settings ? `$${settings.buy_rate.toFixed(3)}/M` : "—", icon: Coins },
+          { label: "Live sell price", value: settings ? `$${settings.sell_rate.toFixed(3)}/M` : "—", icon: TrendingUp },
           { label: "Buy volume", value: `${metrics.buyVolume}M`, icon: Coins },
           { label: "Sell volume", value: `${metrics.sellVolume}M`, icon: TrendingUp },
-          { label: "Order value", value: `$${metrics.totalValue.toFixed(2)}`, icon: CircleDollarSign },
         ].map(({ label, value, icon: Icon }) => (
           <article key={label} className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
             <div className="flex items-center justify-between">

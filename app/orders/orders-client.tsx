@@ -15,7 +15,7 @@ import {
   ShieldCheck,
   TimerReset,
 } from "lucide-react";
-import { findOrder, getOrderTimeline } from "@/lib/marketplace";
+import { findOrder, getOrderTimeline, getSettings } from "@/lib/marketplace";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase-browser";
 import type { Order, OrderStatusHistory } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
@@ -70,6 +70,7 @@ export function OrdersClient({initialReference:referenceFromPath}:{initialRefere
   const [liveConnected, setLiveConnected] = useState(false);
   const [lastLiveUpdate, setLastLiveUpdate] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<OrderStatusHistory[]>([]);
+  const [deliveryMinutes, setDeliveryMinutes] = useState<number | null>(null);
 
   async function searchOrder(value = reference) {
     const cleaned = value.trim().toUpperCase();
@@ -96,6 +97,7 @@ export function OrdersClient({initialReference:referenceFromPath}:{initialRefere
   }
 
   useEffect(() => {
+    void getSettings().then((settings) => setDeliveryMinutes(settings.estimated_delivery_minutes ?? null)).catch(() => setDeliveryMinutes(null));
     if (initialReference) void searchOrder(initialReference);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialReference]);
@@ -145,6 +147,9 @@ export function OrdersClient({initialReference:referenceFromPath}:{initialRefere
     : -1;
 
   const statusInfo = order ? statusCopy[order.status] ?? statusCopy.pending : null;
+  const nextStatus = order && order.status !== "cancelled" && activeIndex >= 0 && activeIndex < progress.length - 1
+    ? progress[activeIndex + 1].replaceAll("_", " ")
+    : order?.status === "completed" ? "No further action" : "Staff review";
 
   const progressPercent = useMemo(() => {
     if (!order || order.status === "cancelled") return 0;
@@ -357,6 +362,19 @@ export function OrdersClient({initialReference:referenceFromPath}:{initialRefere
                 </p>
                 <p className="mt-2 font-bold">{new Date(order.updated_at).toLocaleString()}</p>
               </div>
+            </div>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <article className="rounded-2xl border border-amber-300/15 bg-amber-300/[.04] p-5">
+                <p className="text-xs font-bold uppercase tracking-[.14em] text-amber-300">Estimated next step</p>
+                <p className="mt-2 font-black capitalize">{nextStatus}</p>
+                <p className="mt-2 text-sm text-white/40">The timeline updates when authorized staff advances the order.</p>
+              </article>
+              <article className="rounded-2xl border border-white/10 bg-black/10 p-5">
+                <p className="text-xs font-bold uppercase tracking-[.14em] text-white/30">Configured delivery estimate</p>
+                <p className="mt-2 font-black">{deliveryMinutes ? `About ${deliveryMinutes} minutes` : "Shown during checkout"}</p>
+                <p className="mt-2 text-sm text-white/40">An estimate, not a guarantee; payment review or meetup coordination can affect timing.</p>
+              </article>
             </div>
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">

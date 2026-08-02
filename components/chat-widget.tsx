@@ -28,11 +28,16 @@ export function ChatWidget({ externalProvider, externalUrl }: Props) {
     [availability, setAvailability] = useState("offline"),
     [responseTime, setResponseTime] = useState(
       "We usually reply within one business day.",
-    );
+    ),
+    [detectedReference, setDetectedReference] = useState("");
   const realtime = useSupportRealtime("customer", () => { if (open && id) void load(); });
   useEffect(() => {
     setId(localStorage.getItem(idKey) ?? "");
     setToken(localStorage.getItem(tokenKey) ?? "");
+    const url = new URL(window.location.href);
+    const fromQuery = url.searchParams.get("reference")?.trim().toUpperCase();
+    const fromOrderPath = url.pathname.match(/^\/orders\/([^/]+)$/)?.[1];
+    setDetectedReference((fromQuery ?? fromOrderPath ?? "").slice(0, 40));
   }, []);
   async function headers() {
     const { data } = await createClient().auth.getSession();
@@ -200,8 +205,8 @@ export function ChatWidget({ externalProvider, externalUrl }: Props) {
             {!id ? (
               <form onSubmit={start} className="grid gap-3">
                 <p className="text-sm leading-6 text-white/50">
-                  Start a secure conversation. Guest chats are protected by a
-                  token stored only in this browser.
+                  Welcome to RuneVault support. Tell us what you need and we’ll
+                  keep the conversation securely linked to this browser.
                 </p>
                 <input
                   required
@@ -227,6 +232,7 @@ export function ChatWidget({ externalProvider, externalUrl }: Props) {
                   />
                   <input
                     name="orderReference"
+                    defaultValue={detectedReference}
                     placeholder="RV-... (signed in)"
                     className="rounded-xl border border-white/10 bg-white/5 p-3 uppercase"
                   />

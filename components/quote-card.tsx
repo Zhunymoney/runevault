@@ -210,12 +210,15 @@ export function QuoteCard() {
           Add to cart
         </button>
 
-        <div className="mt-5 grid grid-cols-2 gap-3 text-xs font-semibold text-white/35">
+        <div className="mt-5 grid grid-cols-3 gap-2 text-[11px] font-semibold text-white/40">
           <span className="inline-flex items-center gap-2">
-            <ShieldCheck size={15} /> Review first
+            <ShieldCheck size={15} /> Encrypted checkout
           </span>
           <span className="inline-flex items-center gap-2">
-            <CheckCircle2 size={15} /> No payment yet
+            <CheckCircle2 size={15} /> Secure review
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <Coins size={15} /> Live pricing
           </span>
         </div>
 
