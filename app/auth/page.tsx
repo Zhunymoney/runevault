@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LockKeyhole, ShieldCheck } from "lucide-react";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase-browser";
+import { authErrorMessage } from "@/lib/auth-error";
 
 type Mode = "login" | "signup" | "reset";
 
@@ -45,7 +46,7 @@ export default function AuthPage() {
         setMessage("If that address belongs to an account, a password-reset email has been sent.");
       }
     } catch (reason) {
-      setMessage(reason instanceof Error ? reason.message : "Authentication failed.");
+      setMessage(authErrorMessage(reason));
     } finally {
       setBusy(false);
     }
