@@ -26,8 +26,10 @@ test("transactional email exposes provider rejection to server callers", async (
   const originalFrom = process.env.RESEND_FROM_EMAIL;
   const originalFetch = globalThis.fetch;
   const originalError = console.error;
+  const originalTestRecipient = process.env.EMAIL_TEST_RECIPIENT;
   process.env.RESEND_API_KEY = "re_test_key";
   process.env.RESEND_FROM_EMAIL = "RuneVault <orders@example.invalid>";
+  process.env.EMAIL_TEST_RECIPIENT = "recipient@example.invalid";
   globalThis.fetch = async () => new Response(
     JSON.stringify({ name: "validation_error", message: "Domain is not verified" }),
     { status: 403, headers: { "Content-Type": "application/json" } },
@@ -45,5 +47,7 @@ test("transactional email exposes provider rejection to server callers", async (
     else delete process.env.RESEND_API_KEY;
     if (originalFrom) process.env.RESEND_FROM_EMAIL = originalFrom;
     else delete process.env.RESEND_FROM_EMAIL;
+    if (originalTestRecipient) process.env.EMAIL_TEST_RECIPIENT = originalTestRecipient;
+    else delete process.env.EMAIL_TEST_RECIPIENT;
   }
 });

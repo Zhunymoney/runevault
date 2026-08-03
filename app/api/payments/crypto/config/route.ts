@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { durableRateLimit, requestIp, requireOrderOwner, safeGetOrderByReference, supabaseUrl, userHeaders } from "@/lib/launch-server";
 import { createCryptoQuote } from "@/lib/crypto-quote";
+import { sendOrderEmail, siteUrl } from "@/lib/transactional-email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -115,6 +116,13 @@ export async function POST(request: Request) {
       { status: 503 },
     );
   }
+
+  const session = await sessionResponse.json().catch(() => ({})) as { id?: string; email?: string };
+  await sendOrderEmail({
+    eventKey: `payment_instructions:${order.id}:${session.email ?? session.id ?? "unknown"}`,
+    eventType: "payment_instructions", recipient: session.email, userId: session.id, orderId: order.id,
+    payload: { template: "payment_instructions", input: { reference: order.reference, status: "Awaiting payment", summary: Object.fromEntries(methods.map(method => [method.name, `${method.amount} ${method.id.toUpperCase()} on ${method.network} to ${method.address} (expires ${new Date(method.expiresAt).toLocaleString("en-US", { timeZone: "UTC" })} UTC)`])), actionUrl: siteUrl(`/pay/${encodeURIComponent(order.reference)}`), actionLabel: "View payment instructions" } },
+  });
 
   return NextResponse.json(
     {

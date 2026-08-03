@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import {
   sendDiscord,
-  sendEmail,
   serviceHeaders,
   supabaseUrl,
   verifyStripeSignature,
 } from "@/lib/launch-server";
+import { adminRecipient, sendEmailEvent, sendOrderEmail, siteUrl } from "@/lib/transactional-email";
 
 export const runtime = "nodejs";
 
@@ -52,31 +52,39 @@ export async function POST(request: Request) {
     const orderId = session.metadata?.order_id;
     if (orderId && session.payment_status === "paid") {
       const lookup = await fetch(
-        `${supabaseUrl()}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&select=id,reference,total_price,status,payment_status,payment_id&limit=1`,
+        `${supabaseUrl()}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&select=id,user_id,reference,total_price,status,payment_status,payment_id,order_type,amount_m&limit=1`,
         { headers: serviceHeaders(), cache: "no-store" },
       );
       const rows = lookup.ok
         ? ((await lookup.json()) as Array<{
             id: string;
+            user_id: string;
             reference: string;
             total_price: number;
             status: string;
             payment_status: string | null;
             payment_id: string | null;
+            order_type: "buy" | "sell";
+            amount_m: number;
           }>)
         : [];
       const order = rows[0];
       if (!order)
         return NextResponse.json({ error: "Order not found." }, { status: 404 });
+      const alertPaymentError=async(detail:string)=>{const recipient=adminRecipient();if(recipient)await sendEmailEvent({eventKey:`admin_payment_error:${event.id}:${order.id}:${recipient}`,eventType:"admin_payment_error",recipient,orderId:order.id,userId:order.user_id,payload:{template:"admin_payment_error",input:{reference:order.reference,status:"Manual intervention",detail,actionUrl:siteUrl("/admin"),actionLabel:"Review payment"}}})};
       if (order.payment_id === session.id && order.payment_status === "paid")
         return NextResponse.json({ received: true, duplicate: true });
-      if (order.payment_id && order.payment_id !== session.id)
+      if (order.payment_id && order.payment_id !== session.id) {
+        await alertPaymentError("The signed Stripe webhook referenced a different payment session than the order record.");
         return NextResponse.json({ error: "Payment session mismatch." }, { status: 409 });
+      }
       if (["cancelled", "completed"].includes(order.status))
         return NextResponse.json({ error: "Order is already terminal." }, { status: 409 });
       const expectedCents = Math.round(Number(order.total_price) * 100);
-      if (session.currency?.toLowerCase() !== "usd" || session.amount_total !== expectedCents)
+      if (session.currency?.toLowerCase() !== "usd" || session.amount_total !== expectedCents) {
+        await alertPaymentError("The signed Stripe webhook amount or currency did not match the stored order total.");
         return NextResponse.json({ error: "Payment amount or currency mismatch." }, { status: 409 });
+      }
       const transition = await fetch(
         `${supabaseUrl()}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&payment_id=is.null&status=not.in.(cancelled,completed)`,
         {
@@ -108,17 +116,11 @@ export async function POST(request: Request) {
       ]);
 
       const customerEmail = session.customer_details?.email;
-      if (customerEmail) {
-        await sendEmail({
-          to: customerEmail,
-          subject: `RuneVault payment confirmed — ${reference}`,
-          html: `
-            <h1>Payment confirmed</h1>
-            <p>Your RuneVault order <strong>${reference}</strong> has been marked paid.</p>
-            <p>Track the order from your RuneVault account.</p>
-          `,
-        });
-      }
+      const amount = `${((session.amount_total ?? 0) / 100).toFixed(2)} ${(session.currency ?? "usd").toUpperCase()}`;
+      const notifications: Promise<unknown>[] = [sendOrderEmail({ eventKey: `payment_confirmed:${order.id}:${customerEmail ?? order.user_id}`, eventType: "payment_confirmed", recipient: customerEmail, userId: order.user_id, orderId: order.id, payload: { template: "card_confirmed", input: { reference, status: "Paid", summary: { "Amount paid": amount, "Payment method": "Card", "Next step": "Your order is ready for fulfillment." }, actionUrl: siteUrl(`/orders/${encodeURIComponent(reference)}`), actionLabel: "Track order" } } })];
+      const adminEmail = adminRecipient();
+      if (adminEmail) notifications.push(sendEmailEvent({ eventKey: `admin_payment_confirmed:${order.id}:stripe:${adminEmail}`, eventType: "admin_payment_confirmed", recipient: adminEmail, orderId: order.id, userId: order.user_id, payload: { template: "admin_payment_confirmed", input: { reference, status: "Paid", summary: { "Confirmed amount": amount, "Payment method": "Card", Source: "Verified Stripe webhook" }, actionUrl: siteUrl("/admin"), actionLabel: "Open admin" } } }));
+      await Promise.allSettled(notifications);
     }
   }
 

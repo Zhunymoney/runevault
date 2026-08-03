@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { Resend } from "resend";
 
 type SupabaseOrder = {
   id: string;
@@ -10,6 +11,7 @@ type SupabaseOrder = {
   delivery_name: string | null;
   status: string;
   payment_status?: string | null;
+  payment_provider?: string | null;
   payment_id?: string | null;
   transaction_id?: string | null;
   crypto_asset?: string | null;
@@ -353,6 +355,7 @@ export async function sendEmail(args: {
   subject: string;
   html: string;
   text?: string;
+  idempotencyKey?: string;
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;
@@ -365,34 +368,31 @@ export async function sendEmail(args: {
     return { sent: false as const, reason: "not_configured" as const };
   }
 
+  const testRecipient = process.env.EMAIL_TEST_RECIPIENT?.trim();
+  if (process.env.NODE_ENV !== "production" && !testRecipient) {
+    console.info(`Transactional email preview: ${args.subject} -> configured recipient suppressed outside production.`);
+    return { sent: false as const, reason: "development_preview" as const };
+  }
+
   try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const resend = new Resend(apiKey);
+    const { data, error } = await resend.emails.send(
+      {
         from,
-        to: [args.to],
+        to: [testRecipient || args.to],
         subject: args.subject,
         html: args.html,
         text: args.text,
-      }),
-    });
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as
-        | { name?: string; message?: string }
-        | null;
+      },
+      args.idempotencyKey ? { idempotencyKey: args.idempotencyKey } : undefined,
+    );
+    if (error) {
       console.error(
-        `Transactional email failed (${response.status})${payload?.name ? `: ${payload.name}` : ""}${payload?.message ? ` - ${payload.message.slice(0, 300)}` : ""}.`,
+        `Transactional email failed${error.name ? `: ${error.name}` : ""}${error.message ? ` - ${error.message.slice(0, 300)}` : ""}.`,
       );
       return { sent: false as const, reason: "provider_rejected" as const };
     }
-    const payload = (await response.json().catch(() => null)) as
-      | { id?: string }
-      | null;
-    return { sent: true as const, id: payload?.id ?? null };
+    return { sent: true as const, id: data?.id ?? null };
   } catch (reason) {
     console.error(
       `Transactional email request failed: ${reason instanceof Error ? reason.message : "network error"}.`,

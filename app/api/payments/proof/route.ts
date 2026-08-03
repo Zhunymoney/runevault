@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { durableRateLimit, getOrderByReference, requestIp, requireOrderOwner, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
 import { hasValidFileSignature } from "@/lib/upload-validation";
+import { adminRecipient, sendEmailEvent, sendOrderEmail, siteUrl } from "@/lib/transactional-email";
 
 export const runtime = "nodejs";
 const allowedTypes = new Map([["image/jpeg", "jpg"], ["image/png", "png"], ["image/webp", "webp"], ["application/pdf", "pdf"]]);
@@ -37,6 +38,11 @@ export async function POST(request: Request) {
       body: JSON.stringify({ order_id: order.id, user_id: user.id, storage_path: path, mime_type: file.type, size_bytes: file.size }),
     });
     if (!record.ok) throw new Error("Proof metadata could not be saved.");
+    const summary={"Payment method":order.payment_provider??"Manual payment","Proof type":file.type,"Submission time":new Date().toLocaleString("en-US",{timeZone:"UTC"})+" UTC"};
+    const notifications:Promise<unknown>[]=[sendOrderEmail({eventKey:`payment_submitted:${order.id}:proof:${path}`,eventType:"payment_submitted",recipient:user.email,userId:user.id,orderId:order.id,payload:{template:"crypto_submitted",input:{reference:order.reference,status:"Manual review",summary,actionUrl:siteUrl(`/orders/${encodeURIComponent(order.reference)}`),actionLabel:"Track review"}}})];
+    const adminEmail=adminRecipient();
+    if(adminEmail) notifications.push(sendEmailEvent({eventKey:`admin_payment_submitted:${order.id}:proof:${path}:${adminEmail}`,eventType:"admin_payment_submitted",recipient:adminEmail,userId:user.id,orderId:order.id,payload:{template:"admin_payment_submitted",input:{reference:order.reference,status:"Review required",summary:{...summary,"Customer email":user.email??"Unavailable"},actionUrl:siteUrl("/admin"),actionLabel:"Review payment"}}}));
+    await Promise.allSettled(notifications);
     return NextResponse.json({ ok: true, message: "Payment proof uploaded securely." });
   } catch (reason) {
     return NextResponse.json({ error: reason instanceof Error ? reason.message : "Proof upload failed." }, { status: 500 });

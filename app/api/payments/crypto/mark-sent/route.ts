@@ -9,6 +9,7 @@ import {
   updateOrder,
 } from "@/lib/launch-server";
 import { verifyCryptoQuote } from "@/lib/crypto-quote";
+import { adminRecipient, sendEmailEvent, sendOrderEmail, siteUrl } from "@/lib/transactional-email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -84,8 +85,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "A current payment quote is required." }, { status: 400 });
   }
 
+  let quote: ReturnType<typeof verifyCryptoQuote>;
   try {
-    verifyCryptoQuote(quoteToken, reference, rawPaymentMethod as "btc" | "usdc");
+    quote = verifyCryptoQuote(quoteToken, reference, rawPaymentMethod as "btc" | "usdc");
   } catch (reason) {
     return NextResponse.json(
       { error: reason instanceof Error ? reason.message : "Payment quote is invalid." },
@@ -185,6 +187,13 @@ export async function POST(request: Request) {
       inline: true,
     },
   ]);
+
+  const customer = await requireOrderOwner(request, order);
+  const summary = { Asset: asset, Network: asset === "BTC" ? "Bitcoin" : (process.env.CRYPTO_USDC_NETWORK || "Base"), "Expected amount": `${quote.cryptoAmount} ${asset}`, "Transaction ID": txid };
+  const notifications: Promise<unknown>[] = [sendOrderEmail({ eventKey: `payment_submitted:${order.id}:${customer.email ?? customer.id}`, eventType: "payment_submitted", recipient: customer.email, userId: customer.id, orderId: order.id, payload: { template: "crypto_submitted", input: { reference: order.reference, status: "Manual review", summary, actionUrl: siteUrl(`/orders/${encodeURIComponent(order.reference)}`), actionLabel: "Track review" } } })];
+  const adminEmail = adminRecipient();
+  if (adminEmail) notifications.push(sendEmailEvent({ eventKey: `admin_payment_submitted:${order.id}:${adminEmail}`, eventType: "admin_payment_submitted", recipient: adminEmail, userId: customer.id, orderId: order.id, payload: { template: "admin_payment_submitted", input: { reference: order.reference, status: "Review required", summary: { ...summary, "Customer email": customer.email ?? "Unavailable", "Wallet address": asset === "BTC" ? (process.env.CRYPTO_BTC_ADDRESS || "Unavailable") : (process.env.CRYPTO_USDC_ADDRESS || "Unavailable") }, actionUrl: siteUrl("/admin"), actionLabel: "Review payment" } } }));
+  await Promise.allSettled(notifications);
 
   return NextResponse.json(
     {

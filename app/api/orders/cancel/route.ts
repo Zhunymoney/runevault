@@ -8,6 +8,7 @@ import {
   updateOrder,
   userHeaders,
 } from "@/lib/launch-server";
+import { sendOrderEmail, siteUrl } from "@/lib/transactional-email";
 
 export async function POST(request: Request) {
   const limit = await durableRateLimit(
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
     const order = await getOrderByReference(reference, authorization);
     if (!order)
       return NextResponse.json({ error: "Order not found." }, { status: 404 });
-    await requireOrderOwner(request, order);
+    const user = await requireOrderOwner(request, order);
     if (!["pending", "awaiting_payment"].includes(order.status)) {
       return NextResponse.json(
         { error: "This order can no longer be cancelled online." },
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
         await updateOrder(order.id, { status: "cancelled" }, authorization);
       }
     }
+    await sendOrderEmail({eventKey:`order_cancelled:${order.id}:${user.email ?? user.id}`,eventType:"order_cancelled",recipient:user.email,userId:user.id,orderId:order.id,payload:{template:"order_cancelled",input:{reference:order.reference,status:"Cancelled",detail:"Contact support from your account if you need help with this order.",actionUrl:siteUrl(`/orders/${encodeURIComponent(order.reference)}`),actionLabel:"View order"}}});
     return NextResponse.json({
       ok: true,
       reference,

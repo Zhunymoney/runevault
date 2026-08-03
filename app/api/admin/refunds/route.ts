@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { durableRateLimit, requestIp, requirePermission, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
+import { sendOrderEmail, siteUrl } from "@/lib/transactional-email";
 
 const uuid = /^[0-9a-f-]{36}$/i;
 
@@ -12,8 +13,8 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => null) as { id?: unknown; amount?: unknown } | null;
     const id = typeof body?.id === "string" ? body.id : "";
     if (!uuid.test(id)) return NextResponse.json({ error: "Valid order required." }, { status: 400 });
-    const rowsResponse = await fetch(`${supabaseUrl()}/rest/v1/orders?id=eq.${id}&select=id,reference,total_price,payment_provider,payment_id,payment_status,refunded_amount&limit=1`, { headers: serviceHeaders(), cache: "no-store" });
-    const rows = await rowsResponse.json().catch(() => []) as Array<{ id:string; reference:string; total_price:number; payment_provider:string|null; payment_id:string|null; payment_status:string|null; refunded_amount:number|null }>;
+    const rowsResponse = await fetch(`${supabaseUrl()}/rest/v1/orders?id=eq.${id}&select=id,user_id,reference,total_price,payment_provider,payment_id,payment_status,refunded_amount&limit=1`, { headers: serviceHeaders(), cache: "no-store" });
+    const rows = await rowsResponse.json().catch(() => []) as Array<{ id:string; user_id:string; reference:string; total_price:number; payment_provider:string|null; payment_id:string|null; payment_status:string|null; refunded_amount:number|null }>;
     const order = rows[0];
     if (!rowsResponse.ok || !order) return NextResponse.json({ error: "Order not found." }, { status: 404 });
     if (order.payment_provider !== "stripe" || !order.payment_id) return NextResponse.json({ error: "Only captured Stripe payments can be refunded here." }, { status: 409 });
@@ -36,6 +37,7 @@ export async function POST(request: Request) {
     const updated = await updateResponse.json().catch(() => []) as unknown[];
     if (!updateResponse.ok || !updated[0]) return NextResponse.json({ error: "Refund succeeded at Stripe, but the order record requires reconciliation." }, { status: 502 });
     await fetch(`${supabaseUrl()}/rest/v1/audit_logs`, { method: "POST", headers: { ...serviceHeaders(), Prefer: "return=minimal" }, body: JSON.stringify({ actor_id: admin.id, action: full ? "payment.refunded" : "payment.partially_refunded", entity_type: "order", entity_id: id, details: { reference: order.reference, stripe_refund_id: refund.id, amount: requested, status: refund.status ?? null } }) });
+    await sendOrderEmail({eventKey:`order_refunded:${order.id}:${refund.id}:${order.user_id}`,eventType:"order_refunded",userId:order.user_id,orderId:order.id,payload:{template:"refund_issued",input:{reference:order.reference,status:refund.status??(full?"Refunded":"Partially refunded"),summary:{"Refund amount":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(requested),"Payment method":"Card","Refund date":new Date().toLocaleString("en-US",{timeZone:"UTC"})+" UTC"},actionUrl:siteUrl(`/orders/${encodeURIComponent(order.reference)}`),actionLabel:"View order"}}});
     return NextResponse.json({ order: updated[0], refund: { id: refund.id, status: refund.status, amount: requested } });
   } catch (reason) {
     if (reason instanceof Response) return NextResponse.json({ error: reason.status === 401 ? "Authentication required." : "Refund permission denied." }, { status: reason.status });

@@ -7,6 +7,7 @@ import {
   supabaseUrl,
   userHeaders,
 } from "@/lib/launch-server";
+import { adminRecipient, sendEmailEvent, sendOrderEmail, siteUrl } from "@/lib/transactional-email";
 import {
   resolveEffectivePrice,
   type BulkPriceTier,
@@ -293,6 +294,25 @@ export async function POST(request: Request) {
           "Inventory reservation migration is pending; staff must verify inventory manually.",
         );
     }
+    const customerEmail = (await fetch(`${supabaseUrl()}/auth/v1/admin/users/${user.id}`, { headers: serviceHeaders(), cache: "no-store" })
+      .then(async response => response.ok ? ((await response.json()) as { email?: string }).email : null).catch(() => null)) ?? null;
+    const reference = String(order.reference);
+    const summary = {
+      "Order type": type === "buy" ? "Buy Gold" : "Sell Gold",
+      "Gold amount": `${amount.toLocaleString()}M OSRS GP`,
+      "Quoted total": new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(order.total_price ?? total)),
+      "Payment method": type === "sell" ? payoutMethod : "Select during checkout",
+      "RuneScape name": deliveryName,
+    };
+    const emails: Promise<unknown>[] = [sendOrderEmail({ eventKey: `order_received:${order.id}:${user.id}`, eventType: "order_received", recipient: customerEmail, userId: user.id, orderId: String(order.id), payload: { template: "order_confirmation", input: { reference, status: String(order.status), summary, actionUrl: siteUrl(`/orders/${encodeURIComponent(reference)}`), actionLabel: "Track order" } } })];
+    const adminEmail = adminRecipient();
+    if (adminEmail) {
+      emails.push(sendEmailEvent({ eventKey: `admin_new_order:${order.id}:${adminEmail}`, eventType: "admin_new_order", recipient: adminEmail, orderId: String(order.id), userId: user.id, payload: { template: "admin_new_order", input: { reference, status: String(order.status), summary: { ...summary, "Customer email": customerEmail ?? "Unavailable", "Risk": `${risk.level} (${risk.score}/100)` }, actionUrl: siteUrl("/admin"), actionLabel: "Review order" } } }));
+      const threshold = Number(process.env.LARGE_ORDER_ALERT_USD);
+      if (Number.isFinite(threshold) && threshold > 0 && Number(order.total_price ?? total) >= threshold) emails.push(sendEmailEvent({ eventKey: `admin_large_order:${order.id}:${adminEmail}`, eventType: "admin_large_order", recipient: adminEmail, orderId: String(order.id), userId: user.id, payload: { template: "admin_large_order", input: { reference, status: "Review required", summary, actionUrl: siteUrl("/admin"), actionLabel: "Review order" } } }));
+      if (risk.level === "high") emails.push(sendEmailEvent({ eventKey: `admin_high_risk:${order.id}:${adminEmail}`, eventType: "admin_high_risk", recipient: adminEmail, orderId: String(order.id), userId: user.id, payload: { template: "admin_high_risk", input: { reference, status: "High risk", summary: { Score: `${risk.score}/100`, Reasons: risk.reasons.join(", ") || "No reasons recorded" }, actionUrl: siteUrl("/admin"), actionLabel: "Review order" } } }));
+    }
+    await Promise.allSettled(emails);
     return NextResponse.json({ order, warnings }, { status: 201 });
   } catch (reason) {
     return NextResponse.json(

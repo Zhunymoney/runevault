@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { emailTemplate } from "@/lib/email-templates";
-import { getOrderByReference, getUserEmail, rateLimit, requestIp, requireOrderOwner, sendDiscord, sendEmail, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
+import { getOrderByReference, rateLimit, requestIp, requireOrderOwner, sendDiscord, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
+import { sendOrderEmail, siteUrl } from "@/lib/transactional-email";
 
 export async function POST(request: Request) {
   const limit = rateLimit(`notify:${requestIp(request)}`, 5, 10 * 60_000);
@@ -23,11 +23,7 @@ export async function POST(request: Request) {
       { name: "Reference", value: order.reference, inline: true }, { name: "Type", value: order.order_type, inline: true },
       { name: "Gold", value: `${order.amount_m}M`, inline: true }, { name: "Value", value: `$${Number(order.total_price).toFixed(2)}`, inline: true },
     ]);
-    const email = await getUserEmail(order.user_id);
-    if (email) {
-      const template = emailTemplate("order_confirmation", { reference: order.reference, actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/orders/${encodeURIComponent(order.reference)}`, detail: `${order.order_type} ${order.amount_m}M OSRS gold.` });
-      await sendEmail({ to: email, ...template });
-    }
+    await sendOrderEmail({eventKey:`order_received:${order.id}:${order.user_id}`,eventType:"order_received",userId:order.user_id,orderId:order.id,payload:{template:"order_confirmation",input:{reference:order.reference,status:order.status,summary:{"Order type":order.order_type,"Gold amount":`${order.amount_m}M OSRS GP`,"Quoted total":`$${Number(order.total_price).toFixed(2)}`},actionUrl:siteUrl(`/orders/${encodeURIComponent(order.reference)}`),actionLabel:"Track order"}}});
     return NextResponse.json({ ok: true });
   } catch (reason) { if (reason instanceof Response) return reason; return NextResponse.json({ error: "Notification failed." }, { status: 500 }); }
 }

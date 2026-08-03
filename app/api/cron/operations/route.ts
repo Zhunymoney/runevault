@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendDiscord, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
+import { retryEmailEvent } from "@/lib/transactional-email";
 
 export const runtime = "nodejs";
 export async function GET(request: Request) {
@@ -26,8 +27,13 @@ export async function GET(request: Request) {
       { name: "Stale orders", value: String(orders.length), inline: true }, { name: "Expired reservations", value: String(expired), inline: true },
       { name: "Available inventory", value: `${available}M`, inline: true },
     ]);
-    if (runId) await fetch(`${supabaseUrl()}/rest/v1/automation_runs?id=eq.${runId}`, { method: "PATCH", headers: { ...headers, Prefer: "return=minimal" }, body: JSON.stringify({ status: "completed", safe_details: { stale_orders: orders.length, expired_reservations: expired, available_inventory_m: available }, completed_at: new Date().toISOString() }) });
-    return NextResponse.json({ ok: true, staleOrders: orders.length, expiredReservations: expired, availableInventoryM: available });
+    const retryBefore=new Date(Date.now()-5*60_000).toISOString();
+    const retryResponse=await fetch(`${supabaseUrl()}/rest/v1/notification_events?status=eq.failed&attempts=lt.3&last_attempt_at=lt.${encodeURIComponent(retryBefore)}&select=id&order=last_attempt_at.asc&limit=20`,{headers,cache:"no-store"});
+    const retryRows=retryResponse.ok?await retryResponse.json() as Array<{id:string}>:[];
+    const retryResults=await Promise.allSettled(retryRows.map(row=>retryEmailEvent(row.id)));
+    const emailsRetried=retryResults.filter(result=>result.status==="fulfilled"&&result.value.sent).length;
+    if (runId) await fetch(`${supabaseUrl()}/rest/v1/automation_runs?id=eq.${runId}`, { method: "PATCH", headers: { ...headers, Prefer: "return=minimal" }, body: JSON.stringify({ status: "completed", safe_details: { stale_orders: orders.length, expired_reservations: expired, available_inventory_m: available, emails_retried: emailsRetried }, completed_at: new Date().toISOString() }) });
+    return NextResponse.json({ ok: true, staleOrders: orders.length, expiredReservations: expired, availableInventoryM: available, emailsRetried });
   } catch (reason) {
     if (runId) await fetch(`${supabaseUrl()}/rest/v1/automation_runs?id=eq.${runId}`, { method: "PATCH", headers: { ...headers, Prefer: "return=minimal" }, body: JSON.stringify({ status: "failed", error_message: reason instanceof Error ? reason.message.slice(0, 500) : "Automation failed", completed_at: new Date().toISOString() }) });
     return NextResponse.json({ error: "Operations automation failed." }, { status: 500 });
