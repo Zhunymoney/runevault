@@ -4,7 +4,6 @@ import "./launch-pack.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
-import { ChatWidget } from "@/components/chat-widget";
 import { JsonLd } from "@/components/structured-data";
 import { TawkWidget } from "@/components/tawk-widget";
 
@@ -53,7 +52,6 @@ export default function RootLayout({
         <SiteHeader />
         {children}
         <SiteFooter />
-        <ChatWidget externalProvider={process.env.NEXT_PUBLIC_CHAT_PROVIDER} externalUrl={process.env.NEXT_PUBLIC_CHAT_PROVIDER_URL} />
         <TawkWidget />
       </body>
     </html>
