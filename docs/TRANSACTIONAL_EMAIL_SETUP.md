@@ -6,11 +6,11 @@ RuneVault uses Resend for application emails and keeps Supabase Auth responsible
 
 1. Create a Resend account and API key with sending access. Store the key only as `RESEND_API_KEY` in local `.env.local`/`.env.supabase.local and Vercel Production environment variables.
 2. In Resend, add and verify `runevault.shop`. Copy the exact SPF and DKIM DNS records Resend displays into the domain DNS dashboard. Add the optional DMARC record recommended by the provider. Wait until Resend reports the domain verified.
-3. Set `RESEND_FROM_EMAIL` to `RuneVault <noreply@runevault.shop>` and `ADMIN_NOTIFICATION_EMAIL` to the private operations inbox.
+3. Set `RESEND_FROM_EMAIL` to `RuneVault <noreply@runevault.shop>`. Owner and administrator notifications are enforced server-side to `RuneVaultShop@outlook.com` and do not require a recipient environment variable.
 4. Set `NEXT_PUBLIC_SITE_URL` to the canonical HTTPS production origin. Optionally set `LARGE_ORDER_ALERT_USD` to a positive USD amount.
 5. In development, set `EMAIL_TEST_RECIPIENT` to redirect every application email to one test inbox. Without it, non-production delivery is suppressed and logged as skipped.
 
-Add all server variables in Vercel under Project Settings → Environment Variables, select Production (and Preview only when desired), save, and redeploy. Never prefix the API key or admin recipient with `NEXT_PUBLIC_`.
+Add all server variables in Vercel under Project Settings → Environment Variables, select Production (and Preview only when desired), save, and redeploy. Never prefix the API key with `NEXT_PUBLIC_`.
 
 ## Supabase Auth SMTP
 

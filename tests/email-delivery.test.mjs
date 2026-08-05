@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { sendEmail } from "../lib/launch-server.ts";
+import { ADMIN_NOTIFICATION_EMAIL } from "../lib/email-config.ts";
+
+test("all owner notifications use the RuneVault operations inbox", () => {
+  assert.equal(ADMIN_NOTIFICATION_EMAIL, "RuneVaultShop@outlook.com");
+});
 
 test("transactional email reports missing production configuration", async () => {
   const originalKey = process.env.RESEND_API_KEY;

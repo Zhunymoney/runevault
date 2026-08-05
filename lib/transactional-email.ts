@@ -1,4 +1,5 @@
 import { emailTemplate, type EmailTemplateName, type TemplateInput } from "@/lib/email-templates";
+import { ADMIN_NOTIFICATION_EMAIL } from "@/lib/email-config";
 import { getUserEmail, sendEmail, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
 
 export const MAX_EMAIL_ATTEMPTS = 3;
@@ -133,7 +134,7 @@ export async function sendOrderEmail(args: Omit<SendEvent, "recipient"> & { reci
 }
 
 export function adminRecipient() {
-  return cleanEmail(process.env.ADMIN_NOTIFICATION_EMAIL);
+  return ADMIN_NOTIFICATION_EMAIL;
 }
 
 export function siteUrl(path = "") {
