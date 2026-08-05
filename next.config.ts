@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const scriptPolicy = process.env.NODE_ENV === "production"
-  ? "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com"
-  : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com";
+  ? "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://*.tawk.to https://cdn.jsdelivr.net"
+  : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://*.tawk.to https://cdn.jsdelivr.net";
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -17,14 +17,15 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       "base-uri 'self'",
-      "form-action 'self'",
+      "form-action 'self' https://*.tawk.to",
       "frame-ancestors 'none'",
       "object-src 'none'",
       "img-src 'self' data: blob: https:",
-      "font-src 'self' data:",
-      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self' data: https://*.tawk.to https://fonts.gstatic.com",
+      "style-src 'self' 'unsafe-inline' https://*.tawk.to https://fonts.googleapis.com https://cdn.jsdelivr.net",
       scriptPolicy,
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.tawk.to wss://*.tawk.to",
+      "frame-src https://*.tawk.to",
       "upgrade-insecure-requests",
     ].join("; "),
   },
