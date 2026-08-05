@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { ChatWidget } from "@/components/chat-widget";
 import { JsonLd } from "@/components/structured-data";
+import { TawkWidget } from "@/components/tawk-widget";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://runevault-beta.vercel.app";
@@ -53,6 +54,7 @@ export default function RootLayout({
         {children}
         <SiteFooter />
         <ChatWidget externalProvider={process.env.NEXT_PUBLIC_CHAT_PROVIDER} externalUrl={process.env.NEXT_PUBLIC_CHAT_PROVIDER_URL} />
+        <TawkWidget />
       </body>
     </html>
   );
