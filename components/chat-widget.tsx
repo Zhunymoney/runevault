@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase-browser";
 import { parseApiResponse } from "@/lib/client-api";
 import { openSupportAttachment, type SupportAttachment, uploadSupportAttachment } from "@/lib/support-attachments";
 import { useSupportRealtime } from "@/lib/use-support-realtime";
+import { usePathname } from "next/navigation";
+import { isTawkAllowedPath } from "@/lib/tawk-routes";
 
 type Message = {
   id: string;
@@ -18,6 +20,7 @@ const idKey = "runevault-chat-id",
   tokenKey = "runevault-chat-token";
 
 export function ChatWidget({ externalProvider, externalUrl }: Props) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false),
     [id, setId] = useState(""),
     [token, setToken] = useState(""),
@@ -29,7 +32,8 @@ export function ChatWidget({ externalProvider, externalUrl }: Props) {
     [responseTime, setResponseTime] = useState(
       "We usually reply within one business day.",
     ),
-    [detectedReference, setDetectedReference] = useState("");
+    [detectedReference, setDetectedReference] = useState(""),
+    [tawkNotice, setTawkNotice] = useState("");
   const realtime = useSupportRealtime("customer", () => { if (open && id) void load(); });
   useEffect(() => {
     setId(localStorage.getItem(idKey) ?? "");
@@ -157,6 +161,18 @@ export function ChatWidget({ externalProvider, externalUrl }: Props) {
     setAttachments([]);
     setNotice("");
   }
+  async function openTawk() {
+    setOpen(false);
+    setTawkNotice("");
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      if (window.Tawk_API?.maximize) {
+        window.Tawk_API.maximize();
+        return;
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 100));
+    }
+    setTawkNotice("Live chat is temporarily unavailable. Please try again shortly.");
+  }
   let safeExternal = "";
   try {
     if (externalUrl) {
@@ -164,6 +180,7 @@ export function ChatWidget({ externalProvider, externalUrl }: Props) {
       if (parsed.protocol === "https:") safeExternal = parsed.toString();
     }
   } catch {}
+  if (!isTawkAllowedPath(pathname)) return null;
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
       {open && (
@@ -315,8 +332,13 @@ export function ChatWidget({ externalProvider, externalUrl }: Props) {
           )}
         </section>
       )}
+      {tawkNotice && (
+        <p role="status" className="max-w-72 rounded-xl border border-white/10 bg-[#0b0e14] px-4 py-3 text-sm text-white/70 shadow-xl">
+          {tawkNotice}
+        </p>
+      )}
       <button
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => void openTawk()}
         aria-label="Open RuneVault support chat"
         className="flex h-14 items-center gap-2 rounded-2xl bg-amber-400 px-5 font-black text-black shadow-xl"
       >
