@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { durableRateLimit, requestIp, requirePermission, supabaseUrl, userHeaders } from "@/lib/launch-server";
+import { durableRateLimit, requestIp, requirePermission, serviceHeaders, supabaseUrl } from "@/lib/launch-server";
 
 export async function GET(request: Request) {
   try {
     await requirePermission(request, "settings.manage");
-    const authorization = request.headers.get("authorization") ?? "";
-    const response = await fetch(`${supabaseUrl()}/rest/v1/settings?id=eq.1&select=*`, { headers: userHeaders(authorization), cache: "no-store" });
+    const response = await fetch(`${supabaseUrl()}/rest/v1/settings?id=eq.1&select=*`, { headers: serviceHeaders(), cache: "no-store" });
     const rows = await response.json().catch(() => []);
     if (!response.ok || !Array.isArray(rows) || !rows[0]) return NextResponse.json({ error: "Settings could not be loaded." }, { status: response.ok ? 404 : response.status });
     return NextResponse.json({ settings: rows[0] });
@@ -30,18 +29,18 @@ export async function PATCH(request: Request) {
       updated_at: new Date().toISOString(),
     };
     if (Number(values.minimum_order_m) > Number(values.maximum_order_m)) return NextResponse.json({ error: "Minimum order cannot exceed maximum order." }, { status: 400 });
-    const authorization = request.headers.get("authorization") ?? "";
-    const beforeResponse = await fetch(`${supabaseUrl()}/rest/v1/settings?id=eq.1&select=*`, { headers: userHeaders(authorization) });
+    const headers = serviceHeaders();
+    const beforeResponse = await fetch(`${supabaseUrl()}/rest/v1/settings?id=eq.1&select=*`, { headers, cache: "no-store" });
     const before = (await beforeResponse.json().catch(() => [])) as unknown[];
-    let response = await fetch(`${supabaseUrl()}/rest/v1/settings?id=eq.1`, { method: "PATCH", headers: { ...userHeaders(authorization), Prefer: "return=representation" }, body: JSON.stringify(values) });
+    let response = await fetch(`${supabaseUrl()}/rest/v1/settings?id=eq.1`, { method: "PATCH", headers: { ...headers, Prefer: "return=representation" }, body: JSON.stringify(values), cache: "no-store" });
     if (response.status === 400) {
       const { buy_enabled, sell_enabled, estimated_delivery_minutes, pause_message, ...legacyValues } = values;
       void buy_enabled; void sell_enabled; void estimated_delivery_minutes; void pause_message;
-      response = await fetch(`${supabaseUrl()}/rest/v1/settings?id=eq.1`, { method: "PATCH", headers: { ...userHeaders(authorization), Prefer: "return=representation" }, body: JSON.stringify(legacyValues) });
+      response = await fetch(`${supabaseUrl()}/rest/v1/settings?id=eq.1`, { method: "PATCH", headers: { ...headers, Prefer: "return=representation" }, body: JSON.stringify(legacyValues), cache: "no-store" });
     }
     const rows = await response.json().catch(() => []);
     if (!response.ok || !Array.isArray(rows) || rows.length !== 1) return NextResponse.json({ error: "Settings update was not permitted." }, { status: response.ok ? 403 : response.status });
-    await fetch(`${supabaseUrl()}/rest/v1/audit_logs`, { method: "POST", headers: { ...userHeaders(authorization), Prefer: "return=minimal" }, body: JSON.stringify({ actor_id: admin.id, action: "settings.updated", entity_type: "settings", entity_id: "1", details: { previous: before[0] ?? null, next: rows[0] } }) });
+    await fetch(`${supabaseUrl()}/rest/v1/audit_logs`, { method: "POST", headers: { ...headers, Prefer: "return=minimal" }, body: JSON.stringify({ actor_id: admin.id, action: "settings.updated", entity_type: "settings", entity_id: "1", details: { previous: before[0] ?? null, next: rows[0] } }) });
     return NextResponse.json({ settings: rows[0] });
   } catch (reason) { if (reason instanceof Response) return reason; return NextResponse.json({ error: reason instanceof Error ? reason.message : "Admin update failed." }, { status: 400 }); }
 }

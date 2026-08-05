@@ -66,6 +66,7 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [settings, setSettings] = useState<MarketplaceSettings | null>(null);
   const [message, setMessage] = useState("");
+  const [settingsNotice, setSettingsNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
@@ -133,6 +134,7 @@ export default function AdminPage() {
   async function saveSettings() {
     if (!settings) return;
     setSaving(true);
+    setSettingsNotice(null);
     try {
       const saved = await updateSettings(settings);
       setSettings({
@@ -144,8 +146,11 @@ export default function AdminPage() {
         maximum_order_m: Number(saved.maximum_order_m),
       });
       setMessage("Marketplace settings saved.");
+      setSettingsNotice({ type: "success", text: "Settings saved. Live pricing and order limits are updated." });
     } catch (reason) {
-      setMessage(reason instanceof Error ? reason.message : "Save failed.");
+      const text = reason instanceof Error ? reason.message : "Save failed.";
+      setMessage(text);
+      setSettingsNotice({ type: "error", text });
     } finally {
       setSaving(false);
     }
@@ -411,6 +416,7 @@ export default function AdminPage() {
             </div>
 
             <button
+              type="button"
               onClick={() => void saveSettings()}
               disabled={saving}
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-400 px-6 font-black text-black disabled:opacity-50"
@@ -418,6 +424,14 @@ export default function AdminPage() {
               <Save size={18} /> {saving ? "Saving…" : "Save settings"}
             </button>
           </div>
+          {settingsNotice && (
+            <p
+              role={settingsNotice.type === "error" ? "alert" : "status"}
+              className={`mt-4 rounded-xl border p-4 text-sm ${settingsNotice.type === "error" ? "border-rose-300/20 bg-rose-300/[.06] text-rose-100" : "border-emerald-300/20 bg-emerald-300/[.06] text-emerald-100"}`}
+            >
+              {settingsNotice.text}
+            </p>
+          )}
           <div className="mt-4 grid gap-4 sm:grid-cols-[180px_1fr]">
             <label className="text-sm font-semibold text-white/45">Delivery estimate (minutes)<input type="number" min="1" max="1440" value={settings.estimated_delivery_minutes ?? 15} onChange={(event) => setSettings({ ...settings, estimated_delivery_minutes: Number(event.target.value) })} className="mt-2 w-full rounded-xl border border-white/10 bg-black/15 px-4 py-3 text-white" /></label>
             <label className="text-sm font-semibold text-white/45">Pause message<input value={settings.pause_message ?? ""} onChange={(event) => setSettings({ ...settings, pause_message: event.target.value })} placeholder="Shown when buying or selling is paused" className="mt-2 w-full rounded-xl border border-white/10 bg-black/15 px-4 py-3 text-white" /></label>
